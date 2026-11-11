@@ -40,6 +40,7 @@ import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.DefaultAuthProvider;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.ScramUtils;
+import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -198,6 +199,13 @@ public abstract class ScramSaslServer implements SaslServer
 
     private String username;
     private State state = State.INITIAL;
+
+    /**
+     * Set when the user login limits refuse the attempt at client-first (OF-2279). The exchange then continues as for a
+     * user that does not exist, without looking up any credential, and fails at client-final, so that a refusal (for
+     * example of a locked account) cannot be told apart from an unknown user or a wrong password.
+     */
+    private boolean refused;
     private String nonce;
     private String serverFirstMessage;
     private String clientFirstMessageBare;
@@ -462,9 +470,29 @@ public abstract class ScramSaslServer implements SaslServer
             expectedChannelBindingPayloadInFinalClientMessage = gs2_header;
         }
 
+        // Apply the user login limits before any key is looked up (OF-2279). A refused attempt is sent the server-first
+        // message an attempt that is not refused would get (the account's own salt and iteration count, or a fake salt
+        // for a user that does not exist), looks up no key and fails at client-final, so the answer depends neither on
+        // the password nor on whether the account is locked or a block applies.
+        if (username.indexOf('@') >= 0) {
+            // The SCRAM username is the localpart (RFC 6120 section 6.3.7), and no account has an '@' in its name, so
+            // this attempt cannot succeed. It is refused without being counted: the limits normalise 'alice@domain' to
+            // 'alice', so counting it would build up failures against alice from a client that has her right password.
+            refused = true;
+        } else {
+            try {
+                SASLAuthentication.admitPasswordAttempt(props == null ? null : (LocalSession) props.get(LocalSession.class.getCanonicalName()), username);
+                refused = false;
+            } catch (final SaslFailureException e) {
+                refused = true;
+            }
+        }
+
         nonce = clientNonce + UUID.randomUUID().toString();
 
-        serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(getOrCreateSalt(username)), getIterations(username));
+        final byte[] salt = refused ? getSaltWithoutCreating(username) : getOrCreateSalt(username);
+        final int iterations = getIterations(username);
+        serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(salt), iterations);
 
         // XEP-0474: SASL SCRAM Downgrade Protection
         if (SASLAuthentication.SSDP_ENABLED.getValue()) {
@@ -539,6 +567,11 @@ public abstract class ScramSaslServer implements SaslServer
         final byte[] decodedChannelBinding = DatatypeConverter.parseBase64Binary(channelBinding);
         if (!Arrays.equals(expectedChannelBindingPayloadInFinalClientMessage, decodedChannelBinding)) {
             throw new SaslException("Invalid client final message: channel binding payload does not match expected payload");
+        }
+
+        if (refused) {
+            // The same failure as a wrong proof, without looking up any credential.
+            throw new SaslException("Authentication failed for: '"+username+"'");
         }
 
         try {
@@ -670,7 +703,36 @@ public abstract class ScramSaslServer implements SaslServer
         clientFirstMessageBare = null;
         expectedChannelBindingPayloadInFinalClientMessage = null;
         gs2CbindName = null;
+        refused = false;
         state = State.INITIAL;
+    }
+
+    /**
+     * Returns the salt a refused attempt is sent: the same as {@link #getOrCreateSalt(String)} returns (the account's
+     * own salt, or a fake salt for a user that does not exist or whose salt cannot be read), except that a missing salt
+     * is never created, as creating one resets the account's password, which a refused attempt must not do (OF-2279).
+     *
+     * The residual difference: for an account that has no SCRAM salt yet (one whose password was stored before SCRAM
+     * credentials were), a refused attempt is sent a fake salt where an attempt that is not refused would be sent a
+     * newly created one. The first successful SCRAM login creates the salt, so this applies only until then.
+     *
+     * @param username the username of the refused attempt.
+     * @return the salt to send.
+     */
+    private byte[] getSaltWithoutCreating(final String username)
+    {
+        try {
+            final String saltBase64 = AuthFactory.getSalt(username, getMechanismBaseName());
+            if (saltBase64 == null) {
+                return generateFakeSalt(username);
+            }
+            return decodeSalt(saltBase64);
+        } catch (UserNotFoundException e) {
+            return generateFakeSalt(username);
+        } catch (UnsupportedOperationException e) {
+            Log.warn("Exception in SCRAM.getSalt() for user '{}'", UserLoginLimitManager.forLog(username), e);
+            return generateFakeSalt(username);
+        }
     }
 
     /**

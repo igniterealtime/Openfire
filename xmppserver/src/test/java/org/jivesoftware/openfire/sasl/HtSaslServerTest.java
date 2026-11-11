@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.fast.FastSessionState;
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastTokenManager.Ht2ValidationResult;
@@ -96,6 +97,32 @@ class HtSaslServerTest {
             assertEquals(Failure.NOT_AUTHORIZED, error.getFailure());
             verify(lockOutManager).recordFailedLogin("user");
             tokens.verifyNoInteractions();
+        }
+    }
+
+    /**
+     * A username blocked by the login limits (OF-2279) must be refused before the token is validated, with the same
+     * answer as an invalid token. The failure is not counted, as tokens cannot practically be guessed.
+     */
+    @Test
+    void blockedUsernameIsRejectedBeforeTokenValidation() throws Exception {
+        final LockOutManager lockOutManager = mock(LockOutManager.class);
+        final UserLoginLimitManager loginLimits = mock(UserLoginLimitManager.class);
+        final LocalSession session = sessionExpecting("user");
+        when(session.getHostAddress()).thenReturn("192.0.2.1");
+        when(loginLimits.isLoginAllowed("user", "192.0.2.1")).thenReturn(false);
+        try (final var lockOut = mockStatic(LockOutManager.class);
+             final var limits = mockStatic(UserLoginLimitManager.class);
+             final var tokens = mockStatic(FastTokenManager.class)) {
+            lockOut.when(LockOutManager::getInstance).thenReturn(lockOutManager);
+            limits.when(UserLoginLimitManager::getInstance).thenReturn(loginLimits);
+            final HtSaslServer server = new HtSaslServer(FastTokenManager.HT_SHA_256_NONE, propsFor(session));
+
+            final SaslFailureException error = assertThrows(SaslFailureException.class,
+                () -> server.evaluateResponse(message("user", PROOF)), "a blocked username must be refused");
+            assertEquals(Failure.NOT_AUTHORIZED, error.getFailure(), "a blocked username must get the same answer as an invalid token");
+            tokens.verifyNoInteractions();
+            verify(loginLimits, never().description("a FAST attempt must not be counted")).tryAcquireAttempt(anyString(), any());
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,12 @@ import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.sasl.VerifyPasswordCallback;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 
 /**
  * Callback handler that may be used when doing SASL authentication. A CallbackHandler
@@ -45,13 +48,37 @@ import org.slf4j.LoggerFactory;
  * {@link SASLAuthentication} should not offer these kinds of SASL mechanisms if the user
  * provider being in use does not support passwords retrieval.
  *
+ * When a mechanism provides the username (through a {@link NameCallback}), the attempt is checked against account
+ * locks and the user login limits before any password is read or verified, and refused if either applies (see
+ * {@link SASLAuthentication#admitPasswordAttempt(LocalSession, String)}).
+ *
  * @author Hao Chen
  */
 public class XMPPCallbackHandler implements CallbackHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(XMPPCallbackHandler.class);
 
+    /**
+     * The session that is authenticating, or null if not known.
+     */
+    @Nullable
+    private final LocalSession session;
+
+    /**
+     * Creates a handler without a session. Attempts are still refused for locked or blocked usernames, but the limits
+     * by address do not apply, and attempts are not counted, as a success could not give its attempt back.
+     */
     public XMPPCallbackHandler() {
+        this(null);
+    }
+
+    /**
+     * Creates a handler for the authentication of a session.
+     *
+     * @param session the session that is authenticating, or null if not known.
+     */
+    public XMPPCallbackHandler(@Nullable final LocalSession session) {
+        this.session = session;
     }
 
     @Override
@@ -69,6 +96,10 @@ public class XMPPCallbackHandler implements CallbackHandler {
                     name = ((NameCallback) callback).getDefaultName();
                 }
                 Log.trace("NameCallback: {}", name);
+                if (name != null) {
+                    // Refuse a locked or blocked username before any password is read or verified (OF-2279).
+                    SASLAuthentication.admitPasswordAttempt(session, name);
+                }
             }
             else if (callback instanceof PasswordCallback) {
                 try {

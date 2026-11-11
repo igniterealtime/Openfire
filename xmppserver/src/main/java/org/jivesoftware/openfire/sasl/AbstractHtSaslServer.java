@@ -15,10 +15,12 @@
  */
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastSessionState;
 import org.jivesoftware.openfire.lockout.LockOutManager;
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
@@ -96,7 +98,14 @@ abstract class AbstractHtSaslServer implements SaslServer {
             // the stream's 'from' could be used to record failed logins against an arbitrary account.
             if (LockOutManager.getInstance().isAccountDisabled(username)) {
                 LockOutManager.getInstance().recordFailedLogin(username);
-                Log.debug("Rejecting FAST authentication for disabled account '{}'.", username);
+                Log.debug("Rejecting FAST authentication for disabled account '{}'.", UserLoginLimitManager.forLog(username));
+                throw new SaslFailureException("Invalid FAST token", null, Failure.NOT_AUTHORIZED);
+            }
+            // An attempt the user login limits refuse is refused too (OF-2279): one whose IP address, or username from
+            // that IP address, is blocked, or whose username is blocked from any IP address. FAST failures are not
+            // counted, as tokens cannot practically be guessed.
+            if (!UserLoginLimitManager.getInstance().isLoginAllowed(username, SASLAuthentication.getHostAddress(session))) {
+                Log.debug("Rejecting FAST authentication for '{}', as a login limit applies.", UserLoginLimitManager.forLog(username));
                 throw new SaslFailureException("Invalid FAST token", null, Failure.NOT_AUTHORIZED);
             }
             final Long replayCount = FastSessionState.getReplayCount(session);

@@ -105,6 +105,22 @@ public final class ConnectionSettings {
         public static final String QUEUE_MIN_THREADS = "xmpp.server.outgoing.min.threads";
         public static final String QUEUE_SIZE = "xmpp.server.outgoing.queue";
 
+        /**
+         * Whether a remote server may reuse the stream ID of the previous stream when it restarts the stream on an
+         * outgoing server connection, after TLS or SASL negotiation. RFC 6120 requires a new stream ID. When this is
+         * true, such a stream is accepted, and the session of the previous stream continues on it. When this is false,
+         * such a stream is refused.
+         *
+         * Openfire versions before 5.2.0 reuse the stream ID when they restart the stream after SASL negotiation on an
+         * incoming server connection, so with false, Openfire cannot authenticate with SASL EXTERNAL to servers that
+         * run those versions.
+         */
+        public static final SystemProperty<Boolean> OUTGOING_ACCEPT_REUSED_STREAM_ID = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.server.outgoing.accept-reused-stream-id")
+            .setDefaultValue(true)
+            .setDynamic(true)
+            .build();
+
         public static final String DIALBACK_ENABLED = "xmpp.server.dialback.enabled";
         public static final String TLS_POLICY = "xmpp.server.tls.policy";
 

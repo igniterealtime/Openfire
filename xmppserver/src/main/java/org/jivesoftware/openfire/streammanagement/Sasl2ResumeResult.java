@@ -22,7 +22,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * Outcome of {@link StreamManager#processSasl2Resume(ResumeRequest)}: either the {@code <resumed/>} element
+ * Outcome of {@link AnsweringStreamManager#processSasl2Resume(ResumeRequest)}: either the {@code <resumed/>} element
  * (and the now-resumed session) to embed in a SASL2 {@code <success/>} response, or the {@code <failed/>} element to
  * embed instead.
  */

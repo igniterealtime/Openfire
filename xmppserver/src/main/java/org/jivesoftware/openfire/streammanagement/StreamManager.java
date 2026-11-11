@@ -15,15 +15,12 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.dom4j.dom.DOMElement;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.Bind2Request;
 import org.jivesoftware.openfire.session.*;
@@ -31,7 +28,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.XMPPDateTimeFormat;
-import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
@@ -39,17 +35,22 @@ import org.xmpp.packet.*;
 import javax.annotation.Nonnull;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * XEP-0198 Stream Manager.
- * Handles client/server messages acknowledgement.
+ * Handles the acknowledgement of stanzas on a stream: inbound stanzas are those that Openfire receives from the peer,
+ * outbound stanzas are those that Openfire sends to the peer.
+ *
+ * This class holds what both ends of a stream share. What the end that answers requests of the peer does is implemented
+ * by {@link AnsweringStreamManager}, and what the end that asks for Stream Management does by
+ * {@link RequestingStreamManager}. {@link #forSession(LocalSession)} creates the stream manager for a session.
  *
  * @author jonnyheavey
  */
-public class StreamManager {
+public abstract class StreamManager {
 
     public static SystemProperty<Boolean> LOCATION_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
         .setKey("stream.management.location.enabled")
@@ -75,9 +76,45 @@ public class StreamManager {
         .setDynamic(true)
         .build();
 
-    private final Logger Log;
-    private boolean resume = false;
+    /**
+     * Whether Stream Management is used on connections with other servers: offered to servers that connect to
+     * Openfire, and enabled on connections that Openfire opens to other servers. This is separate from
+     * {@link #ACTIVE}, which applies to clients.
+     */
+    public static SystemProperty<Boolean> SERVER_ACTIVE = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.server.active")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
 
+    /**
+     * Whether streams on connections with other servers can be resumed after their connection broke (XEP-0198 § 5).
+     * When this is set, resumption is offered to a server that connected to Openfire and requests it, and such a
+     * server can resume its stream on a new connection. On connections that Openfire opens to other servers, Openfire
+     * requests a stream that can be resumed, and keeps the session, and its routes, when the connection of such a
+     * stream breaks. When this is not set, resumption is not offered, requested or accepted, and a server session is
+     * ended when its connection breaks, even when its stream was made resumable. Applies only to connections on which
+     * Stream Management is used (see {@link #SERVER_ACTIVE}).
+     */
+    public static SystemProperty<Boolean> SERVER_RESUME_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.server.resume.enabled")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
+
+    final Logger Log;
+
+    /**
+     * Whether the stream can be resumed. It is read by the thread of the connection that resumes the stream.
+     */
+    private volatile boolean resume = false;
+
+    /**
+     * An outbound stanza that the peer has not acknowledged yet.
+     *
+     * @deprecated Stream Management does not use this class, which has no replacement.
+     */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     public static class UnackedPacket {
         public final long x;
         public final Date timestamp = new Date();
@@ -100,32 +137,20 @@ public class StreamManager {
     public static final String NAMESPACE_V3 = "urn:xmpp:sm:3";
 
     /**
-     * Session (stream) to client.
+     * Session (stream) to the peer.
      */
-    private final LocalSession session;
+    final LocalSession session;
 
     /**
-     * Namespace to be used in stanzas sent to client (depending on XEP-0198 version used by client)
+     * Namespace to be used in stanzas sent to the peer (depending on XEP-0198 version used by the peer). It is read by
+     * the threads that deliver stanzas to the session, and by the thread of the connection that resumes the stream.
      */
-    private String namespace;
+    private volatile String namespace;
 
     /**
-     * Count of how many stanzas/packets
-     * sent from the client that the server has processed
+     * Count of how many inbound stanzas/packets Openfire has handled
      */
-    private AtomicLong serverProcessedStanzas = new AtomicLong( 0 );
-
-    /**
-     * Count of how many stanzas/packets
-     * sent from the server that the client has processed
-     */
-    private AtomicLong clientProcessedStanzas = new AtomicLong( 0 );
-
-    /**
-     * Whether the count of stanzas sent from the server that the client has processed has rolled over from (2^32)-1 to
-     * zero at least once.
-     */
-    private boolean clientProcessedStanzasRolledOver = false;
+    private AtomicLong handledInboundStanzas = new AtomicLong( 0 );
 
     /**
      * Whether the number of unacknowledged stanzas exceeded the maximum, which causes the session to be closed.
@@ -138,16 +163,29 @@ public class StreamManager {
     static final long MASK = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
 
     /**
-     * Collection of stanzas/packets sent to client that haven't been acknowledged.
+     * Outbound stanzas/packets that haven't been acknowledged, and the count of those that have been.
      */
-    private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
+    private final UnacknowledgedStanzaQueue unacknowledgedOutboundStanzas;
 
     /**
-     * Delegates that can determine if a detached session can be terminated.
+     * Delegates that can determine if a detached session can be terminated. They are added and removed by any thread,
+     * and read by the task that cleans up detached sessions. A copy of this set reflects it at a single moment, so that
+     * a delegate that is replaced while the copy is made cannot be missed together with its replacement.
      */
-    private final Set<TerminationDelegate> terminationDelegates = new HashSet<>();
+    private final Set<TerminationDelegate> terminationDelegates = new CopyOnWriteArraySet<>();
 
-    public StreamManager(LocalSession session) {
+    /**
+     * The SM-ID of the stream, which is set when resumption is enabled (XEP-0198 § 5). It is read by the thread of the
+     * connection that resumes the stream.
+     */
+    private volatile String smId;
+
+    /**
+     * Creates the stream manager for a session.
+     *
+     * @param session The session (cannot be null).
+     */
+    protected StreamManager(LocalSession session) {
         String address;
         try {
             final Connection connection = session.getConnection();
@@ -165,7 +203,24 @@ public class StreamManager {
         }
 
         this.Log = LoggerFactory.getLogger(StreamManager.class + "["+ (address == null ? "(unknown address)" : address) +"]" );
+        this.unacknowledgedOutboundStanzas = new UnacknowledgedStanzaQueue( Log, this::getMaximumUnacknowledgedStanzas );
         this.session = session;
+    }
+
+    /**
+     * Creates the stream manager that matches the end of the stream that Openfire is on in a session: on a connection
+     * that Openfire opened to another server, Openfire asks for Stream Management; on all other sessions, it answers
+     * requests of the peer.
+     *
+     * @param session The session (cannot be null).
+     * @return the stream manager for the session (never null).
+     */
+    @Nonnull
+    public static StreamManager forSession(@Nonnull final LocalSession session) {
+        if (session instanceof LocalOutgoingServerSession) {
+            return new RequestingStreamManager(session);
+        }
+        return new AnsweringStreamManager(session);
     }
 
     /**
@@ -178,345 +233,130 @@ public class StreamManager {
     }
 
     /**
+     * Sets whether the stream can be resumed.
+     *
+     * @param resume true if the stream can be resumed.
+     */
+    void setResume(final boolean resume) {
+        this.resume = resume;
+    }
+
+    /**
+     * Returns the namespace of the version of Stream Management used on the stream, or null if Stream Management is
+     * not enabled.
+     *
+     * @return the namespace (possibly null).
+     */
+    String getNamespace() {
+        return namespace;
+    }
+
+    /**
+     * Sets the namespace of the version of Stream Management used on the stream. Setting null disables Stream
+     * Management.
+     *
+     * @param namespace the namespace (possibly null).
+     */
+    void setNamespace(final String namespace) {
+        this.namespace = namespace;
+    }
+
+    /**
+     * Returns the SM-ID of the stream, which is set when resumption is enabled.
+     *
+     * @return the SM-ID (possibly null).
+     */
+    String getSmId() {
+        return smId;
+    }
+
+    /**
+     * Sets the SM-ID of the stream.
+     *
+     * @param smId the SM-ID.
+     */
+    void setSmId(final String smId) {
+        this.smId = smId;
+    }
+
+    /**
+     * Returns the number of inbound stanzas that Openfire has handled since Stream Management was enabled, as it is
+     * reported to the peer (rolled over at 2^32).
+     *
+     * @return the number of handled inbound stanzas.
+     */
+    long getHandledInboundStanzas() {
+        return handledInboundStanzas.get() & MASK;
+    }
+
+    /**
      * Processes a stream management element.
      *
-     * Inline resume requests, nested in a SASL2 <authenticate/> element, are not processed here; see processSasl2Resume(ResumeRequest)
+     * Inline resume requests, nested in a SASL2 <authenticate/> element, are not processed here; see AnsweringStreamManager#processSasl2Resume(ResumeRequest)
      *
      * @param element The stream management element to be processed.
      */
     public void process( Element element )
     {
         switch(element.getName()) {
-            case "enable":
-                String resumeString = element.attributeValue("resume");
-                boolean resume = false;
-                if (resumeString != null) {
-                    if (resumeString.equalsIgnoreCase("true") || resumeString.equalsIgnoreCase("yes") || resumeString.equals("1")) {
-                        resume = true;
-                    }
-                }
-                enable( element.getNamespace().getStringValue(), resume );
-                break;
-            case "resume":
-                final ResumeRequest resumeRequest;
-                try {
-                    resumeRequest = ResumeRequest.from(element);
-                } catch (MalformedResumeRequestException e) {
-                    Log.info( "Closing client session that sent a malformed 'resume' request. Error message: {}. Affected session: {}", e.getMessage(), session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, e.getMessage() + " Our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-                    // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
-                    session.close( error );
-                    return;
-                }
-                processResume( resumeRequest );
-
-                break;
             case "r":
-                sendServerAcknowledgement();
+                acknowledgeInboundStanzas();
                 break;
             case "a":
-                processClientAcknowledgement(element);
+                processOutboundAcknowledgement(element);
                 break;
             default:
-                sendUnexpectedError();
-        }
-    }
-
-    /**
-     * Should this session be allowed to resume?
-     * This is used while processed <enable/> and <resume/>
-     *
-     * @return True if the session is allowed to resume.
-     */
-    private boolean allowResume() {
-        boolean allow = false;
-        // Ensure that resource binding has occurred.
-        if (session instanceof ClientSession) {
-            AuthToken authToken = ((LocalClientSession)session).getAuthToken();
-            if (authToken != null) {
-                if (!authToken.isAnonymous()) {
-                    allow = true;
+                if ( !processNegotiation( element ) ) {
+                    sendUnexpectedError();
                 }
-            }
         }
-        return allow;
     }
 
     /**
-     * Attempts to enable Stream Management for the entity identified by the provided JID.
+     * Processes a Stream Management element that is part of the negotiation at this end of the stream, such as a
+     * request to enable Stream Management or to resume a stream.
      *
-     * @param namespace The namespace that defines what version of SM is to be enabled.
-     * @param resume Whether the client is requesting a resumable session.
+     * @param element The element received from the peer (cannot be null).
+     * @return true if the element was processed, false if it is not part of the negotiation at this end of the stream.
      */
-    private void enable( String namespace, boolean resume )
-    {
-        final Element outcome;
-        try {
-            outcome = enableAndBuildElement(namespace, resume);
-        } catch (final StreamManagementException e) {
-            Log.debug("Unable to enable stream management for session {}: {}", session, e.getMessage());
-            session.deliverRawText(buildFailedElement(namespace, e.getCondition()).asXML());
-            return;
-        }
-        session.deliverRawText(outcome.asXML());
-    }
+    abstract boolean processNegotiation( @Nonnull Element element );
 
     /**
      * Enables stream management, returning the {@code <enabled/>} element rather than sending it.
      *
-     * Leaving delivery to the caller allows an inline caller to embed the element in its enclosing response, as
-     * XEP-0198 § 9.1 requires of a Bind2 inline request.
+     * A stream manager that does not answer requests of the peer refuses this.
      *
      * @param namespace the SM namespace to use
-     * @param resume    whether the client requests a resumable session
+     * @param resume    whether the peer requests a resumable session
      * @return the {@code <enabled/>} element
      * @throws StreamManagementException when stream management could not be enabled, carrying the condition to report
+     * @deprecated Use {@link AnsweringStreamManager#enableAndBuildElement(String, boolean)}, on the stream manager of a
+     * session that answers requests of the peer.
      */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     @Nonnull
     public Element enableAndBuildElement( String namespace, boolean resume ) throws StreamManagementException
     {
-        boolean offerResume = allowResume();
-        if (!session.isAuthenticated()) {
-            throw new StreamManagementException(PacketError.Condition.unexpected_request,
-                "Stream management cannot be enabled before the session is authenticated.");
-        }
-
-        String smId = null;
-        synchronized ( this )
-        {
-            if ( isEnabled() )
-            {
-                throw new StreamManagementException(PacketError.Condition.unexpected_request,
-                    "Stream management is already enabled for this session.");
-            }
-            this.namespace = namespace;
-
-            this.resume = resume && offerResume;
-            if ( this.resume ) {
-                // Create SM-ID.
-                smId = Base64.getEncoder().encodeToString((session.getAddress().getResource() + "\0" + session.getStreamID().getID()).getBytes(StandardCharsets.UTF_8));
-            }
-        }
-
-        // Build confirmation element.
-        Element enabled = new DOMElement(QName.get("enabled", namespace));
-        if (this.resume) {
-            enabled.addAttribute("resume", "true");
-            enabled.addAttribute("id", smId);
-            if ( !namespace.equals(NAMESPACE_V2) && LOCATION_ENABLED.getValue() ) {
-                // OF-1925: Hint clients to do resumes at the same cluster node.
-                enabled.addAttribute("location", XMPPServer.getInstance().getServerInfo().getHostname());
-            }
-
-            // OF-1926: Tell clients how long they can be detached.
-            if ( MAX_SERVER_ENABLED.getValue() ) {
-                final int sessionDetachTime = XMPPServer.getInstance().getSessionManager().getSessionDetachTime();
-                if ( sessionDetachTime > 0 ) {
-                    enabled.addAttribute("max", String.valueOf(sessionDetachTime/1000));
-                }
-            }
-        }
-        return enabled;
+        throw new StreamManagementException(PacketError.Condition.unexpected_request,
+            "Stream management is not enabled at the request of the peer on this session.");
     }
 
     /**
-     * Attempts to process (validate and perform) a traditional {@code <resume/>} request, as defined by XEP-0198.
+     * Attempts to process an inline SASL2 resume request.
      *
-     * Unlike {@link #processSasl2Resume(ResumeRequest)}, this writes its response (either a stream error, or the
-     * effects of {@link LocalSession#reattach(LocalSession, long)}) directly to the connection, rather than
-     * returning a result to the caller.
-     *
-     * @param request the parsed resume request (cannot be null).
-     */
-    private void processResume(@Nonnull final ResumeRequest request)
-    {
-        this.namespace = request.getNamespace();
-
-        final ResumeRequestValidationResult validation = validateResumeRequest(request);
-        if (!validation.isSuccess()) {
-            assert validation.getFailureCondition() != null; // Per definition of the method contract.
-            sendError(new PacketError(validation.getFailureCondition()));
-            return;
-        }
-
-        final LocalClientSession otherSession = validation.getTarget();
-        assert otherSession != null; // Per definition of the method contract.
-        detachIfNeeded(otherSession);
-
-        // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.
-        Log.debug("Attaching to other session '{}'.", otherSession.getStreamID());
-        otherSession.reattach(session, request.getH());
-        Log.debug("Perform resumption of session {}, using connection from session {}", otherSession.getStreamID(), session.getStreamID());
-    }
-
-    /**
-     * Attempts to process (validate and perform) an inline SASL2 (XEP-0388) resume request, as defined by XEP-0198
-     * § 9.2 ("Inline Stream Resumption").
-     *
-     * Unlike {@link #processResume(ResumeRequest)}, this does not write its response to the connection. Instead, the
-     * outcome is returned as a {@link Sasl2ResumeResult}, for the caller to embed in the SASL2 {@code <success/>}
-     * response that it is constructing.
-     *
-     * This method is invoked on the stream manager of the temporary session that is negotiating the SASL2
-     * authentication. On success, the connection has been transferred to the resumed session, which is the session
-     * that the {@code <success/>} must be delivered to. Having delivered it, the caller completes the resumption by
-     * invoking {@link LocalSession#completeSasl2Resume(long)} on that session: everything it delivers must follow the
-     * resumption confirmation on the wire, which is why it cannot be done here.
-     *
-     * On failure, no state is changed: the temporary session remains usable, and the caller is expected to proceed
-     * with resource binding, reporting the returned {@code <failed/>} element alongside the outcome of that bind.
+     * A stream manager that does not answer requests of the peer refuses this.
      *
      * @param request the parsed inline resume request (cannot be null).
      * @return the outcome of the resume attempt.
+     * @deprecated Use {@link AnsweringStreamManager#processSasl2Resume(ResumeRequest)}, on the stream manager of a
+     * session that answers requests of the peer.
      */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     @Nonnull
     public Sasl2ResumeResult processSasl2Resume(@Nonnull final ResumeRequest request)
     {
-        final ResumeRequestValidationResult validation = validateResumeRequest(request);
-        if (!validation.isSuccess()) {
-            assert validation.getFailureCondition() != null; // Per definition of the method contract.
-            // Note: deliberately no side effects on this (temporary) session's stream management state. Unlike the
-            // traditional flow, a failed inline resume does not abandon the stream: the client proceeds to Bind2,
-            // possibly inlining an <enable/> of its own (XEP-0198 § 9.2.1).
-            return Sasl2ResumeResult.failure(buildFailedElement(request.getNamespace(), validation.getFailureCondition()));
-        }
-
-        final LocalClientSession otherSession = validation.getTarget();
-        assert otherSession != null; // Per definition of the method contract.
-        detachIfNeeded(otherSession);
-
-        Log.debug("Attaching to other session '{}' via inline SASL2 resume.", otherSession.getStreamID());
-        otherSession.reattachForSasl2(session);
-
-        final Element resumed = otherSession.getStreamManager().buildResumedElement();
-        return Sasl2ResumeResult.success(resumed, otherSession);
-    }
-
-    /**
-     * Detaches the connection of a to-be-resumed session, unless it is already detached.
-     *
-     * @param otherSession the pre-existing session that is about to be resumed.
-     */
-    @VisibleForTesting
-    void detachIfNeeded(@Nonnull final LocalClientSession otherSession)
-    {
-        if (!otherSession.isDetached()) {
-            Log.debug("Existing session {} is not detached; detaching.", otherSession.getStreamID());
-            final Connection oldConnection = otherSession.getConnection();
-            otherSession.setDetached();
-            assert oldConnection != null; // If the other session is not detached, the connection can't be null.
-            Log.debug("Closing superseded connection {} for session {}", oldConnection, otherSession.getStreamID());
-            oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."));
-        }
-    }
-
-    /**
-     * Validates a stream resumption request (traditional or inline SASL2), without performing any of the state
-     * changes (detaching/reattaching) needed to actually resume the session. This is shared by {@link #processResume(ResumeRequest)}
-     * and {@link #processSasl2Resume(ResumeRequest)}, so that the two flows agree on what is (and is not) an
-     * acceptable resumption attempt.
-     *
-     * @param request the parsed resume request (cannot be null).
-     * @return the outcome of the validation.
-     */
-    @Nonnull
-    private ResumeRequestValidationResult validateResumeRequest(@Nonnull final ResumeRequest request)
-    {
-        final String namespace = request.getNamespace();
-        final String previd = request.getPrevId();
-        final long h = request.getH();
-
-        Log.debug("Attempting resumption for {}, h={}", previd, h);
-
-        // Ensure that resource binding has NOT occurred.
-        if (!allowResume()) {
-            Log.debug("Unable to process session resumption attempt, as session {} is in a state where session resumption is not allowed.", session);
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-
-        if (session.isAuthenticated()) {
-            Log.debug("Unable to process session resumption attempt, as session {} is already authenticated.", session);
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-
-        AuthToken authToken = null;
-        if (session instanceof ClientSession) {
-            authToken = ((LocalClientSession) session).getAuthToken();
-        }
-        if (authToken == null) {
-            Log.debug("Unable to process session resumption attempt, as session {} does not provide any auth context.", session);
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-
-        // Decode previd.
-        String resource;
-        String streamId;
-        try {
-            StringTokenizer toks = new StringTokenizer(new String(Base64.getDecoder().decode(previd), StandardCharsets.UTF_8), "\0");
-            resource = toks.nextToken();
-            streamId = toks.nextToken();
-        } catch (Exception e) {
-            Log.debug("Exception from previd decode:", e);
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-        final JID fullJid;
-        if ( authToken.isAnonymous() ){
-            fullJid = new JID(resource, session.getServerName(), resource, true);
-        } else {
-            fullJid = new JID(authToken.getUsername(), session.getServerName(), resource, true);
-        }
-        Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session.getStreamID());
-
-        // Locate existing session.
-        final ClientSession route = XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
-        if (route == null) {
-            Log.debug("Not able for client of '{}' to resume a session on this cluster node. No session was found for this client.", fullJid);
-            if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
-                // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
-                CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
-            }
-            return ResumeRequestValidationResult.failure(PacketError.Condition.item_not_found);
-        }
-
-        if (!(route instanceof LocalClientSession otherSession)) {
-            Log.debug("Not allowing a client of '{}' to resume a session on this cluster node. The session can only be resumed on the Openfire cluster node where the original session was connected.", fullJid);
-            if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
-                // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
-                CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
-            }
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-
-        if (!otherSession.getStreamID().getID().equals(streamId)) {
-            return ResumeRequestValidationResult.failure(PacketError.Condition.item_not_found);
-        }
-        Log.debug("Found existing session for '{}', checking status", fullJid);
-
-        // OF-2811: Cannot resume a session that's already closed. That session is likely busy firing its 'closeListeners'.
-        if (route.isClosed()) {
-            Log.debug("Not allowing a client of '{}' to resume a session, as the preexisting session is already in process of being closed.", fullJid);
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-
-        // Previd identifies proper session. Now check SM status
-        if (!otherSession.getStreamManager().resume) {
-            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed does not have the stream management resumption feature enabled.", fullJid);
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-        if (otherSession.getStreamManager().namespace == null) {
-            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed disabled SM functionality as a response to an earlier error.", fullJid);
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-        if (!otherSession.getStreamManager().namespace.equals(namespace)) {
-            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", fullJid, otherSession.getStreamManager().namespace, namespace);
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-        if (!otherSession.getStreamManager().validateClientAcknowledgement(h)) {
-            Log.debug("Not allowing a client of '{}' to resume a session, as it reports it received more stanzas from us than that we've send it.", fullJid);
-            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
-        }
-
-        return ResumeRequestValidationResult.success(otherSession);
+        Log.debug("Refusing inline resumption of {}, as Openfire does not answer requests of the peer on session {}.", request.getPrevId(), session);
+        return Sasl2ResumeResult.failure(buildFailedElement(request.getNamespace(), PacketError.Condition.unexpected_request));
     }
 
     /**
@@ -529,29 +369,43 @@ public class StreamManager {
     }
 
     /**
-     * Sends XEP-0198 acknowledgement &lt;a /&gt; to client from server
+     * Sends XEP-0198 acknowledgement &lt;a /&gt; of inbound stanzas to the peer
      */
-    public void sendServerAcknowledgement() {
-        if(isEnabled()) {
+    public void acknowledgeInboundStanzas() {
+        // Read once, as another thread can disable Stream Management at any time.
+        final String currentNamespace = namespace;
+        if(currentNamespace != null) {
             if (session.isDetached()) {
                 Log.debug("Session is detached, won't request an ack.");
                 return;
             }
-            String ack = String.format("<a xmlns='%s' h='%s' />", namespace, serverProcessedStanzas.get() & MASK );
+            String ack = String.format("<a xmlns='%s' h='%s' />", currentNamespace, handledInboundStanzas.get() & MASK );
             session.deliverRawText( ack );
         }
     }
 
     /**
-     * Sends XEP-0198 request <r /> to client from server
+     * Sends XEP-0198 acknowledgement &lt;a /&gt; of inbound stanzas to the peer
+     *
+     * @deprecated Use {@link #acknowledgeInboundStanzas()} instead.
      */
-    private void sendServerRequest() {
-        if(isEnabled()) {
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
+    public void sendServerAcknowledgement() {
+        acknowledgeInboundStanzas();
+    }
+
+    /**
+     * Sends XEP-0198 request <r /> to the peer, for an acknowledgement of outbound stanzas
+     */
+    void requestOutboundAcknowledgement() {
+        // Read once, as another thread can disable Stream Management at any time.
+        final String currentNamespace = namespace;
+        if(currentNamespace != null) {
             if (session.isDetached()) {
                 Log.debug("Session is detached, won't request an ack.");
                 return;
             }
-            String request = String.format("<r xmlns='%s' />", namespace);
+            String request = String.format("<r xmlns='%s' />", currentNamespace);
             session.deliverRawText( request );
         }
     }
@@ -569,7 +423,7 @@ public class StreamManager {
      *
      * @param error PacketError describing the failure.
      */
-    private void sendError(PacketError error) {
+    void sendError(PacketError error) {
         final Element failed = buildFailedElement(namespace, error.getCondition());
         session.deliverRawText(failed.asXML());
         this.namespace = null; // isEnabled() is testing this.
@@ -582,133 +436,127 @@ public class StreamManager {
      * @param condition The specific error condition that caused the failure. Must not be null.
      * @return An XML {@code <failed>} element containing information about the failure.
      */
-    private static Element buildFailedElement(@Nonnull final String namespace, @Nonnull final PacketError.Condition condition) {
+    static Element buildFailedElement(@Nonnull final String namespace, @Nonnull final PacketError.Condition condition) {
         final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
         failed.addElement(QName.get(condition.toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
         return failed;
     }
 
     /**
-     * Checks if the amount of stanzas that the client acknowledges is not higher than the amount of stanzas that we've
-     * sent to the client.
+     * Checks if the amount of stanzas that the peer acknowledges is not higher than the amount of stanzas that we've
+     * sent to the peer.
      *
-     * @param h Then number of stanzas that the client acknowledges it has received from us.
-     * @return false if we sent fewer stanzas to the client than the number it is acknowledging.
+     * This holds the lock of this instance, so that the check does not see the queue of unacknowledged stanzas halfway
+     * through a sequence of changes that this instance makes under that lock. It is safe to invoke on the stream
+     * manager of another session.
+     *
+     * @param h Then number of stanzas that the peer acknowledges it has received from us.
+     * @return false if we sent fewer stanzas to the peer than the number it is acknowledging.
      */
-    private synchronized boolean validateClientAcknowledgement(long h) {
-        if (h < 0) {
-            throw new IllegalArgumentException("Argument 'h' cannot be negative, but was: " + h);
-        }
-        if (h > MASK) {
-            throw new IllegalArgumentException("Argument 'h' cannot be larger than 2^32 -1, but was: " + h);
-        }
-        final long oldH = clientProcessedStanzas.get();
-        final Long lastUnackedX = unacknowledgedServerStanzas.isEmpty() ? null : unacknowledgedServerStanzas.getLast().x;
-        return validateClientAcknowledgement(h, oldH, lastUnackedX, clientProcessedStanzasRolledOver);
+    synchronized boolean validateOutboundAcknowledgement(long h) {
+        return unacknowledgedOutboundStanzas.isValidAcknowledgement(h);
     }
 
     /**
-     * Checks a value of 'h' against the stanzas that were sent, on a stream on which the acknowledged count has not
-     * rolled over.
+     * Describes the last stanza that the peer has not acknowledged, for use in error messages.
      *
-     * @param h The value to check.
-     * @param oldH The last acknowledged value.
-     * @param lastUnackedX The number of the last stanza sent, or null if all stanzas that were sent are acknowledged.
-     * @return false if the value is higher than the number of stanzas that were sent.
-     * @see #validateClientAcknowledgement(long, long, Long, boolean)
+     * @return a description of the last unacknowledged stanza.
      */
-    @VisibleForTesting
-    static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX) {
-        return validateClientAcknowledgement(h, oldH, lastUnackedX, false);
+    String describeLastUnacknowledged() {
+        return unacknowledgedOutboundStanzas.describeLast();
     }
 
     /**
-     * Checks a value of 'h' against the stanzas that were sent, taking into account that stanza numbers and 'h' roll
-     * over from 2^32-1 to zero (XEP-0198 § 4).
+     * The number of the outbound stanza that was sent last, whether or not the peer acknowledged it, as reported in the
+     * 'send-count' of a {@code <handled-count-too-high/>} error.
      *
-     * A value from the last acknowledged value up to and including the number of the last stanza sent is valid. A value
-     * lower than the last acknowledged value is valid too, as it is not higher than the number of stanzas that were sent
-     * (XEP-0198 § 6), but it does not acknowledge any new stanzas (XEP-0198 § 4).
-     *
-     * A value counts as lower when it is at most half of the range below the last acknowledged value, counting back
-     * across the roll-over. Until the acknowledged count has rolled over, it can't be below zero either, as the values
-     * that would be reached by counting back across the roll-over were never sent.
-     *
-     * @param h The value to check.
-     * @param oldH The last acknowledged value.
-     * @param lastUnackedX The number of the last stanza sent, or null if all stanzas that were sent are acknowledged.
-     * @param rolledOver Whether the acknowledged count has rolled over at least once.
-     * @return false if the value is higher than the number of stanzas that were sent.
+     * @return the number of the stanza that was sent last.
      */
-    @VisibleForTesting
-    static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX, final boolean rolledOver) {
-        final long lastSentX = lastUnackedX == null ? oldH : lastUnackedX;
-        if (isInRange(h, oldH, lastSentX)) {
-            return true;
-        }
-        final long earliestLowerH = rolledOver ? (oldH - (MASK >> 1)) & MASK : Math.max(0, oldH - (MASK >> 1));
-        return isInRange(h, earliestLowerH, oldH);
+    synchronized long getLastSentNumber() {
+        return unacknowledgedOutboundStanzas.getLastSentNumber();
     }
 
     /**
-     * Checks if a value is in a range, taking into account that the range can include the roll-over from 2^32-1 to zero
-     * (XEP-0198 § 4).
+     * Processes an acknowledgement of outbound stanzas that the caller validated already (see
+     * {@link #validateOutboundAcknowledgement(long)}), removing the stanzas that it covers.
      *
-     * @param value The value to check.
-     * @param first The first value of the range.
-     * @param last The last value of the range.
-     * @return true if the value is in the range.
+     * @param h The number of stanzas that the peer acknowledges it has handled.
      */
-    private static boolean isInRange(final long value, final long first, final long last) {
-        return ((value - first) & MASK) <= ((last - first) & MASK);
+    synchronized void acknowledgeOutboundStanzas(final long h) {
+        unacknowledgedOutboundStanzas.acknowledge(h);
     }
 
     /**
-     * Process client acknowledgements for a given value of h.
+     * Prepares the unacknowledged stanzas to be sent again on a resumed stream: those that match the provided condition
+     * are removed and returned, and the others are numbered as the peer counts them when they are sent again in order,
+     * without the removed ones, and are marked as sent again only as they are sent (see
+     * {@link UnacknowledgedStanzaQueue#removeAndRenumber(java.util.function.Predicate)}).
      *
-     * @param h Last handled stanza to be acknowledged.
+     * @param toRemove the condition for the stanzas to remove, such as those that were sent again before.
+     * @return the stanzas that were removed, in the order in which they were sent.
      */
-    private void processClientAcknowledgement(long h) {
-        synchronized (this) {
-
-            if ( !validateClientAcknowledgement(h) ) {
-                // All paths leading up to here should have checked for this. Race condition?
-                throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-            }
-
-            final long oldH = clientProcessedStanzas.get();
-            final long lastSentX = unacknowledgedServerStanzas.isEmpty() ? oldH : unacknowledgedServerStanzas.getLast().x;
-            if ( !isInRange( h, oldH, lastSentX ) )
-            {
-                // OF-3433: A value lower than an earlier one does not acknowledge anything new (XEP-0198 § 4).
-                Log.debug( "Ignoring client Ack (h={}), as it is lower than an earlier one: {}", h, oldH );
-                return;
-            }
-
-            if ( h < oldH ) {
-                // OF-3433: This acknowledges new stanzas, so a smaller value means that the count rolled over.
-                clientProcessedStanzasRolledOver = true;
-            }
-            clientProcessedStanzas.set( h );
-
-            // Remove stanzas from temporary storage as now acknowledged
-            Log.trace( "Before processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size() );
-
-            // Pop all acknowledged stanzas.
-            while( !unacknowledgedServerStanzas.isEmpty() && isInRange( unacknowledgedServerStanzas.getFirst().x, oldH, h ) )
-            {
-                unacknowledgedServerStanzas.removeFirst();
-            }
-
-            Log.trace( "After processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size());
-        }
+    @Nonnull
+    synchronized List<UnacknowledgedStanzaQueue.Entry> removeAndRenumber(@Nonnull final java.util.function.Predicate<UnacknowledgedStanzaQueue.Entry> toRemove) {
+        return unacknowledgedOutboundStanzas.removeAndRenumber(toRemove);
     }
 
     /**
-     * Receive and process acknowledgement packet from client
+     * Checks whether the number of unacknowledged stanzas exceeded the maximum, which causes the session to be closed.
+     *
+     * @return true if the maximum was exceeded.
+     */
+    synchronized boolean hasExceededMaximumUnacknowledgedStanzas() {
+        return exceededMaximumUnacknowledgedStanzas;
+    }
+
+    /**
+     * Records that a number of outbound stanzas were sent that the peer counts, but that are not tracked, so that the
+     * stanzas that are tracked after them are numbered as the peer counts them. This must only be invoked while no
+     * stanzas are unacknowledged.
+     *
+     * @param count the number of outbound stanzas that were sent without being tracked.
+     */
+    synchronized void skipOutboundStanzas(final long count) {
+        unacknowledgedOutboundStanzas.skip(count);
+    }
+
+    /**
+     * Returns the stanzas that the peer has not acknowledged, as an unmodifiable copy that does not reflect later
+     * changes.
+     *
+     * @return the unacknowledged stanzas, in the order in which they were sent.
+     */
+    @Nonnull
+    Collection<UnacknowledgedStanzaQueue.Entry> getUnacknowledgedEntries() {
+        return unacknowledgedOutboundStanzas.getEntries();
+    }
+
+    /**
+     * Handles the stanzas that the peer did not acknowledge, for a session that closed without being resumed, and
+     * disables Stream Management for the session. How these stanzas are handled depends on the end of the stream.
+     *
+     * This must be invoked after the session is removed.
+     *
+     * @param router the router used to route the stanzas.
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on messages.
+     */
+    public abstract void onClose(PacketRouter router, JID serverAddress);
+
+    /**
+     * Completes the resumption of the session of this stream manager on a new connection, which is attached to the
+     * session already, and sends the stanzas again that the peer reports it did not receive. What else is sent
+     * depends on the end of the stream.
+     *
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on stanzas sent again.
+     * @param h the number of stanzas that the peer reports to have handled.
+     */
+    public abstract void onResume(JID serverAddress, long h);
+
+    /**
+     * Receive and process acknowledgement packet of outbound stanzas from the peer
      * @param ack XEP-0198 acknowledgement <a /> stanza to process
      */
-    private void processClientAcknowledgement(Element ack) {
+    private void processOutboundAcknowledgement(Element ack) {
         if(isEnabled()) {
             if (ack.attribute("h") != null) {
                 final String hValue = ack.attributeValue("h");
@@ -716,51 +564,70 @@ public class StreamManager {
                 try {
                     h = Long.parseLong(hValue);
                 } catch (NumberFormatException e) {
-                    Log.warn( "Closing client session. Client sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    Log.warn( "Closing session. Peer sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + unacknowledgedOutboundStanzas.describeLast() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
                 if (h < 0) {
-                    Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    Log.warn( "Closing session. Peer sends negative value for SM 'h': {}, affected session: {}", h, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + unacknowledgedOutboundStanzas.describeLast() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
                 if (h > MASK) {
-                    Log.warn( "Closing client session. Client sends value for SM 'h' that is larger than 2^32-1: {}, affected session: {}", h, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    Log.warn( "Closing session. Peer sends value for SM 'h' that is larger than 2^32-1: {}, affected session: {}", h, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + unacknowledgedOutboundStanzas.describeLast() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
 
-                Log.debug( "Received acknowledgement from client: h={}", h );
+                Log.debug( "Received acknowledgement from peer: h={}", h );
 
                 synchronized ( this ) {
-                    if (!validateClientAcknowledgement(h)) {
-                        Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x, session );
-                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-                        final long sendCount = unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x;
+                    if (!validateOutboundAcknowledgement(h)) {
+                        Log.warn( "Closing session. Peer acknowledges stanzas that we didn't send! Peer Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedOutboundStanzas.describeLast(), session );
+                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + unacknowledgedOutboundStanzas.describeLast() );
+                        final long sendCount = unacknowledgedOutboundStanzas.getLastSentNumber();
                         error.getElement().addElement( QName.get( "handled-count-too-high", namespace ) ).addAttribute( "h", String.valueOf( h ) ).addAttribute( "send-count", String.valueOf( sendCount ) );
                         // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                         session.close( error );
                         return;
                     }
 
-                    processClientAcknowledgement(h);
+                    unacknowledgedOutboundStanzas.acknowledge( h );
+                    outboundAcknowledgementProcessed();
                 }
             }
         }
     }
 
     /**
-     * Registers that Openfire sends a stanza to the client (which is expected to be acknowledged later).
+     * Invoked under the lock of this instance after a valid acknowledgement of outbound stanzas ({@code <a/>}) from the
+     * peer was processed. This does nothing by default.
+     */
+    void outboundAcknowledgementProcessed() {
+    }
+
+    /**
+     * Registers that Openfire sends a stanza to the peer (which is expected to be acknowledged later).
      * @param packet The stanza that is sent.
      */
     public void sentStanza(Packet packet) {
+        sentStanza(packet, false);
+    }
+
+    /**
+     * Registers that Openfire sends a stanza to the peer (which is expected to be acknowledged later).
+     *
+     * @param packet The stanza that is sent.
+     * @param sentAgain whether the stanza was sent before, on a connection that broke before the stanza was
+     *                  acknowledged.
+     */
+    void sentStanza(@Nonnull final Packet packet, final boolean sentAgain) {
 
         if(isEnabled()) {
             final long requestFrequency = JiveGlobals.getLongProperty( "stream.management.requestFrequency", 5 );
@@ -769,6 +636,12 @@ public class StreamManager {
 
             synchronized (this)
             {
+                if ( !isEnabled() ) {
+                    // OF-3420: Stream Management was disabled after the check above, for example by onClose(), which handled the unacknowledged stanzas already.
+                    // A stanza that is tracked after that would never be handled.
+                    Log.trace( "Not tracking stanza of type '{}' with ID '{}', as Stream Management was disabled while it was sent. Session: {}", packet.getElement().getName(), packet.getID(), session );
+                    return;
+                }
                 final Connection connection = session.getConnection();
                 if ( exceededMaximumUnacknowledgedStanzas && packet instanceof Message && connection != null && connection.isClosed() && connection.getPacketDeliverer() != null ) {
                     // OF-3434: The fallback of the closed connection stores this message offline. Tracking it as well would deliver it twice.
@@ -776,16 +649,14 @@ public class StreamManager {
                     return;
                 }
 
-                // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!), rolling over after 2^32-1 (XEP-0198 § 4).
-                final long x = ( 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x ) ) & MASK;
-                unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
+                final long x = unacknowledgedOutboundStanzas.add( packet.createCopy(), sentAgain );
 
-                size = unacknowledgedServerStanzas.size();
+                size = unacknowledgedOutboundStanzas.size();
 
-                Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
+                Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}, sent again: {}). Collection size is now {}.", packet.getElement().getName(), x, sentAgain, size );
 
                 // Prevent keeping to many stanzas in memory. OF-3434: the stanzas are kept, to be handled when the session closes.
-                closeForExceedingMaximum = size > getMaximumUnacknowledgedStanzas() && !exceededMaximumUnacknowledgedStanzas;
+                closeForExceedingMaximum = unacknowledgedOutboundStanzas.exceedsMaximum() && !exceededMaximumUnacknowledgedStanzas;
                 if ( closeForExceedingMaximum ) {
                     exceededMaximumUnacknowledgedStanzas = true;
                 }
@@ -799,7 +670,7 @@ public class StreamManager {
             // When we have a sizable amount of unacknowledged stanzas, request acknowledgement.
             if ( size % requestFrequency == 0 ) {
                 Log.debug( "Requesting acknowledgement from peer, as we have {} or more unacknowledged stanzas.", requestFrequency );
-                sendServerRequest();
+                requestOutboundAcknowledgement();
             }
         }
 
@@ -815,7 +686,7 @@ public class StreamManager {
      *
      * @param size The number of unacknowledged stanzas.
      */
-    private void closeForExceedingMaximum( final int size )
+    void closeForExceedingMaximum( final int size )
     {
         Log.warn( "Closing session, as too many stanzas go unacknowledged: {}, the maximum is {}. Affected session: {}", size, getMaximumUnacknowledgedStanzas(), session );
         formalClose();
@@ -835,102 +706,26 @@ public class StreamManager {
     }
 
     /**
-     * Handles the stanzas that the client did not acknowledge, for a session that closed without being resumed, and
-     * disables Stream Management for the session.
-     *
-     * XEP-0198 § 4 has a server treat unacknowledged stanzas in the same way as stanzas sent to an unavailable resource.
-     * Messages are routed again, with a delay stamp. The sender of an IQ request of type 'get' or 'set' receives a
-     * 'service-unavailable' error, as RFC 6120 § 8.2.3 requires a response to every IQ request, and RFC 6121 § 8.5.3.2.3
-     * defines that error for an unavailable resource. Other stanzas are discarded.
-     *
-     * This must be invoked after the session is removed. While the session is registered, a message routed to its address
-     * reaches that session rather than another resource of the user or offline storage, and the IQ router does not accept
-     * an error that has the address of the session as its sender, as the session is no longer authenticated.
-     *
-     * @param router the router used to route the stanzas.
-     * @param serverAddress this server's bare-domain address, used to stamp delay information on messages.
-     */
-    public void onClose(PacketRouter router, JID serverAddress) {
-        // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
-        synchronized (this) {
-            if(isEnabled()) {
-                namespace = null; // disable stream management.
-                for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
-                    // OF-3442: A failure to handle one stanza must not prevent the others from being handled.
-                    try {
-                        if (unacked.packet instanceof Message) {
-                            Message m = (Message) unacked.packet;
-                            if (m.getExtension("delay", "urn:xmpp:delay") == null) {
-                                Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
-                                delayInformation.addAttribute("from", serverAddress.toBareJID());
-                            }
-                            router.route(unacked.packet);
-                        } else if (unacked.packet instanceof IQ iq && iq.isRequest()) {
-                            // OF-3442: Every IQ request needs a response (RFC 6120 § 8.2.3), here the one for an unavailable resource (RFC 6121 § 8.5.3.2.3).
-                            final IQ error = IQ.createResultIQ(iq);
-                            if (error.getFrom() == null) {
-                                // A request without a 'to' was addressed to this session.
-                                error.setFrom(session.getAddress());
-                            }
-                            error.setError(PacketError.Condition.service_unavailable);
-                            router.route(error);
-                        }
-                    } catch (Exception e) {
-                        // The stanza itself is not logged, as it can have private content.
-                        Log.warn("Unable to handle an unacknowledged '{}' stanza of type '{}' with ID '{}', of session {} that closed.", unacked.packet.getElement().getName(), unacked.packet.getElement().attributeValue("type"), unacked.packet.getID(), session, e);
-                    }
-                }
-            }
-        }
-
-    }
-
-    public void onResume(JID serverAddress, long h) {
-        Log.debug("Agreeing to resume");
-        final Element resumed = buildResumedElement();
-        final Connection connection = session.getConnection();
-        assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
-        connection.deliverRawText(resumed.asXML());
-        redeliverUnackedStanzas(serverAddress, h);
-    }
-
-    /**
-     * Constructs the XEP-0198 {@code <resumed/>} element for this session's stream manager, without delivering it.
-     *
-     * This is used by the traditional resume flow (through {@link #onResume(JID, long)}, which sends it directly),
-     * as well as by the inline SASL2 resume flow, which instead needs to embed the element in a SASL2
-     * {@code <success/>} response, rather than write it to the connection itself.
-     *
-     * @return the {@code <resumed/>} element.
-     */
-    @Nonnull
-    Element buildResumedElement() {
-        final Element resumed = new DOMElement(QName.get("resumed", namespace));
-        resumed.addAttribute("previd", Base64.getEncoder().encodeToString((session.getAddress().getResource() + "\0" + session.getStreamID().getID()).getBytes(StandardCharsets.UTF_8)));
-        resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get() & MASK));
-        return resumed;
-    }
-
-    /**
      * Processes the client's acknowledgement of 'h' as reported in its (traditional or inline SASL2) resume request,
      * and retransmits any stanzas that remain unacknowledged after that.
      *
      * This is the second half of what {@link #onResume(JID, long)} does for the traditional resume flow. It is
      * split out so that the inline SASL2 resume flow can defer this until after it has delivered its own response
      * (typically, the SASL2 {@code <success/>} that embeds the {@code <resumed/>} element built by
-     * {@link #buildResumedElement()}), handled by {@link LocalSession#completeSasl2Resume(long)}.
+     * {@link AnsweringStreamManager#buildResumedElement()}), handled by {@link LocalSession#completeSasl2Resume(long)}.
      *
      * @param serverAddress this server's bare-domain address, used to stamp delay information on redelivered stanzas.
      * @param h the sequence number of the last handled stanza, as reported by the client that is resuming.
      */
     public void redeliverUnackedStanzas(@Nonnull final JID serverAddress, final long h) {
         Log.debug("Resuming session: Ack for {}", h);
-        processClientAcknowledgement(h);
+        synchronized (this) {
+            unacknowledgedOutboundStanzas.acknowledge( h );
+        }
         synchronized (this) {
             if (exceededMaximumUnacknowledgedStanzas) {
                 // OF-3434: The maximum was exceeded while detached. Closing under this lock keeps a stanza that LocalClientSession#pushPackets() delivers from going untracked.
-                closeForExceedingMaximum(unacknowledgedServerStanzas.size());
+                closeForExceedingMaximum(unacknowledgedOutboundStanzas.size());
                 return;
             }
             // OF-3434: Re-delivering under the same lock keeps a stanza that exceeds the maximum from closing the stream first, which would route the re-delivered stanzas twice.
@@ -939,33 +734,33 @@ public class StreamManager {
             assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
             // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
             if(isEnabled()) {
-                for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
+                for (final UnacknowledgedStanzaQueue.Entry unacked : unacknowledgedOutboundStanzas.getEntries()) {
                     try {
-                        if (unacked.packet instanceof Message) {
-                            Message m = (Message) unacked.packet;
+                        if (unacked.getPacket() instanceof Message) {
+                            Message m = (Message) unacked.getPacket();
                             if (m.getExtension("delay", "urn:xmpp:delay") == null) {
                                 Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.getTimestamp()));
                                 delayInformation.addAttribute("from", serverAddress.toBareJID());
                             }
                             connection.deliver(m);
-                        } else if (unacked.packet instanceof Presence) {
-                            Presence p = (Presence) unacked.packet;
+                        } else if (unacked.getPacket() instanceof Presence) {
+                            Presence p = (Presence) unacked.getPacket();
                             if (p.getExtension("delay", "urn:xmpp:delay") == null) {
                                 Element delayInformation = p.addChildElement("delay", "urn:xmpp:delay");
-                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.getTimestamp()));
                                 delayInformation.addAttribute("from", serverAddress.toBareJID());
                             }
                             connection.deliver(p);
                         } else {
-                            connection.deliver(unacked.packet);
+                            connection.deliver(unacked.getPacket());
                         }
                     } catch (UnauthorizedException e) {
                         Log.warn("Caught unauthorized exception, which seems worrying: ", e);
                     }
                 }
 
-                sendServerRequest();
+                requestOutboundAcknowledgement();
             }
         }
     }
@@ -980,13 +775,39 @@ public class StreamManager {
     }
 
     /**
-     * Increments the count of stanzas processed by the server since
-     * Stream Management was enabled.
+     * Returns the number of outbound stanzas that were sent to the peer, and that the peer has not acknowledged yet.
+     *
+     * @return the number of unacknowledged outbound stanzas.
      */
-    public void incrementServerProcessedStanzas() {
+    public int getUnacknowledgedStanzaCount() {
+        return unacknowledgedOutboundStanzas.size();
+    }
+
+    /**
+     * Increments the count of inbound stanzas that Openfire has handled since
+     * Stream Management was enabled.
+     *
+     * This is part of the processing of every inbound stanza. An invocation for a stanza that was not handled makes the
+     * count that is reported to the peer incorrect.
+     */
+    public void incrementHandledInboundStanzas() {
         if(isEnabled()) {
-            this.serverProcessedStanzas.incrementAndGet();
+            this.handledInboundStanzas.incrementAndGet();
         }
+    }
+
+    /**
+     * Increments the count of inbound stanzas that Openfire has handled since
+     * Stream Management was enabled.
+     *
+     * This is part of the processing of every inbound stanza. An invocation for a stanza that was not handled makes the
+     * count that is reported to the peer incorrect.
+     *
+     * @deprecated Use {@link #incrementHandledInboundStanzas()} instead.
+     */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
+    public void incrementServerProcessedStanzas() {
+        incrementHandledInboundStanzas();
     }
 
     /**
@@ -1000,6 +821,9 @@ public class StreamManager {
 
     /**
      * Returns a defensive copy of all delegates that can determine if a detached session can be terminated.
+     *
+     * The copy holds the delegates that were registered at a single moment. A delegate that is added before another
+     * delegate is removed is therefore never missing from the copy together with that other delegate.
      *
      * @return all delegates that can determine if a detached session can be terminated.
      */
@@ -1019,7 +843,7 @@ public class StreamManager {
      */
     public void addTerminationDelegate(@Nonnull final TerminationDelegate delegate)
     {
-        terminationDelegates.add(delegate);
+        terminationDelegates.add(Objects.requireNonNull(delegate, "Argument 'delegate' cannot be null."));
     }
 
     /**
@@ -1032,7 +856,7 @@ public class StreamManager {
      */
     public void removeTerminationDelegate(@Nonnull final TerminationDelegate delegate)
     {
-        terminationDelegates.remove(delegate);
+        terminationDelegates.remove(Objects.requireNonNull(delegate, "Argument 'delegate' cannot be null."));
     }
 
     /**

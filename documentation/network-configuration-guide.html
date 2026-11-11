@@ -43,6 +43,7 @@
             <ul>
                 <li><a href="#dns">DNS Settings</a></li>
                 <li><a href="#ipv6">IPv6 support</a></li>
+                <li><a href="#s2s-stream-management">Stream Management on server-to-server connections</a></li>
             </ul>
         </nav>
 
@@ -396,6 +397,160 @@ _xmpps-server._tcp.conference.example.org. 86400 IN SRV 0 5 5270 xmpp.example.or
                 <a href="#ipv6-java">Java Networking Configuration</a>, and follows the preferences configured through
                 those settings.
             </p>
+        </section>
+
+    </section>
+
+    <section id="s2s-stream-management">
+
+        <h2>Stream Management on server-to-server connections</h2>
+
+        <p>
+            When the network connection between Openfire and another XMPP server breaks, stanzas that were on their way
+            can be lost without anyone noticing. <a href="https://xmpp.org/extensions/xep-0198.html">Stream
+            Management</a> lets both servers keep track of the stanzas that have arrived. Openfire uses it on client
+            connections by default. On server-to-server connections, it is disabled by default.
+        </p>
+
+        <p>
+            Stanzas on a server-to-server connection are sent by the server that opened the connection, to the server
+            that accepted it. With Stream Management, the server that accepted the connection regularly reports how many
+            stanzas it has handled, and the server that opened it keeps a copy of every stanza that has not been
+            confirmed yet. When Stream Management is enabled, Openfire offers it to servers that connect to Openfire,
+            and asks for it on connections that it opens to servers that offer it. Openfire waits for the remote server
+            to answer that request before it uses a new connection that it opened, so that the stanzas on that
+            connection are covered. When the remote server does not answer within the time set by
+            <code>xmpp.server.session.stream-management-negotiation-timeout</code>, Openfire uses the connection anyway.
+            Stanzas that it sends before the answer arrives are not covered: Openfire cannot send them again or return
+            them when the connection breaks.
+        </p>
+
+        <section id="s2s-stream-management-broken">
+
+            <h3>When a connection breaks</h3>
+
+            <p>
+                When a connection that Openfire opened breaks, and its stream is not resumed, Openfire cannot know which
+                of the unconfirmed stanzas arrived. It sends messages, presences and IQ responses again, over a new
+                connection. Messages and presences then carry a <a href="https://xmpp.org/extensions/xep-0203.html">delay</a>
+                stamp with the time at which they were first sent. IQ requests are not sent again, as that could repeat
+                what they do. Instead, their sender receives a <code>service-unavailable</code> error. A stanza is sent
+                again at most once: if it is still unconfirmed when the next connection breaks too, its sender receives
+                that error, or the stanza is dropped when no error is returned for it: for an error, an IQ result or a
+                presence.
+            </p>
+
+            <p>
+                When resumption is enabled as well, a server-to-server session of which the connection breaks is kept
+                for a while, so that its stream can be resumed on a new connection. Both servers then report how far they
+                got, and only the stanzas that did not arrive are sent again.
+            </p>
+
+            <ul>
+                <li>
+                    A session of a server that connected to Openfire is kept until that server resumes it, or the time
+                    set by <code>xmpp.server.session.detach.timeout</code> has passed. Only the same remote server can
+                    resume it: on the new connection, it must authenticate the domain that it authenticated first on
+                    the original connection, using the same or a stronger method. A certificate (SASL EXTERNAL) is
+                    stronger than dialback. All domains that were authenticated on the original connection remain
+                    authenticated after the stream is resumed. Openfire sends no stanzas on connections that other
+                    servers opened, so none are sent again or returned when such a session is not resumed.
+                </li>
+                <li>
+                    A session of a connection that Openfire opened keeps being used for its remote domain: new stanzas for
+                    that domain are queued, and Openfire does not open another connection to it. Openfire opens a new
+                    connection, authenticates it as it does any new connection, and asks the remote server to resume the
+                    stream. When the remote server named a location to reconnect to when it enabled Stream Management,
+                    such as the cluster node that holds its session, the first attempt connects there first. When that
+                    connection cannot be made, or that attempt fails, Openfire connects to the remote domain as it does
+                    for any new connection. A location is not used for a remote domain to which a DNS override applies. When the stream is resumed, Openfire first sends the stanzas that the remote server did not
+                    receive, and then the queued stanzas, in order. A stanza that was sent again before, after an earlier
+                    break, is not sent again: as when a stream is not resumed, its sender receives an error, or the
+                    stanza is dropped. This differs from XEP-0198, which requires all stanzas that the remote server did
+                    not receive to be sent again on resumption. Other domains that were authenticated with dialback on
+                    the original connection are authenticated again before their stanzas are sent. When that fails for a
+                    domain, its unconfirmed stanzas are handled as when a stream is not resumed, and its other stanzas
+                    are sent over a new connection.
+                </li>
+            </ul>
+
+            <p>
+                When an attempt to resume a connection that Openfire opened fails, because no connection could be opened
+                or authenticated, or because the remote server did not answer in time, Openfire tries again after 1
+                second. It waits twice as long after each failed attempt, up to 30 seconds. Openfire keeps trying until
+                the session has been kept for the time set by <code>xmpp.server.session.detach.timeout</code>, or for the
+                time for which the remote server said it keeps the stream, if that is shorter. That time counts from the
+                moment the connection broke. When a resumed stream breaks again before the remote server confirmed any
+                stanza on it, it counts from the earlier break. Openfire stops trying at once when the remote server
+                refuses to resume the stream, when the remote domain is no longer allowed to be accessed, or when the
+                remote server does not offer the version of Stream Management of the stream.
+            </p>
+
+            <p>
+                When Openfire stops trying, or when more stanzas are queued than
+                <code>stream.management.server.resume.max-queued</code> allows, the session is ended. Unconfirmed stanzas
+                are then handled as when a stream is not resumed, and the queued stanzas, which were never sent, are sent
+                over a new connection.
+            </p>
+
+            <p>
+                Openfire checks for sessions that are to be ended periodically, so a session can be kept somewhat
+                longer than the time that is set. A session that Openfire closes itself is not kept to be resumed: for
+                example a session that has been idle for too long, a session that is closed in the admin console, or a
+                session of a remote domain that is blocked. In a cluster, a stream can only be resumed on the cluster
+                node that holds its session. The <a href="load-balancing.html#sticky">Load Balancing Guide</a> describes
+                what that means for a remote server that resumes its stream.
+            </p>
+
+        </section>
+
+        <section id="s2s-stream-management-properties">
+
+            <h3>Properties</h3>
+
+            <p>
+                The following properties configure Stream Management on server-to-server connections:
+            </p>
+
+            <dl>
+                <dt>stream.management.server.active</dt>
+                <dd>Use Stream Management on server-to-server connections: offer it to servers that connect to Openfire,
+                    and enable it on connections that Openfire opens to servers that offer it. This is separate from
+                    <code>stream.management.active</code>, which applies to clients. Defaults to <code>false</code>.</dd>
+
+                <dt>stream.management.server.resume.enabled</dt>
+                <dd>Allow streams on server-to-server connections to be resumed after their connection broke, as
+                    described above. Applies only when <code>stream.management.server.active</code> is enabled. Defaults
+                    to <code>false</code>.</dd>
+
+                <dt>xmpp.server.session.detach.timeout</dt>
+                <dd>How long, in milliseconds, a server-to-server session is kept after its connection broke while its
+                    stream can be resumed. Openfire tells servers that connect to it this time, unless
+                    <code>stream.management.max-server.enabled</code> is set to <code>false</code>. A value of
+                    <code>-1</code> keeps such a session until it is resumed, or, for a connection that Openfire opened,
+                    until the time for which the remote server said it keeps the stream has passed. Client sessions use
+                    <code>xmpp.session.detach.timeout</code> instead. Defaults to 2 minutes.</dd>
+
+                <dt>stream.management.server.resume.max-queued</dt>
+                <dd>The maximum number of stanzas that are queued for a remote domain while a connection that Openfire
+                    opened to it is broken and waits to be resumed. When more are queued, Openfire stops trying to resume
+                    the stream, as described above. Defaults to 10000.</dd>
+
+                <dt>xmpp.server.session.stream-management-negotiation-timeout</dt>
+                <dd>How long, in milliseconds, Openfire waits for a remote server to answer a request to enable Stream
+                    Management on a new connection that Openfire opened. The connection is used once the remote server
+                    answers, or once this time has passed. This is also how long Openfire waits for the answer to a
+                    request to resume a stream, after which the attempt fails, and how long it tries to connect to the
+                    location that a remote server named for resuming its stream. Defaults to 5 seconds.</dd>
+            </dl>
+
+            <p>
+                The properties <code>stream.management.requestFrequency</code>,
+                <code>stream.management.max-unacked</code>, <code>stream.management.location.enabled</code> and
+                <code>stream.management.max-server.enabled</code>, which configure Stream Management for clients, apply
+                to server-to-server connections as well.
+            </p>
+
         </section>
 
     </section>

@@ -251,8 +251,19 @@ _xmpp-client._tcp.example.net. 86400 IN SRV 10 30 5222 server2.example.net.</cod
 
         <p>
             Server-to-server connections are established by using long-lived socket connections, similar to TCP-based
-            clients. As Openfire will accept multiple concurrent connections from remote domains (and does not support
-            the Stream Management feature for server-to-server connections), session persistence is not needed here.
+            clients. As Openfire will accept multiple concurrent connections from remote domains, session persistence is
+            not needed here.
+        </p>
+
+        <p>
+            When Stream Management is used on server-to-server connections, and streams can be resumed (see the
+            <a href="network-configuration-guide.html#s2s-stream-management">Network Configuration Guide</a>), the
+            same applies as for clients: a remote server can only resume its stream on the server where its session was
+            created. Openfire tells the remote server the host name of that server, so that it can reconnect to it,
+            unless the property <code>stream.management.location.enabled</code> is set to <code>false</code>. When the
+            remote server reaches a different server, resumption is refused, and the remote server can continue on the
+            new connection without resuming. Streams of connections that Openfire opens to other servers are resumed
+            from the server that opened the connection.
         </p>
 
     </section>

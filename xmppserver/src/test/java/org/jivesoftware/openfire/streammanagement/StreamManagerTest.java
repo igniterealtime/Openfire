@@ -15,96 +15,65 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
-import java.lang.reflect.Field;
+import javax.annotation.Nonnull;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.math.BigInteger;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests that verify the implementation of {@link StreamManager}.
+ * Unit tests that verify what {@link StreamManager} implements for both ends of a stream, without a resumption or a
+ * detached session that is ended.
+ *
+ * Tests that use a stream manager run against both {@link AnsweringStreamManager} and {@link RequestingStreamManager},
+ * each with a session of a type that it is used for. A few tests exercise how client sessions deliver stanzas, and run
+ * against the end that answers only.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
-public class StreamManagerTest
+public class StreamManagerTest extends AbstractStreamManagerTest
 {
-    private static final JID FULL_JID = new JID("johndoe", Fixtures.XMPP_DOMAIN, "test-resource", true);
-    private static final JID SERVER_ADDRESS = new JID(Fixtures.XMPP_DOMAIN);
-    private static final String STREAM_ID = "test-stream-id";
-
-    // OF-3433: Names of private fields, used to reach the roll-over at 2^32 without sending that many stanzas.
-    private static final String HANDLED_COUNTER_FIELD = "serverProcessedStanzas";
-    private static final String ACKNOWLEDGED_COUNTER_FIELD = "clientProcessedStanzas";
-
-    private SessionManager sessionManager;
-
-    @BeforeAll
-    public static void setUpClass() throws Exception
+    static Stream<Arguments> endsAndNamespaces()
     {
-        Fixtures.reconfigureOpenfireHome();
-        Fixtures.disableDatabasePersistence();
+        return Arrays.stream(End.values()).flatMap(end -> Stream.of(StreamManager.NAMESPACE_V2, StreamManager.NAMESPACE_V3).map(namespace -> Arguments.of(end, namespace)));
     }
 
-    @BeforeEach
-    public void setUp()
+    static Stream<Arguments> endsAndNonNumericValues()
     {
-        final XMPPServer server = Fixtures.mockXMPPServer();
-        sessionManager = server.getSessionManager();
-
-        //noinspection deprecation
-        XMPPServer.setInstance(server);
-    }
-
-    @AfterEach
-    public void tearDown()
-    {
-        Fixtures.clearExistingProperties();
-        //noinspection deprecation
-        XMPPServer.setInstance(null);
+        return Arrays.stream(End.values()).flatMap(end -> Stream.of("not-a-number", "", "1.5", "9223372036854775808").map(h -> Arguments.of(end, h)));
     }
 
     @Test
-    public void testValidateClientAcknowledgement() throws Exception
+    public void testValidateOutboundAcknowledgement() throws Exception
     {
         // Setup test fixture.
         final long h = 0;
@@ -112,14 +81,14 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_clientAcksSentStanza() throws Exception
+    public void testValidateOutboundAcknowledgement_peerAcksSentStanza() throws Exception
     {
         // Setup test fixture.
         final long h = 1;
@@ -127,14 +96,14 @@ public class StreamManagerTest
         final Long lastUnackedX = 1L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_clientAcksSentStanzaWithMoreInflight() throws Exception
+    public void testValidateOutboundAcknowledgement_peerAcksSentStanzaWithMoreInflight() throws Exception
     {
         // Setup test fixture.
         final long h = 10;
@@ -142,14 +111,14 @@ public class StreamManagerTest
         final Long lastUnackedX = 12L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_clientAcksUnsentStanza() throws Exception
+    public void testValidateOutboundAcknowledgement_peerAcksUnsentStanza() throws Exception
     {
         // Setup test fixture.
         final long h = 1;
@@ -157,14 +126,14 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_clientAcksUnsentStanzaA() throws Exception
+    public void testValidateOutboundAcknowledgement_peerAcksUnsentStanzaA() throws Exception
     {
         // Setup test fixture.
         final long h = 3;
@@ -172,14 +141,14 @@ public class StreamManagerTest
         final Long lastUnackedX = 2L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -188,14 +157,14 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase_unsent() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase_unsent() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -204,15 +173,14 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
     }
 
-
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase_sent() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase_sent() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -221,14 +189,14 @@ public class StreamManagerTest
         final Long lastUnackedX = MAX;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase1() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase1() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -237,14 +205,14 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase2() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase2() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -253,13 +221,14 @@ public class StreamManagerTest
         final Long lastUnackedX = MAX;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
+
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase3() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase3() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -268,14 +237,14 @@ public class StreamManagerTest
         final Long lastUnackedX = 0L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase3a() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase3a() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -284,14 +253,14 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase3_unsent() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase3_unsent() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -300,14 +269,14 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase4() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase4() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -316,14 +285,14 @@ public class StreamManagerTest
         final Long lastUnackedX = 0L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase4a() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase4a() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -332,13 +301,14 @@ public class StreamManagerTest
         final Long lastUnackedX = 3L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
+
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase4_unsent() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase4_unsent() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -347,14 +317,14 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase5() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase5() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -363,14 +333,14 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase5a() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase5a() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -379,14 +349,14 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
     }
 
     @Test
-    public void testValidateClientAcknowledgement_rollover_edgecase5_unsent() throws Exception
+    public void testValidateOutboundAcknowledgement_rollover_edgecase5_unsent() throws Exception
     {
         // Setup test fixture.
         final long MAX = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -395,97 +365,141 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
     }
 
     /**
-     * Verifies that {@link StreamManager#detachIfNeeded(LocalClientSession)} closes the pre-existing session's
-     * connection with a 'conflict' {@link StreamError}, as recommended by XEP-0198 §5 for a former stream that is still
-     * open when it is superseded by a resumed session.
+     * Verifies that an {@code <r/>} is answered with the number of stanzas that were handled since enabling.
      */
-    @Test
-    void closesOldConnectionWithAConflictStreamError()
+    @ParameterizedTest
+    @MethodSource("endsAndNamespaces")
+    void requestIsAnsweredWithCountOfHandledStanzas(final End end, final String namespace) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession otherSession = mock(LocalClientSession.class);
-        final Connection oldConnection = mock(Connection.class);
-        when(otherSession.isDetached()).thenReturn(false);
-        when(otherSession.getConnection()).thenReturn(oldConnection);
-        final LocalSession tempSession = mock(LocalSession.class); // owns this StreamManager
-        final StreamManager sm = new StreamManager(tempSession);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, namespace);
+        sm.incrementHandledInboundStanzas();
+        sm.incrementHandledInboundStanzas();
+        sm.incrementHandledInboundStanzas();
 
         // Execute system under test.
-        sm.detachIfNeeded(otherSession);
+        sm.process(smElement("r", namespace));
 
-        // Verify results.
-        verify(otherSession, times(1).description("The pre-existing session must be marked detached before its connection is handed off to the resumed session.")).setDetached();
-
-        final ArgumentCaptor<StreamError> errorCaptor = ArgumentCaptor.forClass(StreamError.class);
-        verify(oldConnection, times(1).description("The pre-existing connection must be closed exactly once as part of the hand-off.")).close(errorCaptor.capture());
-        final StreamError closeError = errorCaptor.getValue();
-        assertNotNull(closeError, "The pre-existing connection must be closed with a StreamError, as recommended by XEP-0198 §5 for a former stream that is still open when superseded by a resumed session.");
-        assertEquals(StreamError.Condition.conflict, closeError.getCondition(), "The StreamError used to close a superseded connection must use the 'conflict' condition, per the example in XEP-0198 §5.");
+        // Verify result.
+        final Element ack = lastDelivered(session);
+        assertEquals(QName.get("a", namespace), ack.getQName(), "An 'a' element must be sent, in the namespace of the stream.");
+        assertEquals("3", ack.attributeValue("h"), "The count must equal the number of handled stanzas.");
     }
 
     /**
-     * Verifies that {@link StreamManager#detachIfNeeded(LocalClientSession)} is a no-op for a session
-     * that is already detached, leaving its (already absent) connection untouched.
+     * Verifies that an {@code <r/>} is answered with zero when no stanzas have been handled.
      */
-    @Test
-    void isANoOpWhenAlreadyDetached()
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void requestIsAnsweredWithZeroWhenNoStanzasWereHandled(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession otherSession = mock(LocalClientSession.class);
-        when(otherSession.isDetached()).thenReturn(true);
-        final StreamManager sm = new StreamManager(mock(LocalSession.class));
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
 
         // Execute system under test.
-        sm.detachIfNeeded(otherSession);
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
 
-        // Verify results.
-        verify(otherSession, never().description("An already-detached session has no connection to obtain; detachIfNeeded() must not attempt to read it.")).getConnection();
-        verify(otherSession, never().description("An already-detached session must not be detached again.")).setDetached();
+        // Verify result.
+        assertEquals("0", lastDelivered(session).attributeValue("h"), "The count must be zero when no stanzas were handled.");
     }
 
     /**
-     * Verifies that {@link StreamManager#detachIfNeeded(LocalClientSession)} marks the pre-existing session as detached
-     * strictly before closing its connection. This ordering is not incidental: it is what lets
-     * NettyConnection#close(StreamError) tell a benign resumption hand-off (session already detached when close() runs)
-     * apart from a genuine stream failure (session not yet detached), and so decide whether to disable resumption
-     * (OF-2751). If this ordering were ever reversed, that distinction (and with it, the safety of resuming a session
-     * across a hand-off) would silently break.
+     * Verifies that the count of handled stanzas is cumulative: it is not reset by reporting it.
      */
-    @Test
-    void detachesSessionBeforeClosingItsConnection()
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void countOfHandledStanzasIsCumulative(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession otherSession = mock(LocalClientSession.class);
-        final Connection oldConnection = mock(Connection.class);
-        when(otherSession.isDetached()).thenReturn(false);
-        when(otherSession.getConnection()).thenReturn(oldConnection);
-        final StreamManager sm = new StreamManager(mock(LocalSession.class));
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.incrementHandledInboundStanzas();
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+        sm.incrementHandledInboundStanzas();
 
         // Execute system under test.
-        sm.detachIfNeeded(otherSession);
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
 
-        // Verify results.
-        final InOrder inOrder = inOrder(otherSession, oldConnection);
-        inOrder.verify(otherSession).setDetached();
-        inOrder.verify(oldConnection).close(any(StreamError.class));
+        // Verify result.
+        assertEquals("2", lastDelivered(session).attributeValue("h"), "The count must include stanzas handled before the previous acknowledgement.");
+    }
+
+    /**
+     * Verifies that stanzas handled before Stream Management was enabled are not counted.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void stanzasHandledBeforeEnablingAreNotCounted(final End end) throws Exception
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.newStreamManager(session);
+        sm.incrementHandledInboundStanzas();
+        end.enable(sm, StreamManager.NAMESPACE_V3);
+
+        // Execute system under test.
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        assertEquals("0", lastDelivered(session).attributeValue("h"), "Stanzas handled before enabling Stream Management must not be counted.");
+    }
+
+    /**
+     * Verifies that an {@code <r/>} is silently ignored when Stream Management is not enabled.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void requestIsIgnoredWhenNotEnabled(final End end)
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.newStreamManager(session);
+
+        // Execute system under test.
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        verify(session, never().description("Nothing is to be sent in response to a request when Stream Management is not enabled.")).deliverRawText(anyString());
+    }
+
+    /**
+     * Verifies that no acknowledgement is sent on a detached session.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void requestIsNotAnsweredOnDetachedSession(final End end)
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        doReturn(true).when(session).isDetached();
+
+        // Execute system under test.
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        verify(session, never().description("Nothing can be sent on a detached session.")).deliverRawText(anyString());
     }
 
     /**
      * Verifies that an {@code <a/>} removes the stanzas that it acknowledges, and no others.
      */
-    @Test
-    void acknowledgementRemovesAcknowledgedStanzas() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementRemovesAcknowledgedStanzas(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
         sm.sentStanza(message("3"));
@@ -494,19 +508,20 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
 
         // Verify result.
-        assertEquals(List.of("3"), unacknowledgedMessageIds(sm), "Only the stanza that was not acknowledged must remain.");
+        assertEquals(List.of("3"), UnacknowledgedStanzas.ids(sm), "Only the stanza that was not acknowledged must remain.");
         assertFalse(session.isClosed(), "A valid acknowledgement must not close the session.");
     }
 
     /**
      * Verifies that an {@code <a/>} that covers all stanzas that were sent leaves nothing unacknowledged.
      */
-    @Test
-    void acknowledgementOfAllStanzasRemovesAll() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementOfAllStanzasRemovesAll(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
 
@@ -514,7 +529,51 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
 
         // Verify result.
-        assertEquals(List.of(), unacknowledgedMessageIds(sm), "No stanzas must remain after all of them were acknowledged.");
+        assertEquals(List.of(), UnacknowledgedStanzas.ids(sm), "No stanzas must remain after all of them were acknowledged.");
+        assertFalse(session.isClosed(), "A valid acknowledgement must not close the session.");
+    }
+
+    /**
+     * Verifies that the number of unacknowledged stanzas counts the stanzas that were sent, minus those that the peer
+     * acknowledged.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void unacknowledgedStanzaCountExcludesAcknowledgedStanzas(final End end) throws Exception
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        sm.sentStanza(message("3"));
+        final int countBeforeAcknowledgement = sm.getUnacknowledgedStanzaCount();
+
+        // Execute system under test.
+        sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
+
+        // Verify result.
+        assertEquals(3, countBeforeAcknowledgement, "All stanzas that were sent must be counted before the peer acknowledges any.");
+        assertEquals(1, sm.getUnacknowledgedStanzaCount(), "Only the stanza that the peer did not acknowledge must be counted.");
+    }
+
+    /**
+     * Verifies that an {@code <a/>} with a value of zero does not remove any stanzas.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementOfZeroRemovesNothing(final End end) throws Exception
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+
+        // Execute system under test.
+        sm.process(ack(StreamManager.NAMESPACE_V3, "0"));
+
+        // Verify result.
+        assertEquals(List.of("1"), UnacknowledgedStanzas.ids(sm), "A stanza must remain when no stanzas were acknowledged.");
         assertFalse(session.isClosed(), "A valid acknowledgement must not close the session.");
     }
 
@@ -522,12 +581,13 @@ public class StreamManagerTest
      * Verifies that stanzas are numbered on from the last acknowledged value, after all earlier stanzas were
      * acknowledged.
      */
-    @Test
-    void stanzasAreNumberedOnAfterAcknowledgement() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void stanzasAreNumberedOnAfterAcknowledgement(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
         sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
@@ -538,18 +598,19 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "3"));
 
         // Verify result.
-        assertEquals(List.of("4"), unacknowledgedMessageIds(sm), "The stanzas that were sent after an acknowledgement must be numbered on from its value.");
+        assertEquals(List.of("4"), UnacknowledgedStanzas.ids(sm), "The stanzas that were sent after an acknowledgement must be numbered on from its value.");
     }
 
     /**
      * Verifies that repeating the last acknowledgement has no effect, also when no stanzas remain.
      */
-    @Test
-    void repeatedAcknowledgementIsAccepted() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void repeatedAcknowledgementIsAccepted(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
 
@@ -561,14 +622,75 @@ public class StreamManagerTest
     }
 
     /**
-     * Verifies that acknowledging a stanza while none were sent closes the session with a stream error.
+     * Verifies that stanzas that are sent before Stream Management is enabled are not tracked.
      */
-    @Test
-    void acknowledgementOfStanzaWhenNoneWereSentClosesSession()
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void stanzasSentBeforeEnablingAreNotTracked(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.newStreamManager(session);
+        sm.sentStanza(message("before"));
+        end.enable(sm, StreamManager.NAMESPACE_V3);
+
+        // Execute system under test.
+        sm.sentStanza(message("after"));
+
+        // Verify result.
+        assertEquals(List.of("after"), UnacknowledgedStanzas.ids(sm), "Only stanzas sent after enabling Stream Management must be tracked.");
+    }
+
+    /**
+     * Verifies that an {@code <a/>} is silently ignored when Stream Management is not enabled, whatever its value.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementIsIgnoredWhenNotEnabled(final End end)
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.newStreamManager(session);
+
+        // Execute system under test.
+        sm.process(ack(StreamManager.NAMESPACE_V3, "not-a-number"));
+
+        // Verify result.
+        verify(session, never().description("Nothing is to be sent in response to an acknowledgement when Stream Management is not enabled.")).deliverRawText(anyString());
+        assertFalse(session.isClosed(), "An acknowledgement must not close the session when Stream Management is not enabled.");
+    }
+
+    /**
+     * Verifies that an {@code <a/>} without a 'h' attribute is silently ignored.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementWithoutValueIsIgnored(final End end) throws Exception
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+
+        // Execute system under test.
+        sm.process(smElement("a", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        verify(session, never().description("An acknowledgement without a value does not cause anything to be sent.")).deliverRawText(anyString());
+        assertFalse(session.isClosed(), "An acknowledgement without a value does not close the session.");
+        assertEquals(List.of("1"), UnacknowledgedStanzas.ids(sm), "An acknowledgement without a value must not remove any stanzas.");
+    }
+
+    /**
+     * Verifies that acknowledging a stanza while none were sent closes the session with a stream error.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementOfStanzaWhenNoneWereSentClosesSession(final End end)
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
 
         // Execute system under test.
         sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
@@ -581,12 +703,13 @@ public class StreamManagerTest
      * Verifies that acknowledging more stanzas than were sent closes the session with a stream error, without removing
      * any stanzas.
      */
-    @Test
-    void acknowledgementOfMoreStanzasThanSentClosesSession() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementOfMoreStanzasThanSentClosesSession(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
 
@@ -595,19 +718,20 @@ public class StreamManagerTest
 
         // Verify result.
         assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send.");
-        assertEquals(List.of("1", "2"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
+        assertEquals(List.of("1", "2"), UnacknowledgedStanzas.ids(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
     /**
      * Verifies that the stream error for a value of 'h' that is too high contains the element that XEP-0198 § 6 defines
      * for it, which reports that value and the number of stanzas that were sent.
      */
-    @Test
-    void acknowledgementOfMoreStanzasThanSentReportsHandledCountTooHigh() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementOfMoreStanzasThanSentReportsHandledCountTooHigh(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
 
@@ -622,12 +746,13 @@ public class StreamManagerTest
      * Verifies that a value of 'h' that is far above the number of stanzas that were sent is recognised as too high
      * (XEP-0198 § 6), rather than being mistaken for a value that is lower than an earlier one.
      */
-    @Test
-    void acknowledgementFarAboveNumberOfStanzasSentClosesSession() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementFarAboveNumberOfStanzasSentClosesSession(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
 
         // Execute system under test.
@@ -635,19 +760,19 @@ public class StreamManagerTest
 
         // Verify result.
         assertHandledCountTooHigh(session, "3000000000", "1");
-        assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
+        assertEquals(List.of("1"), UnacknowledgedStanzas.ids(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
     /**
      * Verifies that a value of 'h' that is not a number that fits a long closes the session with a stream error.
      */
     @ParameterizedTest
-    @ValueSource(strings = {"not-a-number", "", "1.5", "9223372036854775808"})
-    void acknowledgementWithNonNumericValueClosesSession(final String h) throws Exception
+    @MethodSource("endsAndNonNumericValues")
+    void acknowledgementWithNonNumericValueClosesSession(final End end, final String h) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
 
         // Execute system under test.
@@ -655,18 +780,19 @@ public class StreamManagerTest
 
         // Verify result.
         assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition, "is not a number");
-        assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
+        assertEquals(List.of("1"), UnacknowledgedStanzas.ids(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
     /**
      * Verifies that a negative value of 'h' closes the session with a stream error.
      */
-    @Test
-    void acknowledgementWithNegativeValueClosesSession() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementWithNegativeValueClosesSession(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
 
         // Execute system under test.
@@ -674,7 +800,7 @@ public class StreamManagerTest
 
         // Verify result.
         assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition, "negative value");
-        assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
+        assertEquals(List.of("1"), UnacknowledgedStanzas.ids(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
     /**
@@ -682,12 +808,13 @@ public class StreamManagerTest
      * § 13 defines 'h' as an xs:unsignedInt, and § 6 allows for misuse of stream management to terminate the stream. The
      * session is closed with the error, which also makes it non-resumable (OF-3443).
      */
-    @Test
-    void acknowledgementWithValueAboveLegalMaximumClosesSession() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementWithValueAboveLegalMaximumClosesSession(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
 
         // Execute system under test.
@@ -695,7 +822,7 @@ public class StreamManagerTest
 
         // Verify result.
         assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition);
-        assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
+        assertEquals(List.of("1"), UnacknowledgedStanzas.ids(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
     /**
@@ -703,12 +830,13 @@ public class StreamManagerTest
      * stanzas. XEP-0198 § 4 states that an {@code <a/>} only indicates that new stanzas were processed if 'h' has been
      * incremented, and § 6 only requires closing the stream for a value that is too high.
      */
-    @Test
-    void lowerAcknowledgementIsNotAnErrorWhileStanzasAreUnacknowledged() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void lowerAcknowledgementIsNotAnErrorWhileStanzasAreUnacknowledged(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
         sm.sentStanza(message("3"));
@@ -719,19 +847,20 @@ public class StreamManagerTest
 
         // Verify result.
         assertFalse(session.isClosed(), "A lower acknowledgement is not too high, so it must not close the session.");
-        assertEquals(List.of("3"), unacknowledgedMessageIds(sm), "Stanzas that were acknowledged earlier must not come back.");
+        assertEquals(List.of("3"), UnacknowledgedStanzas.ids(sm), "Stanzas that were acknowledged earlier must not come back.");
     }
 
     /**
      * Verifies that an acknowledgement with a value lower than an earlier one is also no error when no stanzas are
      * unacknowledged, and that it does not affect the numbers of the stanzas that follow (XEP-0198 § 4 and § 6).
      */
-    @Test
-    void lowerAcknowledgementIsNotAnErrorWhenNoStanzasAreUnacknowledged() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void lowerAcknowledgementIsNotAnErrorWhenNoStanzasAreUnacknowledged(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
         sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
@@ -744,28 +873,116 @@ public class StreamManagerTest
 
         // Verify result.
         assertFalse(session.isClosed(), "A lower acknowledgement is not too high, so it must not close the session.");
-        assertEquals(List.of("4"), unacknowledgedMessageIds(sm), "A lower acknowledgement must not affect the numbers of the stanzas that follow.");
+        assertEquals(List.of("4"), UnacknowledgedStanzas.ids(sm), "A lower acknowledgement must not affect the numbers of the stanzas that follow.");
+    }
+
+    /**
+     * Verifies that an {@code <r/>} is sent each time the number of unacknowledged stanzas reaches a multiple of the
+     * default request frequency.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementIsRequestedAtDefaultFrequency(final End end) throws Exception
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        for (int i = 1; i <= 4; i++) {
+            sm.sentStanza(message(String.valueOf(i)));
+        }
+        verify(session, never().description("No acknowledgement is to be requested below the default frequency of 5.")).deliverRawText(anyString());
+
+        // Execute system under test.
+        sm.sentStanza(message("5"));
+
+        // Verify result.
+        assertEquals(QName.get("r", StreamManager.NAMESPACE_V3), lastDelivered(session).getQName(), "An acknowledgement is to be requested at the default frequency of 5, in the namespace of the stream.");
+    }
+
+    /**
+     * Verifies that the frequency at which an {@code <r/>} is sent can be configured.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementIsRequestedAtConfiguredFrequency(final End end)
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.requestFrequency", "2");
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+
+        // Execute system under test.
+        for (int i = 1; i <= 4; i++) {
+            sm.sentStanza(message(String.valueOf(i)));
+        }
+
+        // Verify result.
+        verify(session, times(2).description("An acknowledgement is to be requested for every second unacknowledged stanza.")).deliverRawText(anyString());
+    }
+
+    /**
+     * Verifies that the request frequency is based on the number of stanzas that are unacknowledged, rather than the
+     * number of stanzas that were sent.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementRequestDependsOnNumberOfUnacknowledgedStanzas(final End end)
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.requestFrequency", "2");
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+        sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
+
+        // Execute system under test.
+        sm.sentStanza(message("2"));
+
+        // Verify result.
+        verify(session, never().description("No acknowledgement is to be requested when only one stanza is unacknowledged.")).deliverRawText(anyString());
+    }
+
+    /**
+     * Verifies that no {@code <r/>} is sent on a detached session, while stanzas are still tracked.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementIsNotRequestedOnDetachedSession(final End end) throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.requestFrequency", "1");
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        doReturn(true).when(session).isDetached();
+
+        // Execute system under test.
+        sm.sentStanza(message("1"));
+
+        // Verify result.
+        verify(session, never().description("Nothing can be sent on a detached session.")).deliverRawText(anyString());
+        assertEquals(List.of("1"), UnacknowledgedStanzas.ids(sm), "A stanza must be tracked on a detached session.");
     }
 
     /**
      * Verifies that the reported count of handled stanzas rolls over to zero after 2^32-1, as defined by XEP-0198 § 4.
      */
-    @Test
-    void countOfHandledStanzasRollsOver() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void countOfHandledStanzasRollsOver(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, HANDLED_COUNTER_FIELD, StreamManager.MASK);
 
         // Execute system under test.
         sm.process(smElement("r", StreamManager.NAMESPACE_V3));
         final String before = lastDelivered(session).attributeValue("h");
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
         clearInvocations(session);
         sm.process(smElement("r", StreamManager.NAMESPACE_V3));
         final String after = lastDelivered(session).attributeValue("h");
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
         clearInvocations(session);
         sm.process(smElement("r", StreamManager.NAMESPACE_V3));
         final String afterNext = lastDelivered(session).attributeValue("h");
@@ -777,34 +994,15 @@ public class StreamManagerTest
     }
 
     /**
-     * Verifies that the count in a {@code <resumed/>} element rolls over like the count in {@code <a/>}, as XEP-0198 § 4
-     * requires 'h' to be reset from 2^32-1 back to zero.
-     */
-    @Test
-    void countInResumedElementRollsOver() throws Exception
-    {
-        // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        setCounter(sm, HANDLED_COUNTER_FIELD, StreamManager.MASK);
-        sm.incrementServerProcessedStanzas();
-
-        // Execute system under test.
-        final Element result = sm.buildResumedElement();
-
-        // Verify result.
-        assertEquals("0", result.attributeValue("h"), "The count in a 'resumed' element must roll over to zero after 2^32-1.");
-    }
-
-    /**
      * Verifies that a stanza can be acknowledged with the largest legal value of 'h'.
      */
-    @Test
-    void acknowledgementWithLargestLegalValueIsAccepted() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementWithLargestLegalValueIsAccepted(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
@@ -814,19 +1012,20 @@ public class StreamManagerTest
 
         // Verify result.
         assertFalse(session.isClosed(), "An acknowledgement with the largest legal value of 'h' must not close the session.");
-        assertEquals(List.of("2"), unacknowledgedMessageIds(sm), "Only the stanza that was not acknowledged must remain.");
+        assertEquals(List.of("2"), UnacknowledgedStanzas.ids(sm), "Only the stanza that was not acknowledged must remain.");
     }
 
     /**
      * Verifies that an acknowledgement that rolled over removes the stanzas that were sent around the roll-over, when
      * all of them are acknowledged. Numbering then restarts at the value that was acknowledged.
      */
-    @Test
-    void acknowledgementAfterRollOverRemovesAcknowledgedStanzas() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementAfterRollOverRemovesAcknowledgedStanzas(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
         sm.sentStanza(message("peer-counts-2^32-1"));
         sm.sentStanza(message("peer-counts-0"));
@@ -839,19 +1038,20 @@ public class StreamManagerTest
 
         // Verify result.
         assertFalse(session.isClosed(), "Acknowledgements that rolled over must not close the session.");
-        assertEquals(List.of("peer-counts-2"), unacknowledgedMessageIds(sm), "Only the stanza that was not acknowledged must remain.");
+        assertEquals(List.of("peer-counts-2"), UnacknowledgedStanzas.ids(sm), "Only the stanza that was not acknowledged must remain.");
     }
 
     /**
      * Verifies that an acknowledgement that rolled over only removes the stanzas that it acknowledges. XEP-0198 § 4 leaves
      * a stanza the responsibility of the sender until it is acknowledged.
      */
-    @Test
-    void acknowledgementAfterRollOverKeepsUnacknowledgedStanzas() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementAfterRollOverKeepsUnacknowledgedStanzas(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
         sm.sentStanza(message("peer-counts-2^32-1"));
         sm.sentStanza(message("peer-counts-0"));
@@ -861,19 +1061,20 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "0"));
 
         // Verify result.
-        assertEquals(List.of("peer-counts-1"), unacknowledgedMessageIds(sm), "The stanza that was not acknowledged must remain.");
+        assertEquals(List.of("peer-counts-1"), UnacknowledgedStanzas.ids(sm), "The stanza that was not acknowledged must remain.");
     }
 
     /**
      * Verifies that stanzas that are sent after an acknowledgement that rolled over are numbered on from the stanzas that
      * are still unacknowledged, as XEP-0198 § 4 has both parties count every stanza.
      */
-    @Test
-    void stanzasSentAfterRollOverAreNumberedOnFromUnacknowledgedStanzas() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void stanzasSentAfterRollOverAreNumberedOnFromUnacknowledgedStanzas(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
         sm.sentStanza(message("peer-counts-2^32-1"));
         sm.sentStanza(message("peer-counts-0"));
@@ -885,19 +1086,20 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
 
         // Verify result.
-        assertEquals(List.of("peer-counts-2"), unacknowledgedMessageIds(sm), "An acknowledgement must not cover a stanza that the peer counts after it.");
+        assertEquals(List.of("peer-counts-2"), UnacknowledgedStanzas.ids(sm), "An acknowledgement must not cover a stanza that the peer counts after it.");
     }
 
     /**
      * Verifies that successive valid acknowledgements around the roll-over are accepted. XEP-0198 § 6 only calls for
      * closing the stream when a value is higher than the number of stanzas that were sent.
      */
-    @Test
-    void successiveAcknowledgementsAfterRollOverAreAccepted() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void successiveAcknowledgementsAfterRollOverAreAccepted(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
         sm.sentStanza(message("peer-counts-2^32-1"));
         sm.sentStanza(message("peer-counts-0"));
@@ -909,19 +1111,20 @@ public class StreamManagerTest
 
         // Verify result.
         assertFalse(session.isClosed(), "A valid acknowledgement must not close the session.");
-        assertEquals(List.of(), unacknowledgedMessageIds(sm), "No stanzas must remain after all of them were acknowledged.");
+        assertEquals(List.of(), UnacknowledgedStanzas.ids(sm), "No stanzas must remain after all of them were acknowledged.");
     }
 
     /**
      * Verifies that an acknowledgement with a value from before the roll-over, which is lower than an earlier one that
      * rolled over, is no error and does not remove any stanzas (XEP-0198 § 4 and § 6).
      */
-    @Test
-    void lowerAcknowledgementFromBeforeRollOverIsNotAnError() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void lowerAcknowledgementFromBeforeRollOverIsNotAnError(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
         sm.sentStanza(message("peer-counts-2^32-1"));
         sm.sentStanza(message("peer-counts-0"));
@@ -933,19 +1136,20 @@ public class StreamManagerTest
 
         // Verify result.
         assertFalse(session.isClosed(), "A lower acknowledgement is not too high, so it must not close the session.");
-        assertEquals(List.of("peer-counts-1"), unacknowledgedMessageIds(sm), "A lower acknowledgement must not remove any stanzas.");
+        assertEquals(List.of("peer-counts-1"), UnacknowledgedStanzas.ids(sm), "A lower acknowledgement must not remove any stanzas.");
     }
 
     /**
      * Verifies that acknowledging a stanza that was never sent is detected around the roll-over, as XEP-0198 § 6 requires
      * at any other time. The value of 'send-count' has to roll over too, as it is an xs:unsignedInt (§ 13).
      */
-    @Test
-    void acknowledgementOfUnsentStanzaIsRejectedAroundRollOver() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void acknowledgementOfUnsentStanzaIsRejectedAroundRollOver(final End end) throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
         sm.sentStanza(message("peer-counts-2^32-1"));
         sm.sentStanza(message("peer-counts-0"));
@@ -955,129 +1159,20 @@ public class StreamManagerTest
 
         // Verify result.
         assertHandledCountTooHigh(session, "5", "0");
-        assertEquals(List.of("peer-counts-2^32-1", "peer-counts-0"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
-    }
-
-    /**
-     * Verifies that a resume request with a value of 'h' lower than the last acknowledged value is accepted when no
-     * stanzas are unacknowledged. A client can send such a value when it restores a count that is older than its last
-     * acknowledgement. XEP-0198 § 5 has 'h' in a resume request handled as in an {@code <a/>}, for which a lower value
-     * does not acknowledge any new stanzas (§ 4).
-     */
-    @Test
-    void resumeWithLowerValueIsAcceptedWhenNoStanzasAreUnacknowledged() throws Exception
-    {
-        // Setup test fixture.
-        final LocalClientSession original = resumableClientSession();
-        final StreamManager sm = streamManagerWithResumption(original);
-        final String previd = lastDelivered(original).attributeValue("id");
-        sm.sentStanza(message("1"));
-        sm.sentStanza(message("2"));
-        sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
-        final LocalClientSession resuming = resumingClientSession();
-
-        // Execute system under test.
-        new StreamManager(resuming).process(resume(previd, 1));
-
-        // Verify result.
-        verify(original, times(1).description("The session must be resumed, as a lower value of 'h' is not too high.")).reattach(resuming, 1L);
-        verify(resuming, never().description("No failure is to be reported for a lower value of 'h'.")).deliverRawText(anyString());
-    }
-
-    /**
-     * Verifies that a resume request with a value of 'h' lower than the last acknowledged value is accepted when stanzas
-     * are unacknowledged, and that the stanzas that remain unacknowledged are sent again on resumption, without the lower
-     * value affecting the stanzas that the client acknowledges after that.
-     */
-    @Test
-    void resumeWithLowerValueRedeliversUnacknowledgedStanzas() throws Exception
-    {
-        // Setup test fixture.
-        final LocalClientSession original = resumableClientSession();
-        final StreamManager sm = streamManagerWithResumption(original);
-        final String previd = lastDelivered(original).attributeValue("id");
-        sm.sentStanza(message("1"));
-        sm.sentStanza(message("2"));
-        sm.sentStanza(message("3"));
-        sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
-        final LocalClientSession resuming = resumingClientSession();
-        new StreamManager(resuming).process(resume(previd, 1));
-        verify(original, times(1).description("Test fixture expects the session to be resumed.")).reattach(resuming, 1L);
-        final Connection newConnection = mock(Connection.class);
-        doReturn(newConnection).when(original).getConnection();
-
-        // Execute system under test.
-        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 1);
-        sm.process(ack(StreamManager.NAMESPACE_V3, "3"));
-
-        // Verify result.
-        final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
-        verify(newConnection, times(1).description("Only the stanza that remained unacknowledged is to be sent again.")).deliver(captor.capture());
-        assertEquals("3", captor.getValue().getID(), "The stanza that remained unacknowledged is to be sent again.");
-        assertFalse(original.isClosed(), "Acknowledging the stanza that was sent again must not close the session.");
-        assertEquals(List.of(), unacknowledgedMessageIds(sm), "No stanzas must remain after the stanza that was sent again is acknowledged.");
-    }
-
-    /**
-     * Verifies that a resume request with a value of 'h' that is too high is refused after the acknowledged count rolled
-     * over, as it is at any other time.
-     */
-    @Test
-    void resumeWithValueAboveNumberOfStanzasSentIsRefusedAfterRollOver() throws Exception
-    {
-        // Setup test fixture.
-        final LocalClientSession original = resumableClientSession();
-        final StreamManager sm = streamManagerWithResumption(original);
-        final String previd = lastDelivered(original).attributeValue("id");
-        setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
-        sm.sentStanza(message("peer-counts-2^32-1"));
-        sm.sentStanza(message("peer-counts-0"));
-        sm.process(ack(StreamManager.NAMESPACE_V3, "0"));
-        final LocalClientSession resuming = resumingClientSession();
-
-        // Execute system under test.
-        new StreamManager(resuming).process(resume(previd, 5));
-
-        // Verify result.
-        verify(original, never().description("The session must not be resumed with a value of 'h' that is too high.")).reattach(any(), anyLong());
-        assertFailedWithUnexpectedRequest(lastDelivered(resuming), StreamManager.NAMESPACE_V3);
-    }
-
-    /**
-     * Verifies that a resume request with a value of 'h' from before the roll-over, which is lower than an earlier
-     * acknowledgement that rolled over, is accepted.
-     */
-    @Test
-    void resumeWithLowerValueFromBeforeRollOverIsAccepted() throws Exception
-    {
-        // Setup test fixture.
-        final LocalClientSession original = resumableClientSession();
-        final StreamManager sm = streamManagerWithResumption(original);
-        final String previd = lastDelivered(original).attributeValue("id");
-        setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
-        sm.sentStanza(message("peer-counts-2^32-1"));
-        sm.sentStanza(message("peer-counts-0"));
-        sm.process(ack(StreamManager.NAMESPACE_V3, "0"));
-        final LocalClientSession resuming = resumingClientSession();
-
-        // Execute system under test.
-        new StreamManager(resuming).process(resume(previd, StreamManager.MASK));
-
-        // Verify result.
-        verify(original, times(1).description("The session must be resumed, as a value from before the roll-over is not too high.")).reattach(resuming, StreamManager.MASK);
-        verify(resuming, never().description("No failure is to be reported for a value from before the roll-over.")).deliverRawText(anyString());
+        assertEquals(List.of("peer-counts-2^32-1", "peer-counts-0"), UnacknowledgedStanzas.ids(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
     /**
      * Verifies that the stream remains open, with all stanzas tracked, at the maximum number of unacknowledged stanzas.
      */
-    @Test
-    void reachingMaximumOfUnacknowledgedStanzasKeepsStreamOpen() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void reachingMaximumOfUnacknowledgedStanzasKeepsStreamOpen(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "3");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
 
         // Execute system under test.
         sm.sentStanza(message("1"));
@@ -1088,7 +1183,7 @@ public class StreamManagerTest
         assertFalse(session.getConnection().isClosed(), "The stream must not be closed at the maximum number of unacknowledged stanzas.");
         assertFalse(session.isClosed(), "The session must not be closed at the maximum number of unacknowledged stanzas.");
         assertTrue(sm.isEnabled(), "Stream Management must remain enabled at the maximum number of unacknowledged stanzas.");
-        assertEquals(List.of("1", "2", "3"), unacknowledgedMessageIds(sm), "All stanzas must be tracked at the maximum number of unacknowledged stanzas.");
+        assertEquals(List.of("1", "2", "3"), UnacknowledgedStanzas.ids(sm), "All stanzas must be tracked at the maximum number of unacknowledged stanzas.");
     }
 
     /**
@@ -1096,13 +1191,14 @@ public class StreamManagerTest
      * stream error, so that the peer learns why. XEP-0198 defines no such maximum, and no way to stop tracking stanzas on
      * an open stream.
      */
-    @Test
-    void exceedingMaximumOfUnacknowledgedStanzasClosesStream()
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void exceedingMaximumOfUnacknowledgedStanzasClosesStream(final End end)
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "3");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
         sm.sentStanza(message("3"));
@@ -1122,13 +1218,14 @@ public class StreamManagerTest
      * stanza the responsibility of the sender until it is acknowledged, and states that a server should treat it as a
      * stanza for an unavailable resource when the stream ends.
      */
-    @Test
-    void exceedingMaximumOfUnacknowledgedStanzasDoesNotDiscardThem() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void exceedingMaximumOfUnacknowledgedStanzasDoesNotDiscardThem(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "3");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
         sm.sentStanza(message("3"));
@@ -1137,25 +1234,22 @@ public class StreamManagerTest
         sm.sentStanza(message("4"));
 
         // Verify result.
-        assertEquals(List.of("1", "2", "3", "4"), unacknowledgedMessageIds(sm), "Stanzas that were not acknowledged must still be routed when the session closes.");
+        assertEquals(List.of("1", "2", "3", "4"), UnacknowledgedStanzas.ids(sm), "Stanzas that were not acknowledged must remain tracked, to be handled when the session closes.");
     }
 
     /**
      * Verifies that exceeding the maximum number of unacknowledged stanzas disables resumption, so that the session closes
      * and its unacknowledged stanzas are handled, rather than being kept for a peer that does not acknowledge them.
      */
-    @Test
-    void exceedingMaximumOfUnacknowledgedStanzasDisablesResumption()
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void exceedingMaximumOfUnacknowledgedStanzasDisablesResumption(final End end)
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final AuthToken authToken = mock(AuthToken.class);
-        doReturn(authToken).when(session).getAuthToken();
-        final StreamManager sm = new StreamManager(session);
-        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
-        enable.addAttribute("resume", "true");
-        sm.process(enable);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.newStreamManager(session);
+        end.enableResumable(sm, StreamManager.NAMESPACE_V3);
         assertTrue(sm.getResume(), "Test fixture expects a resumable stream.");
         sm.sentStanza(message("1"));
 
@@ -1172,13 +1266,14 @@ public class StreamManagerTest
      * closed, so it hands those stanzas to its fallback, which would deliver them a second time if they were also routed
      * again when the session closes.
      */
-    @Test
-    void exceedingMaximumOfUnacknowledgedStanzasClosesStreamOnce() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void exceedingMaximumOfUnacknowledgedStanzasClosesStreamOnce(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
 
         // Execute system under test.
@@ -1187,36 +1282,7 @@ public class StreamManagerTest
 
         // Verify result.
         verify(session.getConnection(), times(1).description("The stream must be closed once.")).close(any());
-        assertEquals(List.of("1", "2"), unacknowledgedMessageIds(sm), "Stanzas that are sent after the stream was closed must not be tracked, as the closed connection hands them to its fallback.");
-    }
-
-    /**
-     * Verifies that stanzas that are sent to a detached session after exceeding the maximum number of unacknowledged
-     * stanzas are still tracked. A detached session has no connection to hand them to, so they would otherwise be lost.
-     */
-    @Test
-    void stanzasSentToDetachedSessionAfterExceedingMaximumAreTracked() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        doReturn(true).when(session).isDetached();
-        doReturn(null).when(session).getConnection();
-        final CountDownLatch terminated = new CountDownLatch(1);
-        final CountDownLatch terminatedAgain = new CountDownLatch(2);
-        doAnswer(invocation -> { terminated.countDown(); terminatedAgain.countDown(); return null; }).when(sessionManager).terminateDetached(session);
-        sm.sentStanza(message("1"));
-        sm.sentStanza(message("2"));
-        assertTrue(terminated.await(5, TimeUnit.SECONDS), "Test fixture expects the detached session to be ended.");
-
-        // Execute system under test.
-        sm.sentStanza(message("3"));
-
-        // Verify result.
-        assertEquals(List.of("1", "2", "3"), unacknowledgedMessageIds(sm), "Stanzas that are sent to a detached session must be tracked, so that they are routed when the session closes.");
-        // OF-3434: Wait with a latch, as verify() with a timeout holds the lock of the synchronized terminateDetached() on the mock.
-        assertFalse(terminatedAgain.await(500, TimeUnit.MILLISECONDS), "The detached session must be ended once, not again for every stanza that is sent after exceeding the maximum.");
+        assertEquals(List.of("1", "2"), UnacknowledgedStanzas.ids(sm), "Stanzas that are sent after the stream was closed must not be tracked, as the closed connection hands them to its fallback.");
     }
 
     /**
@@ -1269,492 +1335,189 @@ public class StreamManagerTest
     }
 
     /**
-     * Verifies that an IQ request in a batch that is delivered after the stream was closed for exceeding the maximum
-     * number of unacknowledged stanzas is answered with an error when the session closes. The fallback of the closed
-     * connection drops IQ stanzas, so the request must remain tracked, as RFC 6120 § 8.2.3 requires a response to every
-     * IQ request.
+     * Verifies that a stanza that is sent while the session closes is not tracked once the stanzas that the peer did
+     * not acknowledge were handled, and Stream Management was disabled (OF-3420). Such a stanza would never be handled.
+     *
+     * The thread that sends the stanza finds Stream Management enabled, and then waits for the lock of the stream
+     * manager, which this test holds while the session closes.
      */
-    @Test
-    void iqRequestInBatchAfterExceedingMaximumIsAnsweredWhenSessionCloses() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void stanzaSentWhileSessionClosesIsNotTrackedAfterUnacknowledgedStanzasWereHandled(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final Connection connection = closableConnection();
-        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, BasicStreamIDFactory.createStreamID(STREAM_ID), Locale.ENGLISH);
-        session.setStatus(Session.Status.AUTHENTICATED);
-        session.getStreamManager().process(smElement("enable", StreamManager.NAMESPACE_V3));
-        assertTrue(session.getStreamManager().isEnabled(), "Test fixture expects Stream Management to be enabled.");
-        final IQ request = new IQ(IQ.Type.get, "3");
-        request.setFrom(new JID("contact", Fixtures.XMPP_DOMAIN, "desktop"));
-        request.setTo(new JID("user", Fixtures.XMPP_DOMAIN, "mobile"));
-        request.setChildElement("query", "jabber:iq:version");
-
-        // Execute system under test.
-        session.pushPackets(List.of(message("1"), message("2"), request));
-
-        // Verify result.
-        assertTrue(connection.isClosed(), "Test fixture expects the stream to be closed for exceeding the maximum.");
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         final PacketRouter router = mock(PacketRouter.class);
-        session.getStreamManager().onClose(router, SERVER_ADDRESS);
-        final ArgumentCaptor<IQ> captor = ArgumentCaptor.forClass(IQ.class);
-        verify(router, atLeast(0)).route(captor.capture());
-        assertEquals(1, captor.getAllValues().size(), "Exactly one response must be routed for the IQ request, but these were routed: " + captor.getAllValues());
-        final IQ error = captor.getValue();
-        assertEquals(IQ.Type.error, error.getType(), "The response to the IQ request must be an error.");
-        assertEquals("3", error.getID(), "The response must have the ID of the IQ request.");
-        assertEquals(request.getFrom(), error.getTo(), "The response must be addressed to the sender of the IQ request.");
-        assertEquals(PacketError.Condition.service_unavailable, error.getError().getCondition(), "The response must report the condition for an unavailable resource.");
-    }
-
-    /**
-     * Verifies that a session is ended when its close listener detached it while it was closed for exceeding the
-     * maximum number of unacknowledged stanzas. That happens when the connection was already closing, and its close
-     * listener found the session to be resumable before resumption was disabled.
-     */
-    @Test
-    void sessionDetachedWhileClosingForExceedingMaximumIsEnded() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final Connection connection = session.getConnection();
-        final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
-        doReturn(closeFuture).when(connection).getCloseFuture();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        final CountDownLatch terminated = new CountDownLatch(1);
-        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
-        sm.sentStanza(message("1"));
-        sm.sentStanza(message("2"));
-
-        // Execute system under test.
-        doReturn(true).when(session).isDetached();
-        closeFuture.complete(null);
-
-        // Verify result.
-        assertTrue(terminated.await(5, TimeUnit.SECONDS), "A session that was detached while it was closed for exceeding the maximum must be ended.");
-    }
-
-    /**
-     * Verifies that a session that is not detached when its connection finished closing, after it was closed for
-     * exceeding the maximum number of unacknowledged stanzas, is not ended as a detached session, as it has been closed.
-     */
-    @Test
-    void sessionNotDetachedWhenClosedForExceedingMaximumIsNotEndedAgain() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final Connection connection = session.getConnection();
-        final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
-        doReturn(closeFuture).when(connection).getCloseFuture();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        final CountDownLatch terminated = new CountDownLatch(1);
-        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
-        sm.sentStanza(message("1"));
-        sm.sentStanza(message("2"));
-
-        // Execute system under test.
-        closeFuture.complete(null);
-
-        // Verify result.
-        assertFalse(terminated.await(500, TimeUnit.MILLISECONDS), "A session that is not detached must not be ended as a detached session.");
-    }
-
-    /**
-     * Verifies that a detached session, which has no stream to close, is ended when the maximum number of unacknowledged
-     * stanzas is exceeded, rather than after its detach timeout.
-     */
-    @Test
-    void exceedingMaximumOfUnacknowledgedStanzasOnDetachedSessionEndsSession() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        doReturn(true).when(session).isDetached();
-        doReturn(null).when(session).getConnection();
-        sm.sentStanza(message("1"));
-
-        // OF-3434: Wait with a latch, as verify() with a timeout holds the lock of the synchronized terminateDetached() on the mock.
-        final CountDownLatch terminated = new CountDownLatch(1);
-        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
-
-        // Execute system under test.
-        sm.sentStanza(message("2"));
-
-        // Verify result.
-        assertTrue(terminated.await(5, TimeUnit.SECONDS), "A detached session must be ended when the maximum number of unacknowledged stanzas is exceeded.");
-        verify(sessionManager, times(1).description("A detached session must be ended once.")).terminateDetached(session);
-    }
-
-    /**
-     * Verifies that a stanza is still tracked when it is delivered on a connection that is not closed, after the maximum
-     * number of unacknowledged stanzas was exceeded. That happens when a detached session that exceeded the maximum is
-     * resumed: its new connection delivers the stanza before the resumed stream is closed, so no fallback handles it.
-     */
-    @Test
-    void stanzaDeliveredOnResumedConnectionAfterExceedingMaximumIsTracked() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        doReturn(true).when(session).isDetached();
-        doReturn(null).when(session).getConnection();
-        final CountDownLatch terminated = new CountDownLatch(1);
-        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
-        sm.sentStanza(message("1"));
-        sm.sentStanza(message("2"));
-        assertTrue(terminated.await(5, TimeUnit.SECONDS), "Test fixture expects the detached session to be ended.");
-        doReturn(false).when(session).isDetached();
-        final Connection resumedConnection = closableConnection();
-        doReturn(resumedConnection).when(session).getConnection();
-
-        // Execute system under test.
-        sm.sentStanza(message("3"));
-
-        // Verify result.
-        assertEquals(List.of("1", "2", "3"), unacknowledgedMessageIds(sm), "A stanza that is delivered on a connection that is not closed must be tracked, as no fallback handles it.");
-        assertFalse(resumedConnection.isClosed(), "A stanza that is sent after the maximum was exceeded must not close the stream again; closing a resumed stream is up to its resumption.");
-    }
-
-    /**
-     * Verifies that a detached session that exceeded the maximum number of unacknowledged stanzas is closed when it is
-     * resumed before it could be ended, rather than continuing on the new connection without a limit.
-     */
-    @Test
-    void resumptionAfterExceedingMaximumOfUnacknowledgedStanzasClosesStream() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        doReturn(true).when(session).isDetached();
-        doReturn(null).when(session).getConnection();
-        // Hold the task that ends the detached session until the session was resumed, so that the resumption runs first.
-        final CountDownLatch resumed = new CountDownLatch(1);
-        final CountDownLatch terminated = new CountDownLatch(1);
-        doAnswer(invocation -> {
-            resumed.await(5, TimeUnit.SECONDS);
-            terminated.countDown();
-            return null;
-        }).when(sessionManager).terminateDetached(session);
-        sm.sentStanza(message("1"));
-        sm.sentStanza(message("2"));
-        final Connection newConnection = closableConnection();
-        doReturn(false).when(session).isDetached();
-        doReturn(newConnection).when(session).getConnection();
-
-        // Execute system under test.
-        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 0);
-        resumed.countDown();
-
-        // Verify result.
-        assertTrue(terminated.await(5, TimeUnit.SECONDS), "Test fixture expects the task that ends the detached session to complete.");
-        final ArgumentCaptor<StreamError> captor = ArgumentCaptor.forClass(StreamError.class);
-        verify(newConnection, times(1).description("The resumed stream must be closed, as the maximum number of unacknowledged stanzas was exceeded.")).close(captor.capture());
-        assertEquals(StreamError.Condition.policy_violation, captor.getValue().getCondition(), "The stream error must use the 'policy-violation' condition, as a configured limit was exceeded.");
-        verify(newConnection, never().description("Stanzas must not be sent again on a stream that is being closed.")).deliver(any());
-        assertEquals(List.of("1", "2"), unacknowledgedMessageIds(sm), "Stanzas that were not acknowledged must still be routed when the session closes.");
-    }
-
-    /**
-     * Verifies that a resumed stream that is closed for exceeding the maximum number of unacknowledged stanzas is closed
-     * while the lock of the stream manager is held. The session delivers and tracks stanzas under that lock. Closing the
-     * stream between those two steps would leave a stanza that was delivered on the open stream untracked.
-     */
-    @Test
-    void resumedStreamIsClosedForExceedingMaximumWhileHoldingLock() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        doReturn(true).when(session).isDetached();
-        doReturn(null).when(session).getConnection();
-        final CountDownLatch terminated = new CountDownLatch(1);
-        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
-        sm.sentStanza(message("1"));
-        sm.sentStanza(message("2"));
-        assertTrue(terminated.await(5, TimeUnit.SECONDS), "Test fixture expects the detached session to be ended.");
-        final Connection newConnection = mock(Connection.class);
-        final AtomicBoolean closedWhileHoldingLock = new AtomicBoolean(false);
-        doAnswer(invocation -> { closedWhileHoldingLock.set(Thread.holdsLock(sm)); return null; }).when(newConnection).close(any());
-        doReturn(false).when(session).isDetached();
-        doReturn(newConnection).when(session).getConnection();
-
-        // Execute system under test.
-        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 0);
-
-        // Verify result.
-        verify(newConnection, times(1).description("The resumed stream must be closed, as the maximum number of unacknowledged stanzas was exceeded.")).close(any());
-        assertTrue(closedWhileHoldingLock.get(), "The resumed stream must be closed while the lock of the stream manager is held, so that no stanza is delivered on it without being tracked.");
-    }
-
-    /**
-     * Verifies that a stanza that is sent while a session is resumed, and that exceeds the maximum number of
-     * unacknowledged stanzas, cannot close the resumed stream before the unacknowledged stanzas are re-delivered on it.
-     * The closed stream would hand the re-delivered stanzas to its fallback, while they are also routed again when the
-     * session closes.
-     */
-    @Test
-    void stanzaExceedingMaximumDuringResumptionDoesNotCloseStreamBeforeRedelivery() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "2");
-        final LocalClientSession session = authenticatedClientSession();
-        final Connection connection = session.getConnection();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        sm.sentStanza(message("1"));
-        sm.sentStanza(message("2"));
-        final List<String> deliveredWhileClosed = new CopyOnWriteArrayList<>();
-        doAnswer(invocation -> {
-            if (connection.isClosed()) {
-                deliveredWhileClosed.add(((Packet) invocation.getArgument(0)).getID());
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+        final Thread sender = new Thread(() -> {
+            try {
+                sm.sentStanza(message("sent-while-closing"));
+            } catch (final Throwable t) {
+                failure.set(t);
             }
-            return null;
-        }).when(connection).deliver(any());
-        // Send a stanza from another thread, as LocalClientSession#pushPackets() does, when the connection is obtained for the re-delivery.
-        final AtomicBoolean sending = new AtomicBoolean(false);
-        final Thread[] sender = new Thread[1];
-        doAnswer(invocation -> {
-            if (sending.compareAndSet(false, true)) {
-                sender[0] = new Thread(() -> { synchronized (sm) { sm.sentStanza(message("3")); } });
-                sender[0].start();
-                sender[0].join(500);
-            }
-            return connection;
-        }).when(session).getConnection();
+        }, "OF-3420-sender");
 
         // Execute system under test.
-        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 0);
+        synchronized (sm) {
+            sender.start();
+            awaitBlockedOn(sender, sm);
+            sm.onClose(router, SERVER_ADDRESS);
+        }
+        sender.join(TimeUnit.SECONDS.toMillis(10));
 
         // Verify result.
-        sender[0].join(5000);
-        assertTrue(connection.isClosed(), "Test fixture expects the stream to be closed for exceeding the maximum.");
-        assertEquals(List.of(), deliveredWhileClosed, "Unacknowledged stanzas must be re-delivered before the stream is closed, as the stanzas on a closed stream go to its fallback, and are also routed again when the session closes.");
+        assertFalse(sender.isAlive(), "The thread that sends the stanza must finish once the lock is released.");
+        assertNull(failure.get(), "Sending the stanza must not fail, but it threw: " + failure.get());
+        assertTrue(sm.getUnacknowledgedEntries().isEmpty(), "A stanza that is sent after the unacknowledged stanzas of the session were handled must not be tracked, as it would never be handled.");
     }
 
     /**
-     * A mock of a connection that reports itself as closed once it is closed, through either close() or
-     * close(StreamError), and that has a fallback for stanzas that it cannot deliver.
-     */
-    private static Connection closableConnection()
-    {
-        final Connection connection = mock(Connection.class);
-        doReturn(mock(PacketDeliverer.class)).when(connection).getPacketDeliverer();
-        final AtomicBoolean closed = new AtomicBoolean(false);
-        doAnswer(invocation -> { closed.set(true); return null; }).when(connection).close();
-        doAnswer(invocation -> { closed.set(true); return null; }).when(connection).close(nullable(StreamError.class));
-        doAnswer(invocation -> closed.get()).when(connection).isClosed();
-        return connection;
-    }
-
-    /**
-     * A mock of an authenticated client session that has a connection, a full JID and a stream ID.
+     * Verifies that the termination delegates of a session can be obtained while a delegate is added (OF-3420). The
+     * task that cleans up detached sessions obtains them, while any thread can add or remove one.
      *
-     * The session will set its closed flag when it is closed through invocation of either close() or close(StreamError)
+     * Obtaining the delegates computes the hash code of each delegate, while the delegates are iterated. One delegate
+     * adds another delegate when its hash code is computed, which stands in for a thread that adds a delegate at that
+     * moment.
      */
-    private static LocalClientSession authenticatedClientSession()
+    @Test
+    void terminationDelegatesCanBeObtainedWhileDelegateIsAdded()
     {
-        final LocalClientSession session = mock(LocalClientSession.class);
-        doReturn(closableConnection()).when(session).getConnection();
-        doReturn(true).when(session).isAuthenticated();
-        doReturn(FULL_JID).when(session).getAddress();
-        doReturn(BasicStreamIDFactory.createStreamID(STREAM_ID)).when(session).getStreamID();
-        mockCloseTracking(session);
-        return session;
+        // Setup test fixture.
+        final StreamManager sm = End.ANSWERING.newStreamManager(End.ANSWERING.newSession());
+        final AtomicReference<Runnable> onHashCode = new AtomicReference<>();
+        final TerminationDelegate first = new DelegateWithHashCode(1, onHashCode);
+        final TerminationDelegate second = new DelegateWithHashCode(2, onHashCode);
+        final TerminationDelegate added = new DelegateWithHashCode(3, onHashCode);
+        sm.addTerminationDelegate(first);
+        sm.addTerminationDelegate(second);
+        onHashCode.set(() -> sm.addTerminationDelegate(added));
+
+        // Execute system under test.
+        final Set<TerminationDelegate> result = assertDoesNotThrow(sm::getTerminationDelegates, "Obtaining the termination delegates must not fail when a delegate is added at the same time.");
+
+        // Verify result.
+        assertNull(onHashCode.get(), "Test fixture expects a delegate to be added while the delegates were obtained.");
+        assertTrue(result.containsAll(Set.of(first, second)), "The delegates that were added before must be obtained, but were: " + result);
+        assertTrue(sm.getTerminationDelegates().contains(added), "The delegate that was added while the delegates were obtained must be kept.");
     }
 
     /**
-     * Creates a stream manager with Stream Management enabled, and clears the interaction with the session that resulted
-     * from enabling it.
-     */
-    private static StreamManager enabledStreamManager(final LocalSession session, final String namespace)
-    {
-        final StreamManager sm = new StreamManager(session);
-        sm.process(smElement("enable", namespace));
-        assertTrue(sm.isEnabled(), "Test fixture expects Stream Management to be enabled.");
-        clearInvocations(session);
-        return sm;
-    }
-
-    /**
-     * A mock of a detached client session that can be resumed: it has a non-anonymous authentication token, and is the
-     * route for its full JID in the routing table of a mocked server.
-     */
-    private static LocalClientSession resumableClientSession()
-    {
-        final LocalClientSession session = authenticatedClientSession();
-        final AuthToken authToken = mock(AuthToken.class);
-        doReturn(FULL_JID.getNode()).when(authToken).getUsername();
-        doReturn(authToken).when(session).getAuthToken();
-        doReturn(true).when(session).isDetached();
-
-        final XMPPServer server = Fixtures.mockXMPPServer();
-        final RoutingTable routingTable = mock(RoutingTable.class);
-        doReturn(session).when(routingTable).getClientRoute(FULL_JID);
-        doReturn(routingTable).when(server).getRoutingTable();
-        //noinspection deprecation
-        XMPPServer.setInstance(server);
-        return session;
-    }
-
-    /**
-     * A mock of a new client session from which a resumption is requested: it authenticated as the same user, but did
-     * not bind a resource.
-     */
-    private static LocalClientSession resumingClientSession()
-    {
-        final LocalClientSession session = mock(LocalClientSession.class);
-        final AuthToken authToken = mock(AuthToken.class);
-        doReturn(FULL_JID.getNode()).when(authToken).getUsername();
-        doReturn(authToken).when(session).getAuthToken();
-        doReturn(false).when(session).isAuthenticated();
-        doReturn(Fixtures.XMPP_DOMAIN).when(session).getServerName();
-        doReturn(BasicStreamIDFactory.createStreamID("resuming-stream-id")).when(session).getStreamID();
-        mockCloseTracking(session);
-        return session;
-    }
-
-    /**
-     * Creates the stream manager of a session, with Stream Management enabled with resumption. The {@code <enabled/>}
-     * element remains the last element that was delivered to the session.
-     */
-    private static StreamManager streamManagerWithResumption(final LocalClientSession session)
-    {
-        final StreamManager sm = new StreamManager(session);
-        doReturn(sm).when(session).getStreamManager();
-        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
-        enable.addAttribute("resume", "true");
-        sm.process(enable);
-        assertTrue(sm.getResume(), "Test fixture expects a resumable stream.");
-        return sm;
-    }
-
-    private static Element resume(final String previd, final long h)
-    {
-        return smElement("resume", StreamManager.NAMESPACE_V3).addAttribute("previd", previd).addAttribute("h", String.valueOf(h));
-    }
-
-    private static Element smElement(final String name, final String namespace)
-    {
-        return DocumentHelper.createElement(QName.get(name, namespace));
-    }
-
-    private static Element ack(final String namespace, final String h)
-    {
-        return smElement("a", namespace).addAttribute("h", h);
-    }
-
-    private static Message message(final String id)
-    {
-        final Message message = new Message();
-        message.setID(id);
-        return message;
-    }
-
-    /**
-     * Returns the last element that was delivered to the session.
-     */
-    private static Element lastDelivered(final LocalSession session) throws DocumentException
-    {
-        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(session, atLeastOnce().description("Expected something to be delivered to the session.")).deliverRawText(captor.capture());
-        return DocumentHelper.parseText(captor.getValue()).getRootElement();
-    }
-
-    /**
-     * Returns the IDs of the messages that are unacknowledged, in order. This closes the stream manager, as it uses the
-     * routing of unacknowledged messages on close to observe them.
-     */
-    private static List<String> unacknowledgedMessageIds(final StreamManager sm)
-    {
-        final PacketRouter router = mock(PacketRouter.class);
-        sm.onClose(router, SERVER_ADDRESS);
-
-        final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
-        verify(router, atLeast(0)).route(captor.capture());
-        return captor.getAllValues().stream().map(Packet::getID).toList();
-    }
-
-    private static void assertFailedWithUnexpectedRequest(final Element failed, final String namespace)
-    {
-        assertEquals(QName.get("failed", namespace), failed.getQName(), "The response must be a 'failed' element in the namespace of the request.");
-        assertNotNull(failed.element(QName.get("unexpected-request", "urn:ietf:params:xml:ns:xmpp-stanzas")), "The response must report the 'unexpected-request' condition, but was: " + failed.asXML());
-    }
-
-    /**
-     * Verifies that the session was closed with one stream error of the specified condition. Returns that stream
-     * error's XML representation.
+     * Verifies that a termination delegate that is replaced while the delegates are obtained is not missed together
+     * with its replacement (OF-3420). The task that cleans up detached sessions would otherwise decide without either
+     * of them, and could end a session that both would keep.
      *
-     * @param expectedCondition the condition of the stream error
-     * @return the XML representation of the stream error
+     * The replacement is added before the replaced delegate is removed, at the moment that the hash code of the first
+     * delegate is computed. The hash codes place the replacement before, and the replaced delegate after, the
+     * delegates that are being iterated.
      */
-    private static String assertSessionClosedWithStreamError(final LocalSession session, final StreamError.Condition expectedCondition)
+    @Test
+    void replacedTerminationDelegateIsNotMissedTogetherWithItsReplacement()
     {
-        final ArgumentCaptor<StreamError> captor = ArgumentCaptor.forClass(StreamError.class);
-        verify(session, times(1).description("The session must be closed with exactly one stream error.")).close(captor.capture());
-        assertTrue(session.isClosed(), "The session must report itself as closed.");
-        assertEquals(expectedCondition, captor.getValue().getCondition(), "The stream error must use the '" + expectedCondition + "' condition, but was: " + captor.getValue());
-        return captor.getValue().toXML();
+        // Setup test fixture.
+        final StreamManager sm = End.ANSWERING.newStreamManager(End.ANSWERING.newSession());
+        final AtomicReference<Runnable> onHashCode = new AtomicReference<>();
+        final TerminationDelegate first = new DelegateWithHashCode(1, onHashCode);
+        final TerminationDelegate second = new DelegateWithHashCode(2, onHashCode);
+        final TerminationDelegate replaced = new DelegateWithHashCode(5, onHashCode);
+        final TerminationDelegate replacement = new DelegateWithHashCode(0, onHashCode);
+        sm.addTerminationDelegate(first);
+        sm.addTerminationDelegate(second);
+        sm.addTerminationDelegate(replaced);
+        onHashCode.set(() -> {
+            sm.addTerminationDelegate(replacement);
+            sm.removeTerminationDelegate(replaced);
+        });
+
+        // Execute system under test.
+        final Set<TerminationDelegate> result = assertDoesNotThrow(sm::getTerminationDelegates, "Obtaining the termination delegates must not fail when a delegate is replaced at the same time.");
+
+        // Verify result.
+        assertNull(onHashCode.get(), "Test fixture expects a delegate to be replaced while the delegates were obtained.");
+        assertTrue(result.contains(replaced) || result.contains(replacement), "The replaced delegate or its replacement must be obtained, but the delegates were: " + result);
     }
 
     /**
-     * Verifies that the session was closed with one stream error of the specified condition, containing the specified
-     * text.
-     *
-     * @param expectedCondition the condition of the stream error
-     * @param expectedText      the text that must be contained in the stream error
+     * Verifies that a termination delegate of null is refused, rather than added (OF-3420).
      */
-    private static void assertSessionClosedWithStreamError(final LocalSession session, final StreamError.Condition expectedCondition, final String expectedText)
+    @Test
+    void addingNullTerminationDelegateIsRefused()
     {
-        final ArgumentCaptor<StreamError> captor = ArgumentCaptor.forClass(StreamError.class);
-        verify(session, times(1).description("The session must be closed with exactly one stream error.")).close(captor.capture());
-        assertTrue(session.isClosed(), "The session must report itself as closed.");
-        assertEquals(expectedCondition, captor.getValue().getCondition(), "The stream error must use the '" + expectedCondition + "' condition, but was: " + captor.getValue());
-        final String streamError = captor.getValue().toXML();
-        assertTrue(streamError.contains(expectedText), "The stream error must contain the text '" + expectedText + "', but was: " + streamError);
-    }
+        // Setup test fixture.
+        final StreamManager sm = End.ANSWERING.newStreamManager(End.ANSWERING.newSession());
 
-    private static void assertHandledCountTooHigh(final LocalSession session, final String expectedH, final String expectedSendCount) throws DocumentException
-    {
-        final String streamError = assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition);
-        final Element element = DocumentHelper.parseText(streamError).getRootElement().element(QName.get("handled-count-too-high", StreamManager.NAMESPACE_V3));
-        assertNotNull(element, "The stream error must include a 'handled-count-too-high' element, but was: " + streamError);
-        assertEquals(expectedH, element.attributeValue("h"), "The element must report the value of 'h' that was received.");
-        assertEquals(expectedSendCount, element.attributeValue("send-count"), "The element must report the number of stanzas that were sent.");
+        // Execute system under test.
+        assertThrows(NullPointerException.class, () -> sm.addTerminationDelegate(null), "Adding a termination delegate of null must be refused.");
+
+        // Verify result.
+        assertTrue(sm.getTerminationDelegates().isEmpty(), "No termination delegate must be registered after null was refused, but found: " + sm.getTerminationDelegates());
     }
 
     /**
-     * Mocks the session to track whether it is closed.
-     *
-     * @param session the session to mock.
+     * Verifies that removing a termination delegate of null is refused, and leaves the registered delegates in place (OF-3420).
      */
-    private static void mockCloseTracking(final LocalClientSession session)
+    @Test
+    void removingNullTerminationDelegateIsRefused()
     {
-        final AtomicBoolean closed = new AtomicBoolean(false);
+        // Setup test fixture.
+        final StreamManager sm = End.ANSWERING.newStreamManager(End.ANSWERING.newSession());
+        final TerminationDelegate delegate = allowableInactivity -> false;
+        sm.addTerminationDelegate(delegate);
 
-        doAnswer(invocation -> {
-            closed.set(true);
-            return null;
-        }).when(session).close();
+        // Execute system under test.
+        assertThrows(NullPointerException.class, () -> sm.removeTerminationDelegate(null), "Removing a termination delegate of null must be refused.");
 
-        doAnswer(invocation -> {
-            closed.set(true);
-            return null;
-        }).when(session).close(nullable(StreamError.class));
-
-        doAnswer(invocation -> closed.get()).when(session).isClosed();
+        // Verify result.
+        assertEquals(Set.of(delegate), sm.getTerminationDelegates(), "The registered termination delegate must be kept after removing null was refused.");
     }
 
     /**
-     * Sets a private counter of a stream manager, as sending 2^32 stanzas is not feasible in a unit test.
+     * A termination delegate with a fixed hash code, which runs an action, once, when its hash code is computed.
      */
-    private static void setCounter(final StreamManager sm, final String fieldName, final long value) throws Exception
+    private static final class DelegateWithHashCode implements TerminationDelegate
     {
-        final Field field = StreamManager.class.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        ((AtomicLong) field.get(sm)).set(value);
+        private final int hashCode;
+        private final AtomicReference<Runnable> onHashCode;
+
+        DelegateWithHashCode(final int hashCode, final AtomicReference<Runnable> onHashCode)
+        {
+            this.hashCode = hashCode;
+            this.onHashCode = onHashCode;
+        }
+
+        @Override
+        public boolean shouldTerminate(@Nonnull final Duration allowableInactivity)
+        {
+            return false;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            final Runnable action = onHashCode.getAndSet(null);
+            if (action != null) {
+                action.run();
+            }
+            return hashCode;
+        }
+    }
+
+    /**
+     * Waits until a thread waits to obtain the lock of an object, failing when it ends before that, or does not wait
+     * within ten seconds.
+     */
+    private static void awaitBlockedOn(final Thread thread, final Object monitor)
+    {
+        final ThreadMXBean threads = ManagementFactory.getThreadMXBean();
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (true) {
+            final ThreadInfo info = threads.getThreadInfo(thread.getId());
+            if (info != null && info.getThreadState() == Thread.State.BLOCKED && info.getLockInfo() != null && info.getLockInfo().getIdentityHashCode() == System.identityHashCode(monitor)) {
+                return;
+            }
+            assertTrue(thread.isAlive(), "Test fixture expects the thread to wait for the lock, but it ended.");
+            assertTrue(System.nanoTime() < deadline, "Test fixture expects the thread to wait for the lock within ten seconds.");
+            Thread.onSpinWait();
+        }
     }
 }

@@ -28,4 +28,15 @@ window.onload = function()
     document.getElementById("directtls-enabled").addEventListener('click', () => { applyDisplayable( "directtls" ); }, false);
     applyDisplayable( "plaintext" );
     applyDisplayable( "directtls" );
+
+    // Settings that only some pages have, such as those for Stream Management on server connections.
+    for ( const connectionType of [ "streammanagement", "resumption" ] )
+    {
+        const checkbox = document.getElementById( connectionType + "-enabled" );
+        if ( checkbox != null )
+        {
+            checkbox.addEventListener('click', () => { applyDisplayable( connectionType ); }, false);
+            applyDisplayable( connectionType );
+        }
+    }
 };

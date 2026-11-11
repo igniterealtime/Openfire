@@ -64,15 +64,13 @@
         try {
             final List<IncomingServerSession> incomingServerSessions = sessionManager.getIncomingServerSessions(domainName);
             for (Session incomingServerSession : incomingServerSessions) {
-                incomingServerSession.markNonResumable();
-                incomingServerSession.close();
+                sessionManager.closeWithoutResumption(incomingServerSession);
             }
 
             Collection<OutgoingServerSession> outgoingServerSessions = sessionManager.getOutgoingServerSessions(domainName);
             for (OutgoingServerSession outgoingServerSession : outgoingServerSessions) {
                 if (outgoingServerSession != null) {
-                    outgoingServerSession.markNonResumable();
-                    outgoingServerSession.close();
+                    sessionManager.closeWithoutResumption(outgoingServerSession);
                 }
             }
             // Log the event

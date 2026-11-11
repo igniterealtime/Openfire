@@ -206,6 +206,33 @@ public class SASLAuthenticationTest
     }
 
     /**
+     * Verifies that the domain that an incoming server session authenticates with EXTERNAL is recorded as its first
+     * authenticated domain, with SASL_EXTERNAL as its method.
+     */
+    @Test
+    public void shouldRecordFirstAuthenticationOfIncomingServerSessionForExternalMechanism() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("EXTERNAL"));
+
+        final SaslServer saslServer = mock(SaslServer.class);
+        when(saslServer.evaluateResponse(any())).thenReturn(new byte[0]);
+        when(saslServer.isComplete()).thenReturn(true);
+        when(saslServer.getAuthorizationID()).thenReturn("remote.example.org");
+        when(saslServer.getMechanismName()).thenReturn("EXTERNAL");
+        session.setSessionData("SaslServer", saslServer);
+
+        // Execute system under test.
+        SASLAuthentication.handle(session, responseElement(""), false);
+
+        // Verify result.
+        assertEquals(new LocalIncomingServerSession.DomainAuthentication("remote.example.org", ServerSession.AuthenticationMethod.SASL_EXTERNAL), session.getFirstAuthentication(), "Expected the domain authenticated with EXTERNAL to be recorded as the first authenticated domain, with SASL_EXTERNAL as its method.");
+    }
+
+    /**
      * Verifies that an incoming server session authenticated with a non-EXTERNAL mechanism is marked as OTHER.
      */
     @Test
@@ -2165,7 +2192,7 @@ public class SASLAuthenticationTest
 
     /**
      * Builds an authenticated, SM-resumable session and registers it in the (mocked) routing table, so that
-     * {@link org.jivesoftware.openfire.streammanagement.StreamManager#processSasl2Resume} can locate it as an
+     * {@link org.jivesoftware.openfire.streammanagement.AnsweringStreamManager#processSasl2Resume} can locate it as an
      * existing session to resume.
      *
      * @return the previd (SM-ID) a client would use to resume the returned session.

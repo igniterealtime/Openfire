@@ -96,9 +96,11 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
                             // OF-2311: If closed by another cluster node, chances are that the session needs to be closed forcibly.
                             // Chances of the session being resumed are neglectable, while retaining the session in a detached state
                             // causes problems (eg: IQBindHandler could have re-issued the resource to a replacement session).
-                            session.markNonResumable();
+                            // OF-2425: This also ends a detached server session, which has no connection to close.
+                            SessionManager.getInstance().closeWithoutResumption(session);
+                        } else {
+                            session.close();
                         }
-                        session.close();
                     } catch (Exception e) {
                         Log.info("An exception was logged while closing session: {}", session, e);
                     }

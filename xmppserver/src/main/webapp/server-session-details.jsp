@@ -24,6 +24,7 @@
 <%@ page import="java.util.stream.Collectors" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.net.InetAddress" %>
+<%@ page import="java.util.function.Function" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.session.*" %>
@@ -58,15 +59,13 @@
         try {
             final List<IncomingServerSession> incomingServerSessions = sessionManager.getIncomingServerSessions(domainname);
             for (Session incomingServerSession : incomingServerSessions) {
-                incomingServerSession.markNonResumable();
-                incomingServerSession.close();
+                sessionManager.closeWithoutResumption(incomingServerSession);
             }
 
             Collection<OutgoingServerSession> outgoingServerSessions = sessionManager.getOutgoingServerSessions(domainname);
             for (OutgoingServerSession outgoingServerSession : outgoingServerSessions) {
                 if (outgoingServerSession != null) {
-                    outgoingServerSession.markNonResumable();
-                    outgoingServerSession.close();
+                    sessionManager.closeWithoutResumption(outgoingServerSession);
                 }
             }
             // Log the event
@@ -92,22 +91,21 @@
     List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(domainname);
     List<OutgoingServerSession> outSessions = sessionManager.getOutgoingServerSessions(domainname);
 
-    // Sort them by remote peer.
-    final Map<String, Set<IncomingServerSession>> inByHost = inSessions.stream().collect(Collectors.groupingBy(e -> {
+    // Sort them by remote peer. OF-2425: detached sessions have no connection, and therefore no host address.
+    final String detachedHostKey = "detached";
+    final Function<Session, String> hostKey = e -> {
+        if (e.isDetached()) {
+            return detachedHostKey;
+        }
         try {
-            return e.getHostAddress();
+            final String hostAddress = e.getHostAddress();
+            return hostAddress == null ? "Invalid session/connection" : hostAddress;
         } catch (Exception t) {
             return "Invalid session/connection";
         }
-    }, Collectors.mapping(e -> e, Collectors.toSet())));
-
-    final Map<String, Set<OutgoingServerSession>> outByHost = outSessions.stream().collect(Collectors.groupingBy(e -> {
-        try {
-            return e.getHostAddress();
-        } catch (Exception t) {
-            return "Invalid session/connection";
-        }
-    }, Collectors.mapping(e -> e, Collectors.toSet())));
+    };
+    final Map<String, Set<IncomingServerSession>> inByHost = inSessions.stream().collect(Collectors.groupingBy(hostKey, Collectors.mapping(e -> e, Collectors.toSet())));
+    final Map<String, Set<OutgoingServerSession>> outByHost = outSessions.stream().collect(Collectors.groupingBy(hostKey, Collectors.mapping(e -> e, Collectors.toSet())));
 
     Map<String, String> allHosts = new HashMap<>();
 
@@ -116,6 +114,10 @@
     hosts.addAll(outByHost.keySet());
 
     for (String host : hosts) {
+        if (detachedHostKey.equals(host)) {
+            allHosts.put(host, null);
+            continue;
+        }
         try {
             allHosts.put(host, InetAddress.getByName(host).getCanonicalHostName());
         } catch (Exception e) {
@@ -130,6 +132,7 @@
     pageContext.setAttribute("inByHost", inByHost);
     pageContext.setAttribute("outByHost", outByHost);
     pageContext.setAttribute("clusteringEnabled", clusteringEnabled);
+    pageContext.setAttribute("detachedHostKey", detachedHostKey);
 %>
 
 <html>
@@ -204,8 +207,15 @@
                             <fmt:message key="server.session.details.hostname" />
                         </td>
                         <td>
-                            <c:out value="${host.key}"/>
-                            <c:if test="${not empty host.value}">/ <c:out value="${host.value}"/></c:if>
+                            <c:choose>
+                                <c:when test="${host.key eq detachedHostKey}">
+                                    <fmt:message key="server.session.details.detached_host"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:out value="${host.key}"/>
+                                    <c:if test="${not empty host.value}">/ <c:out value="${host.value}"/></c:if>
+                                </c:otherwise>
+                            </c:choose>
                         </td>
                     </tr>
                     <tr>
@@ -270,6 +280,8 @@
                             <th><fmt:message key="server.session.details.cipher"/></th>
                             <th><fmt:message key="server.session.details.local_port"/></th>
                             <th><fmt:message key="server.session.details.remote_port"/></th>
+                            <th><fmt:message key="session.details.sm-status"/></th>
+                            <th><fmt:message key="server.session.details.unacknowledged"/></th>
                             <th><fmt:message key="server.session.label.creation" /></th>
                             <th><fmt:message key="server.session.label.last_active" /></th>
                             <th><fmt:message key="server.session.details.incoming_statistics" /></th>
@@ -277,9 +289,15 @@
                         </tr>
 
                         <c:forEach items="${inSessions}" var="session">
+                            <c:set var="isDetached" value="${session.detached}"/>
+                            <c:set var="isLocal" value="${session['class'].simpleName eq 'LocalIncomingServerSession'}"/>
                             <tr>
                                 <td>
                                     <c:choose>
+                                        <c:when test="${isDetached}">
+                                            <fmt:message key="session.details.sm-detached" var="detachedText"/>
+                                            <img src="images/blank.gif" width="1" height="1" alt="${fn:escapeXml(detachedText)}">
+                                        </c:when>
                                         <c:when test="${session.encrypted}">
                                             <img src="images/lock.gif" alt="An encrypted connection">
                                         </c:when>
@@ -292,7 +310,7 @@
                                 <c:if test="${clusteringEnabled}">
                                     <td >
                                         <c:choose>
-                                            <c:when test="${session['class'].simpleName eq 'LocalIncomingServerSession'}">
+                                            <c:when test="${isLocal}">
                                                 <fmt:message key="server.session.details.local"/>
                                             </c:when>
                                             <c:otherwise>
@@ -301,32 +319,71 @@
                                         </c:choose>
                                     </td>
                                 </c:if>
+                                <c:choose>
+                                    <c:when test="${isDetached}">
+                                        <td colspan="5"><fmt:message key="server.session.details.no_connection"/></td>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${session.isUsingServerDialback()}">
+                                                    <fmt:message key="server.session.details.dialback"/>
+                                                </c:when>
+                                                <c:when test="${session.isUsingSaslExternal()}">
+                                                    <fmt:message key="server.session.details.tlsauth"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <fmt:message key="server.session.details.unknown"/>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td><c:out value="${session.TLSProtocolName}"/></td>
+                                        <td><c:out value="${session.cipherSuiteName}"/></td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${session.localPort gt 0}">
+                                                    <c:out value="${session.localPort}"/>
+                                                </c:when>
+                                                <c:otherwise>&nbsp;</c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${session.remotePort gt 0}">
+                                                    <c:out value="${session.remotePort}"/>
+                                                </c:when>
+                                                <c:otherwise>&nbsp;</c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                    </c:otherwise>
+                                </c:choose>
+                                <%-- OF-2425: the Stream Management state of a session on another cluster node is not available. --%>
                                 <td>
                                     <c:choose>
-                                        <c:when test="${session.isUsingServerDialback()}">
-                                            <fmt:message key="server.session.details.dialback"/>
+                                        <c:when test="${isDetached}">
+                                            <fmt:message key="session.details.sm-detached"/>
                                         </c:when>
-                                        <c:when test="${session.isUsingSaslExternal()}">
-                                            <fmt:message key="server.session.details.tlsauth"/>
+                                        <c:when test="${not isLocal}">
+                                            <fmt:message key="server.session.details.unknown"/>
+                                        </c:when>
+                                        <c:when test="${session.streamManager.enabled and session.streamManager.resume}">
+                                            <fmt:message key="session.details.sm-resume"/>
+                                        </c:when>
+                                        <c:when test="${session.streamManager.enabled}">
+                                            <fmt:message key="session.details.sm-enabled"/>
                                         </c:when>
                                         <c:otherwise>
-                                            <fmt:message key="server.session.details.unknown"/>
+                                            <fmt:message key="session.details.sm-disabled"/>
                                         </c:otherwise>
                                     </c:choose>
-                                <td><c:out value="${session.TLSProtocolName}"/></td>
-                                <td><c:out value="${session.cipherSuiteName}"/></td>
-                                <td>
-                                    <c:choose>
-                                        <c:when test="${session.localPort gt 0}">
-                                            <c:out value="${session.localPort}"/>
-                                        </c:when>
-                                        <c:otherwise>&nbsp;</c:otherwise>
-                                    </c:choose>
                                 </td>
-                                <td>
+                                <td style="text-align: center">
                                     <c:choose>
-                                        <c:when test="${session.remotePort gt 0}">
-                                            <c:out value="${session.remotePort}"/>
+                                        <c:when test="${not isLocal}">
+                                            <fmt:message key="server.session.details.unknown"/>
+                                        </c:when>
+                                        <c:when test="${isDetached or session.streamManager.enabled}">
+                                            <fmt:formatNumber type="number" value="${session.streamManager.unacknowledgedStanzaCount}"/>
                                         </c:when>
                                         <c:otherwise>&nbsp;</c:otherwise>
                                     </c:choose>
@@ -353,6 +410,8 @@
                             <th><fmt:message key="server.session.details.cipher"/></th>
                             <th><fmt:message key="server.session.details.local_port"/></th>
                             <th><fmt:message key="server.session.details.remote_port"/></th>
+                            <th><fmt:message key="session.details.sm-status"/></th>
+                            <th><fmt:message key="server.session.details.unacknowledged"/></th>
                             <th><fmt:message key="server.session.label.creation" /></th>
                             <th><fmt:message key="server.session.label.last_active" /></th>
                             <th><fmt:message key="server.session.details.incoming_statistics" /></th>
@@ -360,9 +419,15 @@
                         </tr>
 
                         <c:forEach items="${outSessions}" var="session">
+                            <c:set var="isDetached" value="${session.detached}"/>
+                            <c:set var="isLocal" value="${session['class'].simpleName eq 'LocalOutgoingServerSession'}"/>
                             <tr>
                                 <td style="width: 1%">
                                     <c:choose>
+                                        <c:when test="${isDetached}">
+                                            <fmt:message key="session.details.sm-detached" var="detachedText"/>
+                                            <img src="images/blank.gif" width="1" height="1" alt="${fn:escapeXml(detachedText)}">
+                                        </c:when>
                                         <c:when test="${session.encrypted}">
                                             <img src="images/lock.gif" alt="An encrypted connection">
                                         </c:when>
@@ -375,7 +440,7 @@
                                 <c:if test="${clusteringEnabled}">
                                     <td >
                                         <c:choose>
-                                            <c:when test="${session['class'].simpleName eq 'LocalOutgoingServerSession'}">
+                                            <c:when test="${isLocal}">
                                                 <fmt:message key="server.session.details.local"/>
                                             </c:when>
                                             <c:otherwise>
@@ -384,32 +449,71 @@
                                         </c:choose>
                                     </td>
                                 </c:if>
-                                <td >
+                                <c:choose>
+                                    <c:when test="${isDetached}">
+                                        <td colspan="5"><fmt:message key="server.session.details.no_connection"/></td>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${session.isUsingServerDialback()}">
+                                                    <fmt:message key="server.session.details.dialback"/>
+                                                </c:when>
+                                                <c:when test="${session.isUsingSaslExternal()}">
+                                                    <fmt:message key="server.session.details.tlsauth"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <fmt:message key="server.session.details.unknown"/>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td><c:out value="${session.TLSProtocolName}"/></td>
+                                        <td><c:out value="${session.cipherSuiteName}"/></td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${session.localPort gt 0}">
+                                                    <c:out value="${session.localPort}"/>
+                                                </c:when>
+                                                <c:otherwise>&nbsp;</c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${session.remotePort gt 0}">
+                                                    <c:out value="${session.remotePort}"/>
+                                                </c:when>
+                                                <c:otherwise>&nbsp;</c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                    </c:otherwise>
+                                </c:choose>
+                                <%-- OF-2425: the Stream Management state of a session on another cluster node is not available. --%>
+                                <td>
                                     <c:choose>
-                                        <c:when test="${session.isUsingServerDialback()}">
-                                            <fmt:message key="server.session.details.dialback"/>
+                                        <c:when test="${isDetached}">
+                                            <fmt:message key="session.details.sm-detached"/>
                                         </c:when>
-                                        <c:when test="${session.isUsingSaslExternal()}">
-                                            <fmt:message key="server.session.details.tlsauth"/>
+                                        <c:when test="${not isLocal}">
+                                            <fmt:message key="server.session.details.unknown"/>
+                                        </c:when>
+                                        <c:when test="${session.streamManager.enabled and session.streamManager.resume}">
+                                            <fmt:message key="session.details.sm-resume"/>
+                                        </c:when>
+                                        <c:when test="${session.streamManager.enabled}">
+                                            <fmt:message key="session.details.sm-enabled"/>
                                         </c:when>
                                         <c:otherwise>
-                                            <fmt:message key="server.session.details.unknown"/>
+                                            <fmt:message key="session.details.sm-disabled"/>
                                         </c:otherwise>
                                     </c:choose>
-                                <td><c:out value="${session.TLSProtocolName}"/></td>
-                                <td><c:out value="${session.cipherSuiteName}"/></td>
-                                <td>
-                                    <c:choose>
-                                        <c:when test="${session.localPort gt 0}">
-                                            <c:out value="${session.localPort}"/>
-                                        </c:when>
-                                        <c:otherwise>&nbsp;</c:otherwise>
-                                    </c:choose>
                                 </td>
-                                <td>
+                                <td style="text-align: center">
                                     <c:choose>
-                                        <c:when test="${session.remotePort gt 0}">
-                                            <c:out value="${session.remotePort}"/>
+                                        <c:when test="${not isLocal}">
+                                            <fmt:message key="server.session.details.unknown"/>
+                                        </c:when>
+                                        <c:when test="${isDetached or session.streamManager.enabled}">
+                                            <fmt:formatNumber type="number" value="${session.streamManager.unacknowledgedStanzaCount}"/>
                                         </c:when>
                                         <c:otherwise>&nbsp;</c:otherwise>
                                     </c:choose>

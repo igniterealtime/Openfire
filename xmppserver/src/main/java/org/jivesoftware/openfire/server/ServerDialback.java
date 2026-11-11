@@ -264,6 +264,8 @@ public class ServerDialback {
                     session.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                     // Set the remote domain as the address of the session.
                     session.setAddress(new JID(null, domainPair.getRemote(), null));
+                    // OF-2425: this stream has no features, so Stream Management cannot be offered on it, and the session need not wait for its negotiation.
+                    session.getStreamManager().skipEnable();
                     log.debug( "Successfully created new outgoing session!" );
                     return session;
                 }
@@ -431,7 +433,7 @@ public class ServerDialback {
                         LocalIncomingServerSession session = sessionManager.
                             createIncomingServerSession(connection, streamID, hostname);
                         // Add the validated domain as a valid domain
-                        session.addValidatedDomain(hostname);
+                        session.addValidatedDomain(hostname, ServerSession.AuthenticationMethod.DIALBACK);
                         session.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                         // Set the domain or subdomain of the local server used when
                         // validating the session
@@ -547,6 +549,16 @@ public class ServerDialback {
             boolean alreadyExists = false;
             for (IncomingServerSession session : sessionManager.getIncomingServerSessions(remoteDomain)) {
                 if (recipient.equals(session.getLocalDomain())) {
+                    // OF-2425: A detached session has no connection. It can only be resumed on a new connection, after that is authenticated.
+                    if (!sessionManager.isMultipleServerConnectionsAllowed() && session.isDetached()) {
+                        log.debug( "Not counting detached session {} as an existing connection.", session.getStreamID() );
+                        continue;
+                    }
+                    // OF-2425: The remote server can authenticate a domain again on the connection that it already uses for it, for example after resumption.
+                    if (!sessionManager.isMultipleServerConnectionsAllowed() && session instanceof LocalSession localSession && localSession.getConnection() == connection) {
+                        log.debug( "Not counting session {}, which uses this connection, as an existing connection.", session.getStreamID() );
+                        continue;
+                    }
                     alreadyExists = true;
                 }
             }

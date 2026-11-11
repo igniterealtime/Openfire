@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.streammanagement.AnsweringStreamManager;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -26,6 +27,7 @@ import org.jivesoftware.openfire.nio.XMLLightweightParser;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.StreamErrorException;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -37,10 +39,13 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -72,8 +77,29 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * List of domains, subdomains and virtual hostnames of the remote server that were
      * validated with this server. The remote server is allowed to send packets to this
      * server from any of the validated domains.
+     *
+     * Domains are added by the thread that processes data from the remote server, and read by other threads, such as
+     * the one that closes the session.
      */
-    private Set<String> validatedDomains = new HashSet<>();
+    private final Set<String> validatedDomains = ConcurrentHashMap.newKeySet();
+
+    /**
+     * The first domain that was validated for this session, and how it was authenticated. Set once, and kept when that
+     * domain is removed from the validated domains.
+     *
+     * Set by the thread that processes data from the remote server, and read by other threads, such as the one of a
+     * connection on which the stream of this session is resumed.
+     */
+    private final AtomicReference<DomainAuthentication> firstAuthentication = new AtomicReference<>();
+
+    /**
+     * The stream ID that Openfire sent in the stream header on the current connection of this session. This is the
+     * stream ID of this session, unless its stream was resumed on a connection of which the stream header carried the
+     * stream ID of another session.
+     *
+     * Set by the thread of the connection on which the stream is resumed, and read by other threads.
+     */
+    private volatile StreamID connectionStreamID;
 
     /**
      * Domains or subdomain of this server that was used by the remote server
@@ -216,6 +242,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     public LocalIncomingServerSession(String serverName, Connection connection, StreamID streamID, String fromDomain) {
         super(serverName, connection, streamID);
         this.fromDomain = fromDomain;
+        this.connectionStreamID = streamID;
     }
     
     public String getDefaultIdentity() {
@@ -241,6 +268,10 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * For optimization reasons, the same session may be servicing several domains of a
      * remote server.
      *
+     * The key is verified with the stream ID that Openfire sent in the stream header on the current connection
+     * ({@link #getConnectionStreamID()}), with which the remote server generated it (XEP-0185). A domain that was
+     * validated for this session already can be validated again.
+     *
      * @param dbResult the DOM stanza requesting the domain validation.
      * @return true if the requested domain was valid.
      */
@@ -248,12 +279,12 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         final DomainPair domainPair = new DomainPair(getServerName(), fromDomain);
         ServerDialback method = new ServerDialback(getConnection(), domainPair);
         try {
-            final String recipient = method.validateRemoteDomain(dbResult, getStreamID());
+            final String recipient = method.validateRemoteDomain(dbResult, getConnectionStreamID());
             final String remoteDomain = dbResult.attributeValue("from");
 
             // Add the validated domain as a valid domain. Do this before notifying the remote domain of success! (OF-2626)
             setAuthenticationMethod(AuthenticationMethod.DIALBACK);
-            addValidatedDomain(remoteDomain);
+            addValidatedDomain(remoteDomain, AuthenticationMethod.DIALBACK);
 
             // Report success to the peer.
             final Namespace ns = Namespace.get("db", "jabber:server:dialback");
@@ -335,10 +366,33 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * Adds a new validated domain, subdomain or virtual host to the list of
      * validated domains for the remote server.
      *
+     * When this is the first domain that is validated for the session, it is recorded as such
+     * ({@link #getFirstAuthentication()}), together with the authentication method of the session at the time of this
+     * invocation, which is null when none was set yet. {@link #addValidatedDomain(String, AuthenticationMethod)} names
+     * the method explicitly.
+     *
      * @param domain the new validated domain, subdomain or virtual host to add.
      */
-    public void addValidatedDomain(String domain) {
+    public void addValidatedDomain(@Nonnull final String domain) {
+        addValidatedDomain(domain, getAuthenticationMethod());
+    }
+
+    /**
+     * Adds a new validated domain, subdomain or virtual host to the list of validated domains for the remote server,
+     * which was authenticated with the provided method.
+     *
+     * When this is the first domain that is validated for the session, it is recorded as such, together with the
+     * method ({@link #getFirstAuthentication()}). This does not set the authentication method of the session
+     * ({@link #setAuthenticationMethod(AuthenticationMethod)}).
+     *
+     * @param domain the new validated domain, subdomain or virtual host to add.
+     * @param method the method with which the domain was authenticated (null when it is not known).
+     */
+    public void addValidatedDomain(@Nonnull final String domain, @Nullable final AuthenticationMethod method) {
         if (validatedDomains.add(domain)) {
+            if (firstAuthentication.compareAndSet(null, new DomainAuthentication(domain, method))) {
+                Log.debug("Domain '{}' is the first that is validated for session with stream ID '{}', using authentication method {}.", domain, getStreamID(), method);
+            }
             // Set the first validated domain as the address of the session
             if (validatedDomains.size() < 2) {
                 setAddress(new JID(null, domain, null));
@@ -350,6 +404,100 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
 
     /**
+     * Creates the session for the stream that the remote server restarts on the connection of this session, after SASL
+     * negotiation succeeded on it. The restarted stream gets a new stream ID, as RFC 6120 § 6.4.6 requires. The new
+     * session takes over what was negotiated on this one: its validated domains, its authentication method, the record
+     * of its first authentication ({@link #getFirstAuthentication()}), the local domain and the identity that the remote
+     * server claimed. The new session is registered under the new stream ID, and this session is then unregistered, so
+     * that the validated domains remain registered throughout. This session is unregistered also when registering the
+     * new one fails.
+     *
+     * @return the session for the restarted stream.
+     * @throws UnauthorizedException if the server is not initialised.
+     */
+    @Nonnull
+    public LocalIncomingServerSession createSessionForRestartedStream() throws UnauthorizedException
+    {
+        final SessionManager sessionManager = SessionManager.getInstance();
+        final StreamID restartedStreamID = sessionManager.nextStreamID();
+        final LocalIncomingServerSession restarted = sessionManager.createIncomingServerSession(conn, restartedStreamID, fromDomain);
+        restarted.setLocalDomain(localDomain);
+        restarted.setClaimedIdentity(getClaimedIdentity().orElse(null));
+        if (authenticationMethod != null) {
+            restarted.setAuthenticationMethod(authenticationMethod);
+        }
+        restarted.firstAuthentication.set(firstAuthentication.get());
+        // OF-3447: register before unregistering, so that blocking a domain in between cannot miss this connection.
+        // Unregister also when registering fails, as the connection's close listener now refers to the new session.
+        try {
+            validatedDomains.forEach(restarted::addValidatedDomain);
+        } finally {
+            sessionManager.unregisterIncomingServerSession(streamID);
+        }
+        Log.debug("Session with stream ID '{}' of validated domain(s) {} continues as session with stream ID '{}', as the remote server restarted the stream after SASL negotiation.", streamID, validatedDomains, restartedStreamID);
+        return restarted;
+    }
+
+    /**
+     * Returns the first domain that was validated for this session, and the method with which it was authenticated.
+     * This does not change after that, also when that domain is removed from the validated domains, or other domains
+     * are validated with another method. It is the domain that the remote server authenticated as, which can differ
+     * from the domain that it claimed in its stream header ({@link #getDefaultIdentity()}).
+     *
+     * @return the authentication of the first validated domain, or null when no domain was validated yet.
+     */
+    @Nullable
+    public DomainAuthentication getFirstAuthentication() {
+        return firstAuthentication.get();
+    }
+
+    /**
+     * A domain of the remote server that was validated for a session, and the method with which it was authenticated.
+     *
+     * @param domain the domain that was validated (never null).
+     * @param method the method with which the domain was authenticated (null when it is not known).
+     */
+    public record DomainAuthentication(@Nonnull String domain, @Nullable AuthenticationMethod method) {}
+
+    /**
+     * Returns the stream ID that Openfire sent in the stream header on the current connection of this session. The
+     * remote server uses it to generate the dialback keys that it sends on that connection (XEP-0185).
+     *
+     * This is the stream ID of this session ({@link #getStreamID()}), which identifies the session, also in the SM-ID of
+     * its stream and in its registrations. When the stream of this session is resumed on another connection, it is the
+     * stream ID of the session that provided that connection, as the stream header on that connection carried that ID.
+     *
+     * @return the stream ID of the stream header on the current connection (never null).
+     */
+    @Nonnull
+    public StreamID getConnectionStreamID() {
+        return connectionStreamID;
+    }
+
+    /**
+     * Reattaches this session to the connection of another session, as {@link LocalSession#reattach(LocalSession, long)}
+     * describes. From then on, dialback on that connection uses the stream ID of the stream header on it
+     * ({@link #getConnectionStreamID()}), while this session keeps its own stream ID and validated domains. This session
+     * reports the authentication method with which the remote server authenticated on that connection, which is that of
+     * the other session.
+     *
+     * @param connectionProvider Session from which to obtain the connection from.
+     * @param h the sequence number of the last handled stanza sent over the former stream
+     */
+    @Override
+    public void reattach(LocalSession connectionProvider, long h) {
+        final StreamID streamIdOfConnection = connectionProvider instanceof LocalIncomingServerSession serverSession ? serverSession.getConnectionStreamID() : connectionProvider.getStreamID();
+        final AuthenticationMethod method = connectionProvider instanceof LocalServerSession provider ? provider.getAuthenticationMethod() : null;
+        Log.debug("Session with stream ID '{}' is resumed on the connection of session with stream ID '{}', authenticated with {}. Dialback on that connection uses stream ID '{}'. Validated domains are kept: {}", getStreamID(), connectionProvider.getStreamID(), method, streamIdOfConnection, validatedDomains);
+        this.connectionStreamID = streamIdOfConnection;
+        if (method != null) {
+            // OF-2425: The method was cleared when the former connection closed (LocalServerSession#setStatus).
+            setAuthenticationMethod(method);
+        }
+        super.reattach(connectionProvider, h);
+    }
+
+    /**
      * Removes the previously validated domain from the list of validated domains. The remote
      * server will no longer be able to send packets from the removed domain, subdomain or
      * virtual host.
@@ -357,7 +505,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @param domain the domain, subdomain or virtual host to remove from the list of
      *        validated domains.
      */
-    public void removeValidatedDomain(String domain) {
+    public void removeValidatedDomain(@Nonnull final String domain) {
         validatedDomains.remove(domain);
         // Unregister the validated domain for this server session in SessionManager
         SessionManager.getInstance().unregisterIncomingServerSession(domain, this);
@@ -400,6 +548,17 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         ServerDialback.verifyReceivedKey(doc, getConnection());
     }
 
+    /**
+     * Get XEP-0198 Stream manager for session. On this type of session, Openfire answers requests of the peer.
+     *
+     * @return The StreamManager for the session.
+     */
+    @Override
+    public AnsweringStreamManager getStreamManager() {
+        // OF-2425: StreamManager#forSession creates an AnsweringStreamManager for this type of session.
+        return (AnsweringStreamManager) super.getStreamManager();
+    }
+
     @Override
     public List<Element> getAvailableStreamFeatures()
     {
@@ -422,6 +581,12 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
             dialback.addElement("errors");
             result.add(dialback);
+        }
+
+        // OF-2425: Also offered before authentication, as dialback authenticates without restarting the stream.
+        if (StreamManager.SERVER_ACTIVE.getValue()) {
+            result.add(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V2)));
+            result.add(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V3)));
         }
 
         if (!ConnectionSettings.Server.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {

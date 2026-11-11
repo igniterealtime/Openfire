@@ -28,11 +28,17 @@
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 <%@ page import="org.jivesoftware.openfire.ratelimit.NewConnectionLimiterRegistry" %>
+<%@ page import="org.jivesoftware.openfire.SessionManager" %>
+<%@ page import="org.jivesoftware.openfire.session.LocalOutgoingServerSession" %>
+<%@ page import="org.jivesoftware.openfire.streammanagement.RequestingStreamManager" %>
+<%@ page import="org.jivesoftware.openfire.streammanagement.StreamManager" %>
+<%@ page import="java.time.Duration" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 <%
@@ -46,6 +52,7 @@
 
     boolean update = request.getParameter( "update" ) != null;
     boolean closeSettings = request.getParameter( "closeSettings" ) != null;
+    boolean smSettings = request.getParameter( "smSettings" ) != null;
     boolean serverAllowed = request.getParameter( "serverAllowed" ) != null;
     boolean serverBlocked = request.getParameter( "serverBlocked" ) != null;
     boolean permissionUpdate = request.getParameter( "permissionUpdate" ) != null;
@@ -55,10 +62,11 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (update || closeSettings || serverAllowed || serverBlocked || permissionUpdate || configToDelete != null) {
+    if (update || closeSettings || smSettings || serverAllowed || serverBlocked || permissionUpdate || configToDelete != null) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             update = false;
             closeSettings = false;
+            smSettings = false;
             serverAllowed = false;
             serverBlocked = false;
             configToDelete = null;
@@ -132,6 +140,51 @@
             // Log the event
             webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nDirect TLS: enabled=" + directtlsEnabled+ ", port=" + directtlsTcpPort+ "\nRate limit: enabled=" + s2sRateLimitEnabled + ", permits_per_second=" + parsedPermits + ", max_burst=" + parsedMaxBurst + "\n" );
             response.sendRedirect( "connection-settings-socket-s2s.jsp?success=update" );
+            return;
+        }
+    }
+    else if ( smSettings && errors.isEmpty() )
+    {
+        final boolean smEnabled = ParamUtils.getBooleanParameter( request, "streammanagement-enabled" );
+        final boolean resumeEnabled = ParamUtils.getBooleanParameter( request, "resumption-enabled" );
+        final int negotiationTimeout = ParamUtils.getIntParameter( request, "sm-negotiation-timeout", Integer.MIN_VALUE );
+        final int detachTimeout = ParamUtils.getIntParameter( request, "sm-detach-timeout", Integer.MIN_VALUE );
+        final int maxQueued = ParamUtils.getIntParameter( request, "sm-max-queued", Integer.MIN_VALUE );
+
+        if ( negotiationTimeout < 0 ) {
+            errors.put( "sm-negotiation-timeout", "invalid" );
+        }
+        if ( detachTimeout < -1 ) {
+            errors.put( "sm-detach-timeout", "invalid" );
+        }
+        if ( maxQueued < 0 ) {
+            errors.put( "sm-max-queued", "invalid" );
+        }
+
+        if ( errors.isEmpty() )
+        {
+            // Only store what changed, so that a setting that was never changed follows its default.
+            final Duration negotiationDuration = Duration.ofSeconds( negotiationTimeout );
+            final Duration detachDuration = detachTimeout < 0 ? Duration.ofMillis( -1 ) : Duration.ofSeconds( detachTimeout );
+            if ( StreamManager.SERVER_ACTIVE.getValue() != smEnabled ) {
+                StreamManager.SERVER_ACTIVE.setValue( smEnabled );
+            }
+            if ( StreamManager.SERVER_RESUME_ENABLED.getValue() != resumeEnabled ) {
+                StreamManager.SERVER_RESUME_ENABLED.setValue( resumeEnabled );
+            }
+            if ( !LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue().equals( negotiationDuration ) ) {
+                LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.setValue( negotiationDuration );
+            }
+            if ( !SessionManager.SERVER_SESSION_DETACH_TIMEOUT.getValue().equals( detachDuration ) ) {
+                SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue( detachDuration );
+            }
+            if ( RequestingStreamManager.MAX_QUEUED_WHILE_BROKEN.getValue() != maxQueued ) {
+                RequestingStreamManager.MAX_QUEUED_WHILE_BROKEN.setValue( maxQueued );
+            }
+
+            // Log the event
+            webManager.logEvent( "Updated Stream Management settings for " + connectionType, "enabled=" + smEnabled + ", negotiation_timeout=" + negotiationDuration + "\nResumption: enabled=" + resumeEnabled + ", detach_timeout=" + detachDuration + ", max_queued=" + maxQueued + "\n" );
+            response.sendRedirect( "connection-settings-socket-s2s.jsp?success=sm" );
             return;
         }
     }
@@ -285,6 +338,12 @@
     pageContext.setAttribute( "s2sRateLimitEnabled", NewConnectionLimiterRegistry.S2S_ENABLED.getValue() );
     pageContext.setAttribute( "s2sRateLimitPermits", NewConnectionLimiterRegistry.S2S_PERMITS_PER_SECOND.getValue() );
     pageContext.setAttribute( "s2sRateLimitMaxBurst", NewConnectionLimiterRegistry.S2S_MAX_BURST.getValue() );
+    pageContext.setAttribute( "smEnabled", StreamManager.SERVER_ACTIVE.getValue() );
+    pageContext.setAttribute( "smNegotiationTimeout", LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue().toSeconds() );
+    pageContext.setAttribute( "smResumeEnabled", StreamManager.SERVER_RESUME_ENABLED.getValue() );
+    final Duration serverDetachTimeout = SessionManager.SERVER_SESSION_DETACH_TIMEOUT.getValue();
+    pageContext.setAttribute( "smDetachTimeout", serverDetachTimeout.isNegative() ? -1 : serverDetachTimeout.toSeconds() );
+    pageContext.setAttribute( "smMaxQueued", RequestingStreamManager.MAX_QUEUED_WHILE_BROKEN.getValue() );
 %>
 <html>
 <head>
@@ -302,6 +361,7 @@
                 <c:when test="${param.success eq 'allow'}"><fmt:message key="server2server.settings.confirm.allowed"/></c:when>
                 <c:when test="${param.success eq 'block'}"><fmt:message key="server2server.settings.confirm.blocked"/></c:when>
                 <c:when test="${param.success eq 'delete'}"><fmt:message key="server2server.settings.confirm.deleted"/></c:when>
+                <c:when test="${param.success eq 'sm'}"><fmt:message key="server2server.settings.sm.updated"/></c:when>
                 <c:otherwise><fmt:message key="server2server.settings.confirm.updated"/></c:otherwise>
             </c:choose>
         </admin:infoBox>
@@ -311,7 +371,7 @@
             <admin:infobox type="error"><fmt:message key="admin.error"/>: <c:out value="${errors['csrf']}"/></admin:infobox>
         </c:if>
         <c:forEach var="err" items="${errors}">
-            <c:if test="${err.key ne 'csrf' and err.key ne 'ratelimit-permits' and err.key ne 'ratelimit-max-burst'}">
+            <c:if test="${err.key ne 'csrf' and err.key ne 'ratelimit-permits' and err.key ne 'ratelimit-max-burst' and not fn:startsWith(err.key, 'sm-')}">
                 <admin:infobox type="error">
                     <c:choose>
                         <c:when test="${err.key eq 'idletime'}"><fmt:message key="server2server.settings.valid.idle_minutes"/></c:when>
@@ -415,6 +475,77 @@
 
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
+
+<br/>
+
+<!-- BEGIN 'Stream Management Settings' -->
+<form action="connection-settings-socket-s2s.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
+    <fmt:message key="server2server.settings.sm.title" var="smTitle"/>
+    <admin:contentBox title="${smTitle}">
+        <p><fmt:message key="server2server.settings.sm.info"/></p>
+        <table>
+            <tr>
+                <td>
+                    <input type="checkbox" name="streammanagement-enabled" id="streammanagement-enabled" ${smEnabled ? 'checked' : ''}/>
+                    <label for="streammanagement-enabled"><fmt:message key="server2server.settings.sm.enable"/></label>
+                </td>
+            </tr>
+        </table>
+        <%-- OF-2425: the settings below apply only when Stream Management is used (js/connection-settings.js hides them otherwise). --%>
+        <div id="streammanagement-config">
+            <table>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap"><label for="sm-negotiation-timeout"><fmt:message key="server2server.settings.sm.negotiation_timeout"/></label></td>
+                    <td>
+                        <input type="number" name="sm-negotiation-timeout" id="sm-negotiation-timeout" value="${fn:escapeXml(smNegotiationTimeout)}" min="0" max="2147483647" step="1"/>
+                        <fmt:message key="global.seconds"/>
+                        <c:if test="${not empty errors['sm-negotiation-timeout']}">
+                            <br/>
+                            <span class="jive-error-text"><fmt:message key="server2server.settings.sm.negotiation_timeout.invalid"/></span>
+                        </c:if>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <input type="checkbox" name="resumption-enabled" id="resumption-enabled" ${smResumeEnabled ? 'checked' : ''}/>
+                        <label for="resumption-enabled"><fmt:message key="server2server.settings.sm.resume.enable"/></label>
+                        <br/>
+                        <span class="jive-description"><fmt:message key="server2server.settings.sm.resume.info"/></span>
+                    </td>
+                </tr>
+            </table>
+            <div id="resumption-config">
+                <table>
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap"><label for="sm-detach-timeout"><fmt:message key="server2server.settings.sm.detach_timeout"/></label></td>
+                        <td>
+                            <input type="number" name="sm-detach-timeout" id="sm-detach-timeout" value="${fn:escapeXml(smDetachTimeout)}" min="-1" max="2147483647" step="1"/>
+                            <fmt:message key="server2server.settings.sm.detach_timeout.unit"/>
+                            <c:if test="${not empty errors['sm-detach-timeout']}">
+                                <br/>
+                                <span class="jive-error-text"><fmt:message key="server2server.settings.sm.detach_timeout.invalid"/></span>
+                            </c:if>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap"><label for="sm-max-queued"><fmt:message key="server2server.settings.sm.max_queued"/></label></td>
+                        <td>
+                            <input type="number" name="sm-max-queued" id="sm-max-queued" value="${fn:escapeXml(smMaxQueued)}" min="0" max="2147483647" step="1"/>
+                            <c:if test="${not empty errors['sm-max-queued']}">
+                                <br/>
+                                <span class="jive-error-text"><fmt:message key="server2server.settings.sm.max_queued.invalid"/></span>
+                            </c:if>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </admin:contentBox>
+
+    <input type="submit" name="smSettings" value="<fmt:message key="global.save_settings" />">
+</form>
+<!-- END 'Stream Management Settings' -->
 
 <br/>
 

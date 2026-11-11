@@ -337,9 +337,9 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0198.html"/>
-                <xmpp:status>partial</xmpp:status>
+                <xmpp:status>complete</xmpp:status>
                 <xmpp:since>4.0.0</xmpp:since>
-                <xmpp:note xml:lang='en'>Supported on client-to-server connections only.</xmpp:note>
+                <xmpp:note xml:lang='en'>Supported on server-to-server connections since Openfire 5.2.0, where it is disabled by default.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>

@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.server.diagnostics.AttemptMilestones.Authentica
 import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
@@ -47,12 +48,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
 
 /**
@@ -273,6 +278,29 @@ public class RespondingServerStanzaHandlerRecordingTest
         // Verify results.
         assertTrue(closed.get(), "Test fixture: the connection must have been closed while the stream was restarted.");
         assertEquals(Authentication.closedAfterExternalAccepted(), recorder.snapshot().getAuthentication().orElse(null), "a connection that closed while the stream was restarted must be recorded as a close, not as certificate login");
+    }
+
+    @Test
+    public void testFeaturesAfterReportedAuthenticationDoNotStartAuthenticationAgain() throws Exception
+    {
+        // Setup test fixture: authentication was reported when the remote restarted the stream, and the caller closed
+        // the session before the stream features that follow the restarted stream header were processed.
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
+        handler.process(SASL_SUCCESS, reader);
+        handler.process(streamHeader("stream-2"), reader);
+        final LocalSession reportedSession = handler.getSession();
+        reportedSession.setStatus(Session.Status.CLOSED);
+        clearInvocations(connection);
+
+        // Execute system under test.
+        handler.process("<stream:features/>", reader);
+
+        // Verify results.
+        assertEquals(Authentication.saslExternal(), recorder.snapshot().getAuthentication().orElse(null), "the features of the restarted stream must not replace the recorded certificate login");
+        verify(connection, never().description("authentication must not start again once it was reported")).deliverRawText(any());
+        verify(connection, never().description("the connection must not be closed for a lack of authentication methods once authentication was reported")).close(nullable(StreamError.class));
+        assertSame(reportedSession, handler.getSession(), "the session that was reported must remain the session of the handler");
     }
 
     private static String streamHeader(final String streamId)

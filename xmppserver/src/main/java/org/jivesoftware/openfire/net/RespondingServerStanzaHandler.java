@@ -394,10 +394,14 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             // OF-2425: Dialback does not restart the stream, so the features before authentication tell whether Stream Management is offered.
             offeredStreamManagementNamespaces = getOfferedStreamManagementNamespaces(doc);
 
-            // Prevent falling back to dialback if we are already authenticated
-            if (session.isAuthenticated()) {
-                // OF-2425: These features follow the stream restart after SASL authentication.
-                requestStreamManagementIfOffered();
+            // Prevent falling back to dialback if we are already authenticated. Once authentication was reported, the
+            // caller may close the session before the features of the restarted stream arrive; that must not start
+            // authentication again.
+            if (session.isAuthenticated() || isSessionAuthenticated.isDone()) {
+                if (session.isAuthenticated()) {
+                    // OF-2425: These features follow the stream restart after SASL authentication.
+                    requestStreamManagementIfOffered();
+                }
                 return true;
             }
 

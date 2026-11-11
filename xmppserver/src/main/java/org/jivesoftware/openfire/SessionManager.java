@@ -2386,7 +2386,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      */
     private class DetachedCleanupTask extends TimerTask {
         /**
-         * Close detached client sessions that haven't seen activity.
+         * Close detached client sessions that have been detached for longer than the detach timeout, measured from the
+         * moment at which they were most recently detached, or from their last activity when that is later.
          */
         @Override
         public void run() {
@@ -2395,7 +2396,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 return;
             }
             final Duration allowableInactivity = Duration.ofMillis(idleTime);
-            final Instant deadline = Instant.now().minus(allowableInactivity);
+            final Instant now = Instant.now();
             for (LocalSession session : detachedSessions.values()) {
                 try {
                     final Set<TerminationDelegate> delegates = session.getStreamManager().getTerminationDelegates();
@@ -2407,11 +2408,22 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                             Log.trace("Detached session '{}' ({}) uses termination delegation, that does not want to have this session cleaned up yet.", session.getAddress(), session.getStreamID());
                         }
                     } else {
-                        if (session.getLastActiveDate().toInstant().isBefore(deadline)) {
-                            Log.debug("Detached session '{}' ({}) has been detached for longer than {} and will be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(idleTime));
+                        final Instant lastDetached = session.getLastDetachedDate();
+                        final Instant lastActive = session.getLastActiveDate().toInstant();
+                        final Instant detachedSince;
+                        if (lastDetached != null && !lastActive.isAfter(lastDetached)) {
+                            detachedSince = lastDetached;
+                        } else {
+                            // OF-3459: No detach moment, or one before the last activity: registered without LocalSession#setDetached(), or a stanza was still in flight when it detached.
+                            detachedSince = lastActive;
+                            Log.debug("Detached session '{}' ({}) has no recorded moment of detaching ({}) that is later than its last activity ({}). It is measured from its last activity.", session.getAddress(), session.getStreamID(), lastDetached, lastActive);
+                        }
+                        final Duration detachedFor = Duration.between(detachedSince, now);
+                        if (detachedFor.compareTo(allowableInactivity) > 0) {
+                            Log.debug("Detached session '{}' ({}) has been detached since {} ({}), which is longer than the configured maximum of {}. It will be cleaned up.", session.getAddress(), session.getStreamID(), detachedSince, detachedFor, allowableInactivity);
                             terminateDetached(session);
                         } else {
-                            Log.trace("Detached session '{}' ({}) has been detached for {}, which is not longer than the configured maximum of {}. It will not (yet) be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(System.currentTimeMillis()-session.getLastActiveDate().getTime()), Duration.ofMillis(idleTime));
+                            Log.trace("Detached session '{}' ({}) has been detached since {} ({}), which is not longer than the configured maximum of {}. It will not (yet) be cleaned up.", session.getAddress(), session.getStreamID(), detachedSince, detachedFor, allowableInactivity);
                         }
                     }
                 }

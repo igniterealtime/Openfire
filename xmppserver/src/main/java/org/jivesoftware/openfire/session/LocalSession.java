@@ -34,6 +34,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -90,6 +91,12 @@ public abstract class LocalSession implements Session {
     protected final long startDate = System.currentTimeMillis();
 
     private long lastActiveDate;
+
+    /**
+     * The moment at which the session was most recently detached, or null when it has never been detached.
+     */
+    @Nullable
+    private volatile Instant lastDetachedDate;
 
     private AtomicLong clientPacketCount = new AtomicLong( 0 );
 
@@ -160,6 +167,8 @@ public abstract class LocalSession implements Session {
         lock.lock();
         try {
             Log.debug("Setting session with address {} and streamID {} in detached mode.", this.address, this.streamID );
+            // OF-3459: Recorded before the session is registered as detached, so that the cleanup task measures from this detach, not an earlier one.
+            this.lastDetachedDate = Instant.now();
             this.sessionManager.addDetached(this);
             this.conn = null;
         }finally {
@@ -401,6 +410,18 @@ public abstract class LocalSession implements Session {
     @Override
     public Date getLastActiveDate() {
         return new Date(lastActiveDate);
+    }
+
+    /**
+     * Obtain the moment at which this session was most recently detached (see {@link #setDetached()}). While a
+     * session that was detached through {@link #setDetached()} is detached, this is the moment at which its current
+     * detached period started. The value is kept when the session is resumed, and replaced when it is detached again.
+     *
+     * @return The moment at which this session was most recently detached, or null if it has never been detached.
+     */
+    @Nullable
+    public Instant getLastDetachedDate() {
+        return lastDetachedDate;
     }
 
     /**

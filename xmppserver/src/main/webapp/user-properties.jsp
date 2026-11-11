@@ -115,6 +115,7 @@
 
     <admin:infoBox type="success">
         <fmt:message key="user.properties.unlocksuccess" />
+        <c:if test="${not empty param.limitscleared}"><fmt:message key="user.properties.unlocksuccess.limits_cleared" /></c:if>
     </admin:infoBox>
 
 <%  } else if (request.getParameter("editsuccess") != null) { %>

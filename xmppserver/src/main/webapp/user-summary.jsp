@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 <%@ page import="org.jivesoftware.openfire.PresenceManager,
                  org.jivesoftware.openfire.admin.AdminManager,
+                 org.jivesoftware.openfire.auth.UserLoginLimitManager,
                  org.jivesoftware.openfire.user.User,
                  org.jivesoftware.openfire.user.UserManager,
                  org.jivesoftware.openfire.group.Group,
@@ -193,6 +194,10 @@
             }
         }
         boolean isAdmin = AdminManager.getInstance().isUserAdmin(user.getUsername(), false);
+        // A user the login limits refuse from every IP address without a locked account, such as an administrator, whose
+        // account the limits never lock. One cache read; blocks from single IP addresses are not marked, as finding them
+        // would read every entry of a cache for each row.
+        boolean refusedByLoginLimits = !lockedOut && UserLoginLimitManager.getInstance().hasUsernameBlock(user.getUsername());
 %>
     <tr>
         <td style="width: 1%">
@@ -229,6 +234,7 @@
             <% if (isAdmin) { %><img src="/images/star-16x16.gif" alt="<fmt:message key='user.properties.isadmin'/>" title="<fmt:message key='user.properties.isadmin'/>"/><% } %>
             <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
             <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
+            <% if (refusedByLoginLimits) { %><img src="/images/lock.gif" alt="<fmt:message key='user.summary.login_limits_refused'/>" title="<fmt:message key='user.summary.login_limits_refused'/>"/><% } %>
         </td>
         <td style="width: 20%">
             <%= StringUtils.escapeHTMLTags(user.getName()) %> &nbsp;

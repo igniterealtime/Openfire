@@ -414,13 +414,15 @@ public class RespondingServerStanzaHandlerTest
     }
 
     /**
-     * Asserts that, by default, a stream that the remote server restarts after TLS negotiation is refused when it
-     * reuses the stream ID of the previous stream, and that the failure to initiate a session is reported.
+     * Asserts that, when configured to refuse it, a stream that the remote server restarts after TLS negotiation is
+     * refused when it reuses the stream ID of the previous stream, and that the failure to initiate a session is
+     * reported.
      */
     @Test
-    public void testRestartedStreamReusingIdAfterTlsIsRefused() throws Exception
+    public void testRestartedStreamReusingIdAfterTlsIsRefusedWhenConfigured() throws Exception
     {
         // Setup test fixture.
+        ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.setValue(false);
         handler.process(streamHeader("stream-1"), reader);
         handler.process(FEATURES_WITH_STARTTLS, reader);
         handler.process(TLS_PROCEED, reader);
@@ -438,13 +440,15 @@ public class RespondingServerStanzaHandlerTest
     }
 
     /**
-     * Asserts that, by default, a stream that the remote server restarts after SASL success is refused when it reuses
-     * the stream ID of the previous stream, and that the failure to initiate a session is reported.
+     * Asserts that, when configured to refuse it, a stream that the remote server restarts after SASL success is
+     * refused when it reuses the stream ID of the previous stream, and that the failure to initiate a session is
+     * reported.
      */
     @Test
-    public void testRestartedStreamReusingIdAfterSaslIsRefused() throws Exception
+    public void testRestartedStreamReusingIdAfterSaslIsRefusedWhenConfigured() throws Exception
     {
         // Setup test fixture.
+        ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.setValue(false);
         handler.process(streamHeader("stream-1"), reader);
         handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
         handler.process(SASL_SUCCESS, reader);
@@ -462,15 +466,14 @@ public class RespondingServerStanzaHandlerTest
     }
 
     /**
-     * Asserts that, when configured to accept it, a stream that the remote server restarts after SASL success while
-     * reusing the stream ID of the previous stream is accepted, and that authentication is reported for the session of
-     * the previous stream, which continues.
+     * Asserts that, by default, a stream that the remote server restarts after SASL success while reusing the stream
+     * ID of the previous stream is accepted, as Openfire versions before 5.2.0 do so, and that authentication is
+     * reported for the session of the previous stream, which continues.
      */
     @Test
-    public void testRestartedStreamReusingIdAfterSaslIsAcceptedWhenConfigured() throws Exception
+    public void testRestartedStreamReusingIdAfterSaslIsAcceptedByDefault() throws Exception
     {
         // Setup test fixture.
-        ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.setValue(true);
         handler.process(streamHeader("stream-1"), reader);
         handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
         handler.process(SASL_SUCCESS, reader);
@@ -480,7 +483,7 @@ public class RespondingServerStanzaHandlerTest
         handler.process(streamHeader("stream-1"), reader);
 
         // Verify result.
-        verify(connection, never().description("The connection must not be closed when a reused stream ID is accepted by configuration.")).close(nullable(StreamError.class));
+        verify(connection, never().description("The connection must not be closed when a reused stream ID is accepted.")).close(nullable(StreamError.class));
         assertTrue(authenticatedSession.isDone(), "Authentication must be reported once the remote server has restarted the stream after SASL success.");
         final LocalSession result = authenticatedSession.join();
         assertSame(previousSession, result, "As the stream ID was reused, the session of the previous stream must continue and be reported.");

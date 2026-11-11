@@ -21,6 +21,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -53,6 +54,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     private final DomainPair domainPair;
     private final CompletableFuture<Void> isSessionAuthenticated = new CompletableFuture<>();
     private final CompletableFuture<Void> attemptedAllAuthenticationMethods = new CompletableFuture<>();
+
+    /**
+     * Set when the remote server reports that SASL EXTERNAL succeeded. Authentication is reported as completed only
+     * when the remote server has restarted the stream, so that it is reported for the session of that stream (OF-3447).
+     */
+    private volatile boolean saslExternalSucceeded = false;
 
     /**
      * Creates a dedicated reader for a socket.
@@ -95,8 +102,11 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
 
     /**
-     * Transfer an existing connection to a new session when a new streamID is detected. Also transfers existing
-     * authentication method if previously set.
+     * Transfer an existing connection to a new session when a new streamID is detected. When SASL EXTERNAL succeeded
+     * on the previous stream, the new session is authenticated with the authentication method that was used previously.
+     *
+     * This does not add the new session as a server route.
+     *
      * @param newStreamId new stream ID for the new session
      * @param existingAuthMethod authentication method used previously (possibly null)
      */
@@ -105,8 +115,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Transfer new session to existing connection
         connection.reinit(session);
-        if (isSessionAuthenticated.isDone()) {
-            ((LocalOutgoingServerSession) session).addOutgoingDomainPair(domainPair);
+        if (saslExternalSucceeded && existingAuthMethod != null) {
+            session.setAddress(new JID(null, domainPair.getRemote(), null));
             ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);
         } else {
             LOG.debug("Session not authenticated yet, unable to setAuthenticationMethod().");
@@ -116,6 +126,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     @Override
     protected void initiateSession(String stanza, XMPPPacketReader reader) throws Exception {
         boolean startOfStream = isStartOfStream(stanza);
+
+        // OF-3447: once session initiation is abandoned (e.g. the connection closed after SASL success), a stream header that still arrives is ignored.
+        if (startOfStream && sessionCreated && session == null) {
+            LOG.debug("Ignoring stream header from remote domain '{}', as session initiation was abandoned. Connection: {}", domainPair.getRemote(), connection);
+            return;
+        }
 
         if (startOfStream) {
             // Capture the prefixed namespaces declared on the peer's stream header so that prefixed content in
@@ -135,6 +151,19 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                     return;
                 }
 
+                // OF-3447: RFC 6120 requires a new stream ID when the stream is restarted after TLS or SASL negotiation.
+                if (sessionCreated && !isNewStreamId(streamHeaderId)) {
+                    if (!ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.getValue()) {
+                        LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party (remote domain '{}') to supply a new stream ID when it restarts the stream. The peer reused stream ID '{}' of the previous stream: {}", connection, domainPair.getRemote(), streamHeaderId, stanza);
+                        // OF-3447: after TLS, the session is not yet bound to the connection, which then would not send the stream error.
+                        connection.init(session);
+                        abandonSessionInitiation();
+                        connection.close(new StreamError(StreamError.Condition.invalid_xml, "Expected a new stream ID for the restarted stream, but the stream ID of the previous stream was reused."));
+                        return;
+                    }
+                    LOG.debug("Remote domain '{}' restarted the stream reusing stream ID '{}' of the previous stream. Accepted, as '{}' is enabled.", domainPair.getRemote(), streamHeaderId, ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.getKey());
+                }
+
                 // Create a new session with a new ID if a new stream has started on an existing connection
                 // following TLS negotiation in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3
                 if (sessionCreated && isNewStreamId(streamHeaderId)) {
@@ -144,6 +173,17 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                         ? localOutgoingServerSession.getAuthenticationMethod()
                         : null;
                     transferConnectionToNewSession(streamHeaderId, existingAuthMethod);
+                }
+
+                // OF-3447: after SASL success, the restarted stream (and its session) is the one to report.
+                if (saslExternalSucceeded && !isSessionAuthenticated.isDone()) {
+                    if (session.isAuthenticated()) {
+                        reportSessionAuthenticated();
+                    } else {
+                        // OF-3447: authentication was lost, e.g. as the connection was closed by another thread before the stream was restarted.
+                        LOG.debug("Session with stream ID '{}' of remote domain '{}' is not authenticated after the stream was restarted. Session initiation failed. Session: {}", session.getStreamID(), domainPair.getRemote(), session);
+                        abandonSessionInitiation();
+                    }
                 }
             } catch (XmlPullParserException | IOException e) {
                 LOG.error("Failed to extract namespaces and stream ID from the peer's stream header", e);
@@ -170,6 +210,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     @Override
     boolean processUnknowPacket(Element doc) {
         String rootTagName = doc.getName();
+
+        // OF-3447: once session initiation is abandoned (e.g. the connection closed after SASL success), a negotiation element that still arrives is ignored.
+        if (session == null) {
+            LOG.debug("Ignoring <{}/> from remote domain '{}', as session initiation was abandoned. Connection: {}", rootTagName, domainPair.getRemote(), connection);
+            return true;
+        }
 
         // Handle features
         if ("features".equals(rootTagName)) {
@@ -246,7 +292,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 }
 
                 // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
-                isSessionAuthenticated.complete(null);
+                reportSessionAuthenticated();
 
                 return true;
             } else {
@@ -280,6 +326,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Handles SASL success
         if ("success".equals(rootTagName)) {
+            // OF-3447: a repeated <success/> must not restart the stream again, nor add another close callback.
+            if (saslExternalSucceeded) {
+                LOG.debug("Ignoring a repeated <success/> from remote domain '{}', as SASL EXTERNAL already succeeded. Session: {}", domainPair.getRemote(), session);
+                return true;
+            }
+
             LOG.debug("Remote domain '{}' reports that EXTERNAL SASL was successful.", domainPair.getRemote());
 
             // SASL was successful so initiate a new stream
@@ -304,8 +356,15 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 return true;
             }
 
-            // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
-            isSessionAuthenticated.complete(null);
+            // OF-3447: authentication is reported when the remote server restarts the stream. Should the connection close
+            // before that, tell the caller now, rather than leaving it to wait for the session initialisation to time out.
+            saslExternalSucceeded = true;
+            connection.getCloseFuture().thenRun(() -> {
+                if (!isSessionAuthenticated.isDone()) {
+                    LOG.debug("Connection to remote domain '{}' closed after SASL EXTERNAL succeeded, before the stream was restarted. Session initiation failed. Connection: {}", domainPair.getRemote(), connection);
+                    abandonSessionInitiation();
+                }
+            });
             return true;
         }
 
@@ -326,6 +385,14 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         }
 
         return false;
+    }
+
+    /**
+     * Reports that the session of the current stream is authenticated.
+     */
+    private void reportSessionAuthenticated() {
+        LOG.debug("Authentication with remote domain '{}' completed for session with stream ID '{}': {}", domainPair.getRemote(), session.getStreamID(), session);
+        isSessionAuthenticated.complete(null);
     }
 
     private void abandonSessionInitiation() {
@@ -369,6 +436,13 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         return session;
     }
 
+    /**
+     * Returns a future that completes when the session is authenticated. For SASL EXTERNAL, that is when the remote
+     * server has restarted the stream after reporting success; {@link #getSession()} then returns the session of the
+     * restarted stream.
+     *
+     * @return a future that completes when the session is authenticated.
+     */
     public CompletableFuture<Void> isSessionAuthenticated() {
         return isSessionAuthenticated;
     }

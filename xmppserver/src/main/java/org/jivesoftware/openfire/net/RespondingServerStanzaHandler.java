@@ -254,8 +254,10 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         // Handle features
         if ("features".equals(rootTagName)) {
 
-            // Prevent falling back to dialback if we are already authenticated
-            if (session.isAuthenticated()) {
+            // Prevent falling back to dialback if we are already authenticated. Once authentication was reported, the
+            // caller may close the session before the features of the restarted stream arrive; that must not start
+            // authentication again.
+            if (session.isAuthenticated() || isSessionAuthenticated.isDone()) {
                 return true;
             }
 

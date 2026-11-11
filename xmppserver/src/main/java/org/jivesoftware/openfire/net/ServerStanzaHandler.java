@@ -247,6 +247,22 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
+    protected void saslSuccessful() {
+        if (session instanceof LocalIncomingServerSession authenticated) {
+            // OF-3447: RFC 6120 § 6.4.6 requires a new stream ID for the stream that is restarted after SASL negotiation.
+            try {
+                session = authenticated.createSessionForRestartedStream();
+            } catch (UnauthorizedException e) {
+                Log.warn("Unable to continue the session with stream ID '{}' on the stream that the remote server restarted after SASL negotiation. Closing connection: {}", authenticated.getStreamID(), connection, e);
+                connection.close(new StreamError(StreamError.Condition.internal_server_error));
+                return;
+            }
+            this.connection.reinit(session);
+        }
+        super.saslSuccessful();
+    }
+
+    @Override
     protected void processIQ(IQ packet) throws UnauthorizedException {
         packetReceived(packet);
         // Actually process the packet

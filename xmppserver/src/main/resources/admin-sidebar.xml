@@ -65,6 +65,11 @@
             <item id="security-audit-viewer" name="${sidebar.security-audit-viewer}"
                   url="security-audit-viewer.jsp"
                   description="${sidebar.security-audit-viewer.descr}"/>
+
+            <!-- Login Limits -->
+            <item id="user-login-limits" name="${sidebar.user-login-limits}"
+                  url="user-login-limits.jsp"
+                  description="${sidebar.user-login-limits.descr}"/>
         </sidebar>
 
         <!-- Server Settings -->

@@ -435,6 +435,61 @@ public class AttemptRecorderTest
     }
 
     @Test
+    public void testCloseAfterTheRemoteAcceptedTheCertificateSaysSo()
+    {
+        // Setup test fixture: the remote reported that SASL EXTERNAL succeeded, but has not restarted the stream.
+        final AttemptRecorder recorder = new AttemptRecorder("example.com", "remote.example.org");
+        recorder.stream(AttemptMilestones.Stream.opened("remote.example.org"));
+        recorder.tls(Tls.negotiated("TLSv1.3", "TLS_AES_256_GCM_SHA384"));
+        recorder.certificate(AttemptMilestones.Certificate.valid());
+        recorder.authenticationStarted();
+        recorder.externalAccepted();
+
+        // Execute system under test.
+        recorder.connectionClosed();
+
+        // Verify results.
+        assertEquals(Authentication.closedAfterExternalAccepted(), recorder.snapshot().getAuthentication().orElse(null), "a close after the remote accepted the certificate must say that it did, as the certificate is not the problem");
+    }
+
+    @Test
+    public void testAStreamErrorReplacesACloseAfterTheRemoteAcceptedTheCertificate()
+    {
+        // Setup test fixture: the close reached the recorder before the error that explains it.
+        final AttemptRecorder recorder = new AttemptRecorder("example.com", "remote.example.org");
+        recorder.stream(AttemptMilestones.Stream.opened("remote.example.org"));
+        recorder.tls(Tls.negotiated("TLSv1.3", "TLS_AES_256_GCM_SHA384"));
+        recorder.certificate(AttemptMilestones.Certificate.valid());
+        recorder.authenticationStarted();
+        recorder.externalAccepted();
+        recorder.connectionClosed();
+
+        // Execute system under test.
+        recorder.remoteStreamError("internal-server-error");
+
+        // Verify results.
+        assertEquals(Authentication.streamError("internal-server-error"), recorder.snapshot().getAuthentication().orElse(null), "the remote's own error must replace the failure inferred from the close");
+    }
+
+    @Test
+    public void testACloseAfterARefusedRestartedStreamAddsNothing()
+    {
+        // Setup test fixture: this server refused the restarted stream, and closes the connection itself.
+        final AttemptRecorder recorder = new AttemptRecorder("example.com", "remote.example.org");
+        recorder.stream(AttemptMilestones.Stream.opened("remote.example.org"));
+        recorder.tls(Tls.negotiated("TLSv1.3", "TLS_AES_256_GCM_SHA384"));
+        recorder.certificate(AttemptMilestones.Certificate.valid());
+        recorder.externalAccepted();
+        recorder.authentication(Authentication.reusedStreamId());
+
+        // Execute system under test.
+        recorder.connectionClosed();
+
+        // Verify results.
+        assertEquals(Authentication.reusedStreamId(), recorder.snapshot().getAuthentication().orElse(null), "the close that follows this server refusing the restarted stream must not replace the reason");
+    }
+
+    @Test
     public void testCloseAfterARecordedFailureAddsNothing()
     {
         // Setup test fixture: this server rejected the certificate, and closes the connection itself.

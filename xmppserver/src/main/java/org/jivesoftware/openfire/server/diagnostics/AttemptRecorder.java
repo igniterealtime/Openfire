@@ -125,6 +125,7 @@ public final class AttemptRecorder
     private int errorsLoggedElsewhere;
     private boolean gaveUp;
     private boolean authenticationStarted;
+    private boolean externalAccepted;
 
     /**
      * Starts recording an attempt, now.
@@ -274,7 +275,7 @@ public final class AttemptRecorder
             return;
         }
         AttemptMilestones recorded = milestones.build();
-        if (recorded.getAuthentication().map(authentication -> authentication.outcome() == Authentication.Outcome.CLOSED).orElse(false)) {
+        if (recorded.getAuthentication().map(authentication -> authentication.outcome() == Authentication.Outcome.CLOSED || authentication.outcome() == Authentication.Outcome.CLOSED_AFTER_EXTERNAL_ACCEPTED).orElse(false)) {
             milestones.authentication(null);
         }
         if (recorded.getTls().map(tls -> tls.outcome() == Tls.Outcome.CLOSED_BEFORE_SET_UP).orElse(false)) {
@@ -304,6 +305,15 @@ public final class AttemptRecorder
     }
 
     /**
+     * Records that the remote server accepted SASL EXTERNAL. Authentication succeeds only once the remote has restarted
+     * the stream, so a close before that is recorded as a close after the remote accepted the certificate.
+     */
+    public synchronized void externalAccepted()
+    {
+        externalAccepted = true;
+    }
+
+    /**
      * Records whether the connection uses direct TLS, in which the TLS handshake comes before the stream.
      *
      * @param directTls true for direct TLS, false for STARTTLS.
@@ -319,7 +329,8 @@ public final class AttemptRecorder
      * recorded a failure (or an unencrypted connection, which this server can refuse) is explained by that step, as
      * this server closes the connection itself then, and nothing is added; so is a close once authentication was
      * recorded. Over direct TLS, a close before the handshake finished is recorded by the handshake itself. A close
-     * after this server gave up waiting is this server stopping the connection, and adds nothing.
+     * after this server gave up waiting is this server stopping the connection, and adds nothing. A close after the
+     * remote accepted SASL EXTERNAL, before it restarted the stream, says so.
      */
     public synchronized void connectionClosed()
     {
@@ -341,7 +352,7 @@ public final class AttemptRecorder
         } else if (recorded.getTls().isEmpty()) {
             milestones.tls(Tls.closedBeforeSetUp());
         } else {
-            milestones.authentication(Authentication.closed());
+            milestones.authentication(externalAccepted ? Authentication.closedAfterExternalAccepted() : Authentication.closed());
         }
     }
 

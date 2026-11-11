@@ -860,7 +860,25 @@ public final class AttemptMilestones
             /**
              * The remote closed the connection while authentication was under way.
              */
-            CLOSED
+            CLOSED,
+
+            /**
+             * The remote accepted SASL EXTERNAL, but the connection closed before it restarted the stream, without
+             * which no session is set up.
+             */
+            CLOSED_AFTER_EXTERNAL_ACCEPTED,
+
+            /**
+             * The remote restarted the stream (after TLS or SASL) with the stream ID of the previous stream, and this
+             * server refused it, as configured with xmpp.server.outgoing.accept-reused-stream-id.
+             */
+            REUSED_STREAM_ID,
+
+            /**
+             * The remote restarted the stream (after TLS or SASL) without a stream ID, so this server closed the
+             * connection.
+             */
+            RESTARTED_STREAM_MISSING_ID
         }
 
         public Authentication
@@ -886,6 +904,21 @@ public final class AttemptMilestones
         public static Authentication closed()
         {
             return new Authentication(Outcome.CLOSED, null);
+        }
+
+        public static Authentication closedAfterExternalAccepted()
+        {
+            return new Authentication(Outcome.CLOSED_AFTER_EXTERNAL_ACCEPTED, null);
+        }
+
+        public static Authentication reusedStreamId()
+        {
+            return new Authentication(Outcome.REUSED_STREAM_ID, null);
+        }
+
+        public static Authentication restartedStreamMissingId()
+        {
+            return new Authentication(Outcome.RESTARTED_STREAM_MISSING_ID, null);
         }
 
         public static Authentication saslExternal()

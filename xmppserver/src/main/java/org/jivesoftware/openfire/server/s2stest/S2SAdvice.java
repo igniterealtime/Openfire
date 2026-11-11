@@ -214,6 +214,11 @@ public final class S2SAdvice
         add(S2SCheck.AUTHENTICATION, "fail.dialback_refused", Parts.LOCAL_AND_REMOTE, AdminPage.S2S_SETTINGS);
         // No advice for fail.dialback_fallback: it follows a failed TLS handshake, so check 5 is always the first failure.
         add(S2SCheck.AUTHENTICATION, "fail.timed_out", Parts.LOCAL_AND_REMOTE, AdminPage.S2S_SETTINGS);
+        // The remote accepted the certificate of this server for these, so the default advice (on certificates and
+        // Server Dialback) does not apply.
+        add(S2SCheck.AUTHENTICATION, "fail.closed_after_external", Parts.LOCAL_AND_REMOTE, AdminPage.LOGS);
+        add(S2SCheck.AUTHENTICATION, "fail.reused_stream_id", Parts.LOCAL_AND_REMOTE, AdminPage.SYSTEM_PROPERTIES);
+        add(S2SCheck.AUTHENTICATION, "fail.restarted_stream_no_id", Parts.REMOTE);
 
         add(S2SCheck.SESSION, "fail", Parts.LOCAL, AdminPage.LOGS);
 

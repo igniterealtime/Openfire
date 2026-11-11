@@ -57,7 +57,7 @@ public class NettySessionInitializerAbandonResumeTest
     @BeforeEach
     public void setUp()
     {
-        initialiser = new NettySessionInitializer(DOMAIN_PAIR, 5269, mock(LocalOutgoingServerSession.class));
+        initialiser = new NettySessionInitializer(DOMAIN_PAIR, 5269, mock(LocalOutgoingServerSession.class), null);
     }
 
     /**

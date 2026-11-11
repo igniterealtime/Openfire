@@ -39,6 +39,7 @@ import org.slf4j.helpers.MessageFormatter;
 import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -99,7 +100,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * request to enable Stream Management. The session is not used before it answers or this time has passed. This is
      * also the time to wait for the remote server to answer a request to resume the stream of a detached session on a
      * new connection, after which that connection is closed and another attempt is made, until the detach timeout of
-     * the session has passed (see {@link #resumeOnNewConnection()}).
+     * the session has passed (see {@link #resumeOnNewConnection()}), and the longest time to spend connecting to the
+     * location that the remote server named for resuming the stream (see {@link #getLocationForResumptionAttempt()}).
      */
     public static final SystemProperty<Duration> STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.server.session.stream-management-negotiation-timeout")
@@ -674,8 +676,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * Attempts to resume the stream of this session, which is detached, on a new connection (XEP-0198 § 5).
      *
      * A new connection is opened from this cluster node to the remote domain of this session, and the domain pair of the
-     * local and remote domain for which this session was created is authenticated on it, as for a new session. The
-     * remote server is then asked to resume the stream of this session, instead of enabling Stream Management (see
+     * local and remote domain for which this session was created is authenticated on it, as for a new session. In the
+     * first attempt, the location that the remote server named is connected to first (see
+     * {@link #getLocationForResumptionAttempt()}). The remote server is then asked to resume the stream of this session,
+     * instead of enabling Stream Management (see
      * {@link OutboundResumeRequest#send(LocalOutgoingServerSession, Collection)}). The session of the new connection is
      * not made a route, and no event is dispatched for it: when the stream is resumed, the connection is attached to
      * this session (see {@link #resumeWithConnectionOf(LocalOutgoingServerSession, long)}).
@@ -709,7 +713,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             }
             final int port = RemoteServerManager.getPortForServer(domainPair.getRemote());
             final ConnectionListener listener = XMPPServer.getInstance().getConnectionManager().getListener(ConnectionType.SOCKET_S2S, false);
-            initialiser = new NettySessionInitializer(domainPair, port, this);
+            initialiser = new NettySessionInitializer(domainPair, port, this, getLocationForResumptionAttempt());
             final LocalSession provider = initialiser.init(listener).get(INITIALISE_TIMEOUT_SECONDS.getValue().getSeconds(), TimeUnit.SECONDS);
             if (!(provider instanceof LocalOutgoingServerSession connectionProvider)) {
                 Log.debug("Unable to resume detached session {}, as no new connection for {} could be authenticated: {}", this, domainPair, provider);
@@ -721,7 +725,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             Log.debug("Interrupted while resuming detached session {} on a new connection for {}.", this, domainPair, e);
             outcome = ResumptionOutcome.GIVE_UP;
         } catch (Exception e) {
-            Log.debug("Unable to resume detached session {} on a new connection for {}.", this, domainPair, e);
+            // OF-2425: Connecting keeps an interrupt, and reports it as another exception: not attempted again then, as when interrupted while waiting.
+            if (Thread.currentThread().isInterrupted()) {
+                outcome = ResumptionOutcome.GIVE_UP;
+            }
+            Log.debug("Unable to resume detached session {} on a new connection for {} (interrupted: {}).", this, domainPair, outcome == ResumptionOutcome.GIVE_UP, e);
         } finally {
             // OF-2425: Given up before the connection is closed or another attempt is made, so that a late answer on this connection is ignored.
             if (outcome != ResumptionOutcome.ANSWERED && initialiser != null && !initialiser.abandonResume()) {
@@ -738,6 +746,25 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 }
             }
         }
+    }
+
+    /**
+     * Returns the location to connect to first, in the next attempt to resume the stream of this session on a new
+     * connection: the location that the remote server named for that when it enabled Stream Management (XEP-0198 § 3,
+     * see {@link RequestingStreamManager#getPeerLocation()}). It is used in the first attempt after the session was
+     * detached only. When that attempt fails, whether to connect to the location or after connecting, later attempts
+     * connect to the hosts of the remote domain, as for any new connection.
+     *
+     * @return the location to connect to first, or null when there is none, or the location was tried before.
+     */
+    @Nullable
+    @VisibleForTesting
+    String getLocationForResumptionAttempt()
+    {
+        if (failedResumptionAttempts > 0) {
+            return null;
+        }
+        return getStreamManager().getPeerLocation();
     }
 
     /**

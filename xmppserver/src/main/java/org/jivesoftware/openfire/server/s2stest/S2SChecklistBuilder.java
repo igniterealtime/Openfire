@@ -348,6 +348,9 @@ public final class S2SChecklistBuilder
             case DIALBACK_FALLBACK_FAILED -> result(S2SCheck.AUTHENTICATION, CheckStatus.FAIL, "fail.dialback_fallback");
             case TIMED_OUT -> result(S2SCheck.AUTHENTICATION, CheckStatus.FAIL, "fail.timed_out", authentication.reason());
             case CLOSED -> result(S2SCheck.AUTHENTICATION, CheckStatus.FAIL, "fail.closed");
+            case CLOSED_AFTER_EXTERNAL_ACCEPTED -> result(S2SCheck.AUTHENTICATION, CheckStatus.FAIL, "fail.closed_after_external");
+            case REUSED_STREAM_ID -> result(S2SCheck.AUTHENTICATION, CheckStatus.FAIL, "fail.reused_stream_id");
+            case RESTARTED_STREAM_MISSING_ID -> result(S2SCheck.AUTHENTICATION, CheckStatus.FAIL, "fail.restarted_stream_no_id");
         };
     }
 

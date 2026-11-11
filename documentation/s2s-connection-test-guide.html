@@ -881,6 +881,35 @@
                     <td>The remote server closed the connection during authentication, without sending a stream
                         error.</td>
                 </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.closed_after_external">The
+                        remote server accepted the certificate of this server (SASL EXTERNAL), but the connection closed
+                        before the remote server restarted the stream, which it must do before the session can be
+                        used.</q></td>
+                    <td>After SASL EXTERNAL succeeds, the remote server restarts the stream, and only then is this
+                        server authenticated. The connection closed in between, without a stream error. The
+                        certificates are not the cause, as the remote server had accepted them.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.reused_stream_id">The remote
+                        server restarted the stream with the stream ID of the previous stream, where XMPP requires a new
+                        one, so this server closed the connection.</q></td>
+                    <td>RFC 6120 requires a new stream ID each time the stream is restarted, after TLS and after SASL.
+                        This server refuses a stream that keeps the previous ID only when
+                        <code>xmpp.server.outgoing.accept-reused-stream-id</code> is set to false; by default it accepts
+                        one. Openfire versions before 5.2.0 keep the stream ID when they restart the stream after SASL
+                        EXTERNAL.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.restarted_stream_no_id">The
+                        remote server restarted the stream without a stream ID, which XMPP requires, so this server
+                        closed the connection.</q></td>
+                    <td>The first stream had a stream ID, so <a href="#check-4">check 4</a> (the XMPP stream) passes;
+                        the stream that the remote server restarted after TLS or SASL had none.</td>
+                </tr>
                 </tbody>
             </table>
 
@@ -889,7 +918,8 @@
                 uses Server Dialback when it accepts self-signed certificates); strict certificate validation and the
                 STARTTLS policy, which decide whether Server Dialback is tried after a certificate or handshake
                 failure (see <a href="#check-5">check 5</a>, TLS, and <a href="#check-6">check 6</a>, the remote certificate); this server's own certificate, which the remote server checks for SASL
-                EXTERNAL.
+                EXTERNAL; whether a restarted stream may keep the stream ID of the previous stream
+                (<code>xmpp.server.outgoing.accept-reused-stream-id</code>).
             </p>
 
         </section>

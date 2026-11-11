@@ -848,7 +848,10 @@ public class S2SChecklistBuilderTest
             Arguments.of(Authentication.streamError("unsupported-stanza-type"), "authentication.fail.stream_error", List.of("unsupported-stanza-type")),
             Arguments.of(Authentication.dialbackFallbackFailed(), "authentication.fail.dialback_fallback", List.of()),
             Arguments.of(Authentication.timedOut(Duration.ofSeconds(10)), "authentication.fail.timed_out", List.of("10")),
-            Arguments.of(Authentication.closed(), "authentication.fail.closed", List.of())
+            Arguments.of(Authentication.closed(), "authentication.fail.closed", List.of()),
+            Arguments.of(Authentication.closedAfterExternalAccepted(), "authentication.fail.closed_after_external", List.of()),
+            Arguments.of(Authentication.reusedStreamId(), "authentication.fail.reused_stream_id", List.of()),
+            Arguments.of(Authentication.restartedStreamMissingId(), "authentication.fail.restarted_stream_no_id", List.of())
         );
     }
 

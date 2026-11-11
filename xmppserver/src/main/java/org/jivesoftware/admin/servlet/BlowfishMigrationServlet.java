@@ -383,7 +383,14 @@ public class BlowfishMigrationServlet extends HttpServlet {
             con.commit();
             Log.info("Database transaction committed successfully");
 
-            // 8. Update security.xml to switch KDF to PBKDF2
+            // 8. User passwords (ofUser.encryptedPassword) are not re-encrypted by this migration, so
+            // record that they stay on SHA1 before the KDF changes below. Otherwise no user with a
+            // stored password could log in after the next restart (OF-3374).
+            JiveGlobals.preserveLegacyPasswordKdf();
+            Log.info("Recorded user password encryption as SHA1 (encrypt.blowfish.user-kdf); " +
+                    "this migration does not re-encrypt stored passwords.");
+
+            // 9. Update security.xml to switch KDF to PBKDF2
             // This only updates the local node's security.xml
             // In clustered deployments, admin must manually sync to other nodes
             //
@@ -396,7 +403,7 @@ public class BlowfishMigrationServlet extends HttpServlet {
             JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
             Log.info("Updated security.xml: encrypt.blowfish.kdf=pbkdf2");
 
-            // 9. Log success
+            // 10. Log success
             Log.info("Successfully migrated {} database properties and {} XML properties from SHA1 to PBKDF2",
                     migrated, xmlMigrated);
             Log.info("Blowfish KDF is now set to PBKDF2-HMAC-SHA512 in security.xml");

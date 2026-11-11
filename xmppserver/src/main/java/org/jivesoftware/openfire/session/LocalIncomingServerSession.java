@@ -350,6 +350,39 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
 
     /**
+     * Creates the session for the stream that the remote server restarts on the connection of this session, after SASL
+     * negotiation succeeded on it. The restarted stream gets a new stream ID, as RFC 6120 § 6.4.6 requires. The new
+     * session takes over what was negotiated on this one: its validated domains, its authentication method, the local
+     * domain and the identity that the remote server claimed. The new session is registered under the new stream ID,
+     * and this session is then unregistered, so that the validated domains remain registered throughout. This session
+     * is unregistered also when registering the new one fails.
+     *
+     * @return the session for the restarted stream.
+     * @throws UnauthorizedException if the server is not initialised.
+     */
+    @Nonnull
+    public LocalIncomingServerSession createSessionForRestartedStream() throws UnauthorizedException
+    {
+        final SessionManager sessionManager = SessionManager.getInstance();
+        final StreamID restartedStreamID = sessionManager.nextStreamID();
+        final LocalIncomingServerSession restarted = sessionManager.createIncomingServerSession(conn, restartedStreamID, fromDomain);
+        restarted.setLocalDomain(localDomain);
+        restarted.setClaimedIdentity(getClaimedIdentity().orElse(null));
+        if (authenticationMethod != null) {
+            restarted.setAuthenticationMethod(authenticationMethod);
+        }
+        // OF-3447: register before unregistering, so that blocking a domain in between cannot miss this connection.
+        // Unregister also when registering fails, as the connection's close listener now refers to the new session.
+        try {
+            validatedDomains.forEach(restarted::addValidatedDomain);
+        } finally {
+            sessionManager.unregisterIncomingServerSession(streamID);
+        }
+        Log.debug("Session with stream ID '{}' of validated domain(s) {} continues as session with stream ID '{}', as the remote server restarted the stream after SASL negotiation.", streamID, validatedDomains, restartedStreamID);
+        return restarted;
+    }
+
+    /**
      * Removes the previously validated domain from the list of validated domains. The remote
      * server will no longer be able to send packets from the removed domain, subdomain or
      * virtual host.

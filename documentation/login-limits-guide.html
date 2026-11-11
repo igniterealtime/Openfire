@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Login Limits Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Login Limits Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>Openfire can limit how many times a password may be tried for user accounts, to protect them against password guessing. When too many attempts that do not succeed come from one IP address, or are made for one account, further attempts are refused for a while, and an account that is guessed at from many IP addresses is locked.</p>
+
+        <p>The login limits are off by default. Turn them on with the On/Off switch on the Login Limits page (Server &gt; Server Manager &gt; Login Limits), or by setting the system property <code>xmpp.auth.loginlimit.enabled</code> to <code>true</code> (Server &gt; Server Manager &gt; System Properties). While they are off, nothing is counted or blocked, but a locked account is still refused: a lock stays until it ends or an administrator lifts it.</p>
+
+        <p>The admin console has its own, separate limits on its logins; this guide does not cover them.</p>
+
+    </section>
+
+    <section id="how-it-works">
+
+        <h2>How the limits work</h2>
+
+        <p>Every password attempt is counted in three ways, each over a window of time that starts with the first attempt counted for it. A successful login gives its attempt back, so only attempts that do not succeed add up. An attempt the client abandons part-way also counts.</p>
+
+        <table class="general">
+            <tr><th>Counts attempts for</th><th>When the limit is reached</th><th>Default limit</th></tr>
+            <tr><td>One username from one IP address</td><td>That IP address may not try that username for a set time.</td><td>10 in 15 minutes, blocked for 15 minutes</td></tr>
+            <tr><td>One IP address, any username</td><td>That IP address may not try any username for a set time.</td><td>40 in 15 minutes, blocked for 15 minutes</td></tr>
+            <tr><td>One username, from any IP address</td><td>The account is locked for a set time (an administrator's username is refused instead; see below).</td><td>50 in 1 hour, locked for 30 minutes</td></tr>
+        </table>
+
+        <p>A limit of N allows N attempts in a window; the next is refused. A block on one username from one IP address, or on one IP address, lasts its block duration from the attempt that reached the limit, however early or late in the window that was; counting then starts again from zero. IPv6 addresses are counted by /64 network, as one network or device is usually given a whole /64. Only the third limit locks an account, as a lock applies from every IP address: if the lower, per-IP-address limits locked accounts, anyone could lock any user out by guessing on purpose.</p>
+
+        <p>A refused attempt gets the same answer as a wrong password, and its password is not checked, so a client cannot tell whether a guess would have been right. Refused attempts are not counted, so a block does not extend itself. A locked account is refused in this way whether or not the login limits are on.</p>
+
+        <p>Clients should log in with the bare username (<code>alice</code>). Over SCRAM, the username is the account's local part (RFC 6120 section 6.3.7), so a SCRAM login as <code>alice@example.org</code> fails whatever the password; such attempts are not counted, so they cannot block or lock the account.</p>
+
+        <p>Attempts for usernames that have no account are counted in the same way, so the answers do not reveal which accounts exist. In a cluster, every node shares the same counts.</p>
+
+    </section>
+
+    <section id="counted">
+
+        <h2>Which logins are counted</h2>
+
+        <ul>
+            <li>XMPP logins with a password (the PLAIN, SCRAM and DIGEST-MD5 mechanisms), over every type of connection, including BOSH and WebSocket.</li>
+            <li>JMX logins. Openfire is not told the IP address of a JMX client, so these count towards the per-username limit only.</li>
+        </ul>
+
+        <p>Not counted: certificate logins (EXTERNAL), anonymous logins, and FAST tokens. A FAST token login is still refused while its account is locked, its username is blocked from all IP addresses, its IP address is blocked, or its username is blocked from its IP address. A certificate login is refused only while the account is locked: the blocks per IP address and per username do not apply to it. An anonymous login has no username, so neither applies. Admin console logins are covered by the admin console's own limits.</p>
+
+    </section>
+
+    <section id="settings">
+
+        <h2>Settings</h2>
+
+        <p>All settings take effect at once, without a restart. Setting a limit to 0 turns that limit off. Each window, block duration and the lock duration can be at most 1 day. A change to the block duration of the first two limits applies to blocks already in force; a change to the lock duration applies to locks set after it, as each lock keeps the end it was set with. Turning the login limits off lifts their blocks at once (an account lock stays until it ends or is lifted), but turning them on again before a block would have ended brings that block back.</p>
+
+        <table class="general">
+            <tr><th>Property</th><th>Default</th><th>Meaning</th></tr>
+            <tr><td><code>xmpp.auth.loginlimit.enabled</code></td><td>false</td><td>Turns the login limits on.</td></tr>
+            <tr><td><code>xmpp.auth.loginlimit.maxAttemptsPerUsernameAddressPair</code></td><td>10</td><td>Attempts allowed for one username from one IP address.</td></tr>
+            <tr><td><code>xmpp.auth.loginlimit.perUsernameAddressPairInterval</code></td><td>15 minutes</td><td>The window for that limit.</td></tr>
+            <tr><td><code>xmpp.auth.loginlimit.perUsernameAddressPairBlockDuration</code></td><td>15 minutes</td><td>How long that username is refused from that IP address once the limit is reached.</td></tr>
+            <tr><td><code>xmpp.auth.loginlimit.maxAttemptsPerAddress</code></td><td>40</td><td>Attempts allowed from one IP address, for any username.</td></tr>
+            <tr><td><code>xmpp.auth.loginlimit.perAddressInterval</code></td><td>15 minutes</td><td>The window for that limit.</td></tr>
+            <tr><td><code>xmpp.auth.loginlimit.perAddressBlockDuration</code></td><td>15 minutes</td><td>How long that IP address is refused once the limit is reached.</td></tr>
+            <tr><td><code>xmpp.auth.loginlimit.maxAttemptsPerUsername</code></td><td>50</td><td>Attempts allowed for one username, from any IP address, before the account is locked.</td></tr>
+            <tr><td><code>xmpp.auth.loginlimit.perUsernameInterval</code></td><td>1 hour</td><td>The window for that limit.</td></tr>
+            <tr><td><code>xmpp.auth.loginlimit.lockoutDuration</code></td><td>30 minutes</td><td>How long an account stays locked after reaching the per-username limit.</td></tr>
+        </table>
+
+    </section>
+
+    <section id="blocks">
+
+        <h2>Seeing and lifting blocks</h2>
+
+        <p>Each time a limit is reached, an entry is written to the security audit log (Server &gt; Server Manager &gt; Security Audit Viewer). An entry for the per-IP-address limit is filed under the IP address.</p>
+
+        <p>An account locked by the per-username limit shows as locked on the user's Lock Out page (Users/Groups &gt; User Summary, then the user), where it can be unlocked. Unlocking it also resets its count. Where an account cannot be locked (the user does not exist, or the lockout provider is read-only or cannot set a lock that ends), the username is refused for the same time instead; if the account already has a lock, for example one set by an administrator, that lock is left as it is. An administrator's account is never locked by this limit: its username is refused for the same time instead, for XMPP and JMX logins, so that the administrator can still sign in to the admin console. Such a block is listed on the Login Limits page and can be cleared there.</p>
+
+        <p>The blocks that are in force are listed on the Login Limits page (Server &gt; Server Manager &gt; Login Limits), where each can be cleared and the settings changed. Below the settings, the blocks are listed in three boxes, each titled with how many blocks it holds: usernames blocked from one IP address (the username, the IP address, the failed attempts and when the block ends), IP addresses blocked for all usernames (the IP address, the failed attempts and when it ends), and usernames blocked from all IP addresses (the username, the failed attempts, when it ends, and whether the account is also locked, with a link to its lockout page). Each box lists at most 100 blocks, those that end latest. Clearing a username blocked from all IP addresses does not unlock its account; use the Lock Out page for that.</p>
+
+    </section>
+
+    <section id="cautions">
+
+        <h2>Things to consider</h2>
+
+        <ul>
+            <li><strong>Shared IP addresses.</strong> Many users can share one IP address, for example behind a NAT gateway or a company proxy. They share the per-IP-address count, so one person's failed attempts can block the others. Raise the per-IP-address limit, or set it to 0, where users share IP addresses. IPv6 addresses are counted by their /64 network, as a network or household is usually given a whole /64, so every device on one IPv6 network shares a count.</li>
+            <li><strong>Reverse proxies.</strong> When clients connect through a reverse proxy or load balancer, Openfire sees the proxy's IP address for every client. The per-IP-address limit then counts every user together, and the per-username-and-IP-address limit counts each user from all their devices together. Raise or turn off the per-IP-address limit in that set-up. For BOSH, Openfire can take each client's IP address from the proxy's forwarding headers instead (<code>httpbind.forwarded.enabled</code>); when it does, set <code>httpbind.forwarded.trusted.proxies</code> to the proxy's IP addresses, as otherwise any client can send those headers itself and choose the IP address that the limits count. WebSocket connections are always counted under the IP address that connects to Openfire, which behind a proxy is the proxy's.</li>
+            <li><strong>Deliberate lock-outs.</strong> Anyone who knows a username can lock that account by guessing at it until the per-username limit is reached. The lock ends after the lock duration, and the limit is high by default; set it to 0 to turn account locking off while keeping the per-IP-address limits. An administrator's account is not locked: its username is refused for the lock duration instead, for XMPP and JMX logins, so that a deliberate lock-out cannot keep an administrator out of the admin console.</li>
+            <li><strong>Saved passwords.</strong> A client with an outdated saved password keeps trying it, and may block its own IP address or lock its account. The security audit log shows where this happens.</li>
+        </ul>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

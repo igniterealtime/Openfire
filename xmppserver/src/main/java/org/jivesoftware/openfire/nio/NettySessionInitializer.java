@@ -191,6 +191,13 @@ public class NettySessionInitializer {
      */
     @Nullable
     private final LocalOutgoingServerSession resumeTarget;
+
+    /**
+     * The location that the peer named for reconnecting to it to resume a stream (XEP-0198 § 3), which is connected to
+     * before any other host of the remote domain, or null when there is none.
+     */
+    @Nullable
+    private final String location;
     private boolean directTLS = false;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private Channel channel;
@@ -203,7 +210,7 @@ public class NettySessionInitializer {
     volatile NettyOutboundConnectionHandler connectionHandler;
 
     public NettySessionInitializer(DomainPair domainPair, int port) {
-        this(domainPair, port, null);
+        this(domainPair, port, null, null);
     }
 
     /**
@@ -213,11 +220,15 @@ public class NettySessionInitializer {
      * @param port default port to use to open the connection.
      * @param resumeTarget the detached session of which the stream is to be resumed on the new connection, instead of
      *                     enabling Stream Management on it, or null when no stream is to be resumed.
+     * @param location the location that the peer named for reconnecting to it to resume a stream (XEP-0198 § 3), which
+     *                 is connected to before any other host of the remote domain, or null to connect to the hosts of the
+     *                 remote domain only (see {@link SocketUtil#createSocketToLocation(String, String, int, Duration)}).
      */
-    public NettySessionInitializer(DomainPair domainPair, int port, @Nullable LocalOutgoingServerSession resumeTarget) {
+    public NettySessionInitializer(DomainPair domainPair, int port, @Nullable LocalOutgoingServerSession resumeTarget, @Nullable String location) {
         this.domainPair = domainPair;
         this.port = port;
         this.resumeTarget = resumeTarget;
+        this.location = location;
 
         synchronized (sharedResourceLock) {
             if (ioWorkerGroup == null || ioWorkerGroup.isShuttingDown()) {
@@ -231,7 +242,20 @@ public class NettySessionInitializer {
     public Future<LocalSession> init(ConnectionListener listener) {
         // Connect to remote server using XMPP 1.0 (TLS + SASL EXTERNAL or TLS + server dialback or server dialback)
         Log.debug( "Creating plain socket connection to a host that belongs to the remote XMPP domain." );
-        final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port );
+        Map.Entry<Socket, Boolean> socketToXmppDomain = null;
+        if (location != null) {
+            // OF-2425: XEP-0198 § 3: prefer the location that the peer named. If connecting to it fails, the usual connection algorithm applies.
+            socketToXmppDomain = SocketUtil.createSocketToLocation(domainPair.getRemote(), location, port, LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue());
+            if (socketToXmppDomain == null && Thread.currentThread().isInterrupted()) {
+                throw new NetworkEntityUnreachableException("Interrupted while connecting to location '" + location + "' of the XMPP domain '" + domainPair.getRemote() + "'.");
+            }
+            if (socketToXmppDomain == null) {
+                Log.debug("Unable to connect to location '{}' that the peer named for resuming the stream of session {}. Connecting to the hosts of the remote domain of {} instead.", location, resumeTarget, domainPair);
+            }
+        }
+        if (socketToXmppDomain == null) {
+            socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port);
+        }
 
         if ( socketToXmppDomain == null ) {
             throw new NetworkEntityUnreachableException("Cannot establish connection to any host in the XMPP domain '" + domainPair.getRemote() + "'.");
@@ -454,6 +478,7 @@ public class NettySessionInitializer {
             "domainPair=" + domainPair +
             ", port=" + port +
             ", resumeTarget=" + resumeTarget +
+            ", location=" + location +
             ", directTLS=" + directTLS +
             ", workerGroup=" + ioWorkerGroup +
             ", channel=" + channel +

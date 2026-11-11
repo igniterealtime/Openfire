@@ -93,6 +93,17 @@ public class DNSUtil {
     }
 
     /**
+     * Checks whether a DNS override applies to a domain (see {@link #DNS_OVERRIDE}), so that the domain is reached at the
+     * host that the override names.
+     *
+     * @param domain the domain.
+     * @return true if a DNS override applies to the domain.
+     */
+    static boolean hasOverride(@Nonnull final String domain) {
+        return resolveOverrideRecursively(domain, new HashSet<>(), 0) != null;
+    }
+
+    /**
      * Returns a collection of host names and ports that the specified XMPP
      * domain can be reached at for server-to-server communication.
      *

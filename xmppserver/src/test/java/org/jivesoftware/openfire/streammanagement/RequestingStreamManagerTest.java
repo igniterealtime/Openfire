@@ -1138,7 +1138,7 @@ public class RequestingStreamManagerTest
 
     /**
      * Verifies that the stream can be resumed when the peer allows it, with either lexical form of a true boolean
-     * (XEP-0198 § 5), and that its SM-ID and preferred maximum resumption time are recorded.
+     * (XEP-0198 § 5), and that its SM-ID, preferred maximum resumption time and location are recorded.
      */
     @ParameterizedTest
     @ValueSource(strings = {"true", "1"})
@@ -1150,13 +1150,14 @@ public class RequestingStreamManagerTest
         sm.requestEnable(StreamManager.NAMESPACE_V3);
 
         // Execute system under test.
-        sm.process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)).addAttribute("resume", resume).addAttribute("id", "some-sm-id").addAttribute("max", "90"));
+        sm.process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)).addAttribute("resume", resume).addAttribute("id", "some-sm-id").addAttribute("max", "90").addAttribute("location", "[2001:db8::1]:5270"));
 
         // Verify result.
         assertTrue(sm.isEnabled(), "Stream Management must be enabled.");
         assertTrue(sm.getResume(), "The stream must be resumable when the peer allows it.");
         assertEquals("some-sm-id", sm.getSmId(), "The SM-ID that the peer provided must be recorded.");
         assertEquals(Duration.ofSeconds(90), sm.getPeerMaximumResumptionTime(), "The preferred maximum resumption time of the peer must be recorded.");
+        assertEquals("[2001:db8::1]:5270", sm.getPeerLocation(), "The location that the peer named for reconnecting must be recorded.");
     }
 
     /**
@@ -1203,6 +1204,7 @@ public class RequestingStreamManagerTest
             case "false" -> enabled.addAttribute("resume", "false").addAttribute("id", "some-sm-id");
             default -> enabled.addAttribute("id", "some-sm-id");
         }
+        enabled.addAttribute("location", "node2.example.com");
 
         // Execute system under test.
         sm.process(enabled);
@@ -1211,6 +1213,7 @@ public class RequestingStreamManagerTest
         assertTrue(sm.isEnabled(), "Stream Management must be enabled, also without resumption.");
         assertFalse(sm.getResume(), "The stream must not be resumable for an answer that does not allow it: " + enabled.asXML());
         assertNull(sm.getSmId(), "No SM-ID must be recorded for a stream that cannot be resumed.");
+        assertNull(sm.getPeerLocation(), "No location must be recorded for a stream that cannot be resumed.");
     }
 
     /**

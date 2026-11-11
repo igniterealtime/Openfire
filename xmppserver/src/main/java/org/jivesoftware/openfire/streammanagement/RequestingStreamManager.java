@@ -225,6 +225,13 @@ public class RequestingStreamManager extends StreamManager
     private volatile Duration peerMaximumResumptionTime;
 
     /**
+     * The location at which the peer prefers to be reconnected to for resuming the stream, as it reported in the
+     * 'location' attribute of {@code <enabled/>}, or null when it reported none, or the stream cannot be resumed.
+     */
+    @Nullable
+    private volatile String peerLocation;
+
+    /**
      * Copies of the stanzas that were delivered to the session while its connection was broken, in the order in which
      * they were delivered. They are not sent, and are therefore not counted or tracked. Guarded by the lock of this
      * instance.
@@ -667,6 +674,7 @@ public class RequestingStreamManager extends StreamManager
                 if ( resumable ) {
                     setSmId( element.attributeValue( "id" ) );
                     peerMaximumResumptionTime = parseMaximumResumptionTime( element.attributeValue( "max" ) );
+                    peerLocation = element.attributeValue( "location" );
                     setResume( true );
                 }
                 setNamespace( requested );
@@ -683,7 +691,7 @@ public class RequestingStreamManager extends StreamManager
         }
 
         if ( resumable ) {
-            Log.debug( "The peer of session {} enabled Stream Management ({}), and allows the stream to be resumed (SM-ID: {}, preferred maximum resumption time: {}). Stanzas sent while the request awaited an answer, which are counted but not tracked: {}.", session, requested, getSmId(), peerMaximumResumptionTime, sentWhilePending );
+            Log.debug( "The peer of session {} enabled Stream Management ({}), and allows the stream to be resumed (SM-ID: {}, preferred maximum resumption time: {}, location: {}). Stanzas sent while the request awaited an answer, which are counted but not tracked: {}.", session, requested, getSmId(), peerMaximumResumptionTime, peerLocation, sentWhilePending );
         } else if ( enabled ) {
             // An offer of resumption that was not requested, or that lacks an 'id', is not used.
             Log.debug( "The peer of session {} enabled Stream Management ({}), without a stream that can be resumed (requested: {}, 'resume': {}, 'id': {}). Stanzas sent while the request awaited an answer, which are counted but not tracked: {}.", session, requested, resumeRequested, element.attributeValue( "resume" ), element.attributeValue( "id" ), sentWhilePending );
@@ -738,6 +746,20 @@ public class RequestingStreamManager extends StreamManager
     public Duration getPeerMaximumResumptionTime()
     {
         return peerMaximumResumptionTime;
+    }
+
+    /**
+     * Returns the location at which the peer prefers to be reconnected to for resuming the stream, as it reported when it
+     * enabled Stream Management with a stream that can be resumed (the 'location' attribute of {@code <enabled/>},
+     * XEP-0198 § 3). The value is as the peer sent it: a domain name or IP address, optionally followed by a port (see
+     * {@link org.jivesoftware.openfire.net.SocketUtil#createSocketToLocation(String, String, int, Duration)}).
+     *
+     * @return the location that the peer reported, or null when it reported none, or the stream cannot be resumed.
+     */
+    @Nullable
+    public String getPeerLocation()
+    {
+        return peerLocation;
     }
 
     /**

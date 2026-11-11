@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.sasl;
 
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -62,6 +63,14 @@ public abstract class AbstractScramSaslServerTest
      */
     protected MockedStatic<AuthFactory> authFactory;
 
+    /**
+     * Static mock for {@link UserLoginLimitManager}, so that the login limits check (OF-2279) does not reach the real
+     * singleton. Its {@link #loginLimits} instance admits every attempt unless a test configures otherwise.
+     */
+    protected MockedStatic<UserLoginLimitManager> loginLimitsStatic;
+
+    protected UserLoginLimitManager loginLimits;
+
     @BeforeAll
     public static void setupOpenfireHome() throws Exception
     {
@@ -81,6 +90,11 @@ public abstract class AbstractScramSaslServerTest
     void setupStaticMock()
     {
         authFactory = Mockito.mockStatic(AuthFactory.class);
+        loginLimits = Mockito.mock(UserLoginLimitManager.class);
+        loginLimitsStatic = Mockito.mockStatic(UserLoginLimitManager.class);
+        loginLimitsStatic.when(UserLoginLimitManager::getInstance).thenReturn(loginLimits);
+        Mockito.when(loginLimits.tryAcquireAttempt(Mockito.anyString(), Mockito.any())).thenReturn(Mockito.mock(UserLoginLimitManager.Reservation.class));
+        Mockito.when(loginLimits.isAttemptAllowed(Mockito.anyString(), Mockito.any())).thenReturn(true);
     }
 
     @BeforeEach
@@ -94,6 +108,9 @@ public abstract class AbstractScramSaslServerTest
     {
         if (authFactory != null) {
             authFactory.close();
+        }
+        if (loginLimitsStatic != null) {
+            loginLimitsStatic.close();
         }
     }
 

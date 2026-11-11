@@ -191,12 +191,27 @@ public class S2SAdviceTest
     }
 
     @Test
+    public void testAdviceForAReusedStreamIdNamesTheSettingThatDecidesIt()
+    {
+        // Setup test fixture.
+        final CheckResult result = result(S2SCheck.AUTHENTICATION, CheckStatus.FAIL, "fail.reused_stream_id");
+
+        // Execute system under test.
+        final S2SAdvice.Advice advice = S2SAdvice.forResult(result).orElseThrow();
+
+        // Verify results.
+        assertTrue(BUNDLE.getString(advice.localKey().orElseThrow()).contains("xmpp.server.outgoing.accept-reused-stream-id"), "the administrator must learn which setting refuses a reused stream ID");
+        assertTrue(advice.pages().contains(S2SAdvice.AdminPage.SYSTEM_PROPERTIES), "the advice must link to the page on which that setting is changed");
+    }
+
+    @Test
     public void testResultsWithADifferentCauseGetTheirOwnAdvice()
     {
         // Each of these has a cause that the default advice for its check would misdescribe.
         for (final String[] expected : new String[][] {
             { "tcp", "fail.refused" }, { "tcp", "fail.none_attempted" }, { "tls", "fail.refused" }, { "tls", "fail.timed_out" },
-            { "tls", "fail.stalled" }, { "certificate", "fail.revoked" }, { "ping", "fail.local_error" } }) {
+            { "tls", "fail.stalled" }, { "certificate", "fail.revoked" }, { "authentication", "fail.closed_after_external" },
+            { "authentication", "fail.reused_stream_id" }, { "authentication", "fail.restarted_stream_no_id" }, { "ping", "fail.local_error" } }) {
             final S2SCheck check = checkOf(S2SCheck.KEY_PREFIX + expected[0] + ".");
             final S2SAdvice.Advice advice = S2SAdvice.forResult(result(check, CheckStatus.FAIL, expected[1])).orElseThrow();
             assertEquals(expected[0] + "." + expected[1], advice.id(), "the result " + expected[0] + "." + expected[1] + " needs advice of its own");

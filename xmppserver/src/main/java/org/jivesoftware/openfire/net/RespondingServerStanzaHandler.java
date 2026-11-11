@@ -168,6 +168,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                     LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party to supply a stream ID value. The peer that sent this stream element did not: {}", connection, stanza);
                     if (!sessionCreated) {
                         record(recorder -> recorder.stream(AttemptMilestones.Stream.missingId()));
+                    } else {
+                        record(recorder -> recorder.authentication(AttemptMilestones.Authentication.restartedStreamMissingId()));
                     }
                     connection.close(new StreamError(StreamError.Condition.invalid_xml, "Expected a stream ID value, but none was received."));
                     return;
@@ -179,6 +181,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                         LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party (remote domain '{}') to supply a new stream ID when it restarts the stream. The peer reused stream ID '{}' of the previous stream: {}", connection, domainPair.getRemote(), streamHeaderId, stanza);
                         // OF-3447: after TLS, the session is not yet bound to the connection, which then would not send the stream error.
                         connection.init(session);
+                        record(recorder -> recorder.authentication(AttemptMilestones.Authentication.reusedStreamId()));
                         abandonSessionInitiation();
                         connection.close(new StreamError(StreamError.Condition.invalid_xml, "Expected a new stream ID for the restarted stream, but the stream ID of the previous stream was reused."));
                         return;
@@ -206,10 +209,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 // OF-3447: after SASL success, the restarted stream (and its session) is the one to report.
                 if (saslExternalSucceeded && !isSessionAuthenticated.isDone()) {
                     if (session.isAuthenticated()) {
+                        record(recorder -> recorder.authentication(AttemptMilestones.Authentication.saslExternal()));
                         reportSessionAuthenticated();
                     } else {
                         // OF-3447: authentication was lost, e.g. as the connection was closed by another thread before the stream was restarted.
                         LOG.debug("Session with stream ID '{}' of remote domain '{}' is not authenticated after the stream was restarted. Session initiation failed. Session: {}", session.getStreamID(), domainPair.getRemote(), session);
+                        record(recorder -> recorder.authentication(AttemptMilestones.Authentication.closedAfterExternalAccepted()));
                         abandonSessionInitiation();
                     }
                 }
@@ -405,7 +410,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             session.setAddress(new JID(null, domainPair.getRemote(), null));
             if (session instanceof LocalOutgoingServerSession) {
                 ((LocalOutgoingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
-                record(recorder -> recorder.authentication(AttemptMilestones.Authentication.saslExternal()));
+                // Certificate login is recorded once the remote has restarted the stream, when authentication completes.
+                record(AttemptRecorder::externalAccepted);
             } else {
                 LOG.warn("Expected session with remote domain '{}' to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod(). Session: {}", domainPair.getRemote(), session);
                 record(AttemptRecorder::loggedWarning);
@@ -419,6 +425,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             connection.getCloseFuture().thenRun(() -> {
                 if (!isSessionAuthenticated.isDone()) {
                     LOG.debug("Connection to remote domain '{}' closed after SASL EXTERNAL succeeded, before the stream was restarted. Session initiation failed. Connection: {}", domainPair.getRemote(), connection);
+                    // Recorded before the caller learns of the failure, which can stop the attempt before the channel reports the close.
+                    record(AttemptRecorder::connectionClosed);
                     abandonSessionInitiation();
                 }
             });

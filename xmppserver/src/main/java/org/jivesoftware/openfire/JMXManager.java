@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package org.jivesoftware.openfire;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.eclipse.jetty.jmx.ConnectorServer;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,37 +166,7 @@ public class JMXManager {
         String jmxUrl = "/jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
         Map<String, Object> env = new HashMap<>();
         if (JMXManager.isSecure()) {
-            env.put("jmx.remote.authenticator", (JMXAuthenticator) credentials -> {
-                if (!(credentials instanceof String[])) {
-                    if (credentials == null) {
-                        throw new SecurityException("Credentials required");
-                    }
-                    throw new SecurityException("Credentials should be String[]");
-                }
-                final String[] aCredentials = (String[]) credentials;
-                if (aCredentials.length < 2) {
-                    throw new SecurityException("Credentials should have at least two elements");
-                }
-                String username = aCredentials[0];
-                String password = aCredentials[1];
-
-                try {
-                    AuthFactory.authenticate(username, password);
-                } catch (Exception ex) {
-                    Log.error("Authentication failed for " + username);
-                    throw new SecurityException();
-                }
-
-                if (AdminManager.getInstance().isUserAdmin(username, true)) {
-                    return new Subject(true,
-                                       Collections.singleton(new JMXPrincipal(username)),
-                                       Collections.EMPTY_SET,
-                                       Collections.EMPTY_SET);
-                } else {
-                    Log.error("Authorization failed for " + username);
-                    throw new SecurityException();
-                }
-            });
+            env.put("jmx.remote.authenticator", (JMXAuthenticator) JMXManager::authenticate);
         }
         
         try {
@@ -206,6 +178,58 @@ public class JMXManager {
         }
     }
     
+    /**
+     * Authenticates a JMX client: the credentials must be a username and password of an administrator.
+     *
+     * The attempt is counted against the user login limits before the password is checked, and refused without
+     * checking it when the account is locked or the username is blocked (OF-2279). The JMX authenticator is not given
+     * the client's address, so only the per-username limit applies. A correct password gives the attempt back.
+     *
+     * @param credentials the credentials provided by the client: a String array of at least a username and a password.
+     * @return the authenticated subject.
+     * @throws SecurityException if the credentials are malformed or wrong, the attempt is refused, or the user is not an
+     *                           administrator.
+     */
+    @VisibleForTesting
+    static Subject authenticate(final Object credentials) {
+        if (!(credentials instanceof String[])) {
+            if (credentials == null) {
+                throw new SecurityException("Credentials required");
+            }
+            throw new SecurityException("Credentials should be String[]");
+        }
+        final String[] aCredentials = (String[]) credentials;
+        if (aCredentials.length < 2 || aCredentials[0] == null || aCredentials[1] == null) {
+            throw new SecurityException("Credentials should have at least two non-null elements");
+        }
+        final String username = aCredentials[0];
+        final String password = aCredentials[1];
+
+        final UserLoginLimitManager.Reservation reservation = UserLoginLimitManager.getInstance().tryAcquireAttempt(username, null);
+        if (reservation == null) {
+            Log.debug("JMX authentication refused for {}: the account is locked or a login limit applies", UserLoginLimitManager.forLog(username));
+            throw new SecurityException();
+        }
+
+        try {
+            AuthFactory.authenticate(username, password);
+        } catch (Exception ex) {
+            Log.error("Authentication failed for {}", UserLoginLimitManager.forLog(username));
+            throw new SecurityException();
+        }
+        UserLoginLimitManager.getInstance().recordSuccessfulLogin(reservation);
+
+        if (AdminManager.getInstance().isUserAdmin(username, true)) {
+            return new Subject(true,
+                               Collections.singleton(new JMXPrincipal(username)),
+                               Collections.EMPTY_SET,
+                               Collections.EMPTY_SET);
+        } else {
+            Log.error("Authorization failed for {}", UserLoginLimitManager.forLog(username));
+            throw new SecurityException();
+        }
+    }
+
     public MBeanContainer getContainer() {
         return mbContainer;
     }

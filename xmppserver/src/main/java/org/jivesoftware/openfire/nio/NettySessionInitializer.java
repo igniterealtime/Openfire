@@ -190,6 +190,19 @@ public class NettySessionInitializer {
     private Channel channel;
 
     /**
+     * Creates an initializer whose connection attempt is recorded by a recorder of its own, which nothing reads.
+     *
+     * @param domainPair the local and remote domain of the connection.
+     * @param port the default port to connect to.
+     * @deprecated use {@link #NettySessionInitializer(DomainPair, int, AttemptRecorder)}, so that the S2S connection test
+     *             and the failed-session page can show the attempt.
+     */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
+    public NettySessionInitializer(DomainPair domainPair, int port) {
+        this(domainPair, port, new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote()));
+    }
+
+    /**
      * @param domainPair the local and remote domain of the connection.
      * @param port the default port to connect to.
      * @param recorder records the milestones of this connection attempt; made available to the channel's handlers.

@@ -373,7 +373,7 @@
 
         <h3>Configuring read-only certificate stores</h3>
 
-        <p>To set it in the admin console, navigate to "Server / TLS Certificates / Settings", tick "Prevent Openfire from modifying its certificate stores" and click Save Settings. Alternatively, set the System Property <code>cert.stores.readonly</code> to <code>true</code> on the "Server / Server Manager / System Properties" page (the default is <code>false</code>). Like other System Properties, the setting is stored in the database. The change takes effect immediately; no restart is needed.</p>
+        <p>To set it in the admin console, navigate to "Server / TLS Certificates / Read-only Stores", tick "Prevent Openfire from modifying its certificate stores" and click Save Settings. Alternatively, set the System Property <code>cert.stores.readonly</code> to <code>true</code> on the "Server / Server Manager / System Properties" page (the default is <code>false</code>). Like other System Properties, the setting is stored in the database. The change takes effect immediately; no restart is needed.</p>
 
         <p>To have it in effect when Openfire is first set up (so that setup does not generate a self-signed certificate), set it in <code>openfire.xml</code> before setup: <code>&lt;cert&gt;&lt;stores&gt;&lt;readonly&gt;true&lt;/readonly&gt;&lt;/stores&gt;&lt;/cert&gt;</code>. Setup copies it into the database.</p>
 
@@ -390,7 +390,7 @@
         <h3>Limitations</h3>
 
         <ul>
-            <li>The read-only setting guards against unintended changes by Openfire, and not against administrators: any administrator can turn it off, on the Certificate Store Settings page or in System Properties. It does not change the permissions of the store files. File-system permissions remain the control over who can modify a store file.</li>
+            <li>The read-only setting guards against unintended changes by Openfire, and not against administrators: any administrator can turn it off, on the Read-only Certificate Stores page or in System Properties. It does not change the permissions of the store files. File-system permissions remain the control over who can modify a store file.</li>
             <li>The setting stops Openfire's own code, and plugins that use Openfire's certificate store classes, from changing the store files. A plugin that changes the contents of a store in memory directly (through <code>getStore()</code>) without saving them is not prevented, but such a change is never written to the file.</li>
         </ul>
 

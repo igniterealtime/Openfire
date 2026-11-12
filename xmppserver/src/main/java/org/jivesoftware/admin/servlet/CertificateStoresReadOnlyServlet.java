@@ -33,24 +33,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Servlet for the admin console page that holds the settings of the certificate stores: whether Openfire may modify
- * them ({@link CertificateStoreManager#READ_ONLY}).
+ * Servlet for the admin console's Read-only Certificate Stores page, which sets whether Openfire may modify the
+ * certificate stores it uses ({@link CertificateStoreManager#READ_ONLY}).
  *
  * @author Matthew Vivian
  */
-@WebServlet(value = "/security-certificate-store-settings.jsp")
-public class CertificateStoreSettingsServlet extends HttpServlet
+@WebServlet(value = "/security-certificate-stores-read-only.jsp")
+public class CertificateStoresReadOnlyServlet extends HttpServlet
 {
     /**
      * The JSP that renders the page.
      */
-    static final String PAGE = "security-certificate-store-settings-page.jsp";
+    static final String PAGE = "security-certificate-stores-read-only-page.jsp";
 
     /**
      * Where a successful save redirects to, so that the page shows its success message and a reload does not submit
      * the form again.
      */
-    static final String SAVED_REDIRECT = "security-certificate-store-settings.jsp?saved=true";
+    static final String SAVED_REDIRECT = "security-certificate-stores-read-only.jsp?saved=true";
 
     /**
      * The name of the read-only checkbox.

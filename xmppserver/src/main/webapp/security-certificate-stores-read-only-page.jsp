@@ -22,8 +22,8 @@
 
 <html>
 <head>
-    <title><fmt:message key="ssl.certificates.store-settings.title"/></title>
-    <meta name="pageID" content="security-certificate-store-settings"/>
+    <title><fmt:message key="ssl.certificates.read-only-stores.title"/></title>
+    <meta name="pageID" content="security-certificate-stores-read-only"/>
 </head>
 <body>
 
@@ -36,23 +36,19 @@
 <!-- Display success report, but only if there were no errors. -->
 <c:if test="${param.saved and empty errors}">
     <admin:infobox type="success">
-        <fmt:message key="ssl.certificates.store-settings.read-only.saved"/>
+        <fmt:message key="ssl.certificates.read-only-stores.saved"/>
     </admin:infobox>
 </c:if>
 
 <p>
-    <fmt:message key="ssl.certificates.store-settings.info"/>
+    <fmt:message key="ssl.certificates.read-only-stores.info"/>
 </p>
 
-<form action="security-certificate-store-settings.jsp" method="post">
+<form action="security-certificate-stores-read-only.jsp" method="post">
     <input type="hidden" name="csrf" value="<c:out value="${csrf}"/>">
 
-    <fmt:message key="ssl.certificates.store-settings.read-only.title" var="readOnlyTitle"/>
-    <admin:contentBox title="${readOnlyTitle}">
-        <p>
-            <fmt:message key="ssl.certificates.store-settings.read-only.info"/>
-        </p>
-
+    <fmt:message key="ssl.certificates.read-only-stores.settings" var="settingsTitle"/>
+    <admin:contentBox title="${settingsTitle}">
         <table>
             <tbody>
             <tr>
@@ -60,7 +56,7 @@
                     <input type="checkbox" id="${checkboxParameter}" name="${checkboxParameter}" value="true" ${readOnly ? 'checked' : ''}/>
                 </td>
                 <td>
-                    <label for="${checkboxParameter}"><fmt:message key="ssl.certificates.store-settings.read-only.label"/></label>
+                    <label for="${checkboxParameter}"><fmt:message key="ssl.certificates.read-only-stores.label"/></label>
                 </td>
             </tr>
             </tbody>

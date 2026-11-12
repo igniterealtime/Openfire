@@ -50,7 +50,7 @@ Read-only is a safety guard, not an access control. An administrator can turn it
 - Rationale: the admin console is not the only writer. Plugins call these methods, and the setup wizard calls `ensureDomainCertificate`.
 
 ### 4. The admin console shows the setting; the stores enforce it
-- A Certificate Store Settings page, in the TLS Certificates menu next to Backup and Expiry Check, holds one checkbox and a Save button. Saving sets the property to what the checkbox shows. The setting has a page of its own (rather than a section on the Certificate Stores page, as first built) because it will be used far less than the store settings, so it should not sit above them; this was agreed in review.
+- A Read-only Certificate Stores page ("Read-only Stores" in the TLS Certificates menu, next to Backup and Expiry Check) holds one checkbox and a Save button. Saving sets the property to what the checkbox shows. The setting has a page of its own (rather than a section on the Certificate Stores page, as first built) because it will be used far less than the store settings, so it should not sit above them; this was agreed in review.
 - Pages that change a store's contents show a notice and hide the actions that would fail. A request that reaches a write action anyway (an old link, a direct URL) gets the refusal from the store class, shown as an error.
 - Changing a store's location or password stays allowed: that changes Openfire's configuration, not the store.
 
@@ -91,7 +91,7 @@ Plugins in other repositories (for example ones that install certificates automa
 
 | Screen | Today | With the setting on |
 |---|---|---|
-| `security-certificate-store-settings.jsp` (new, served by `CertificateStoreSettingsServlet`) | Does not exist | The read-only checkbox and a Save button, whether the setting is on or off |
+| `security-certificate-stores-read-only.jsp` (new, served by `CertificateStoresReadOnlyServlet`) | Does not exist | The read-only checkbox and a Save button, whether the setting is on or off |
 | `security-keystore.jsp` (identity store contents) | Generate self-signed, import, delete, import a signed-certificate reply, link to the signing-request page; a "no certificate for this domain" message offering generate or import | Notice that the stores are read-only; those actions hidden; the missing-certificate message says the store must be updated outside Openfire. Listing, details and creating a signing request to copy stay |
 | `security-truststore.jsp` (trust store contents) | Import link, delete per certificate | Notice; import and delete hidden |
 | `import-keystore-certificate.jsp`, `import-truststore-certificate.jsp` | Import form | Notice instead of the form; a POST is refused by the store |
@@ -171,17 +171,17 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 
 ### Session 4: Admin console
 
-**Goal:** An administrator can see and change the setting on the Certificate Store Settings page, and the pages that change a store's contents show the stores as read-only and offer no actions that would fail.
+**Goal:** An administrator can see and change the setting on the Read-only Certificate Stores page, and the pages that change a store's contents show the stores as read-only and offer no actions that would fail.
 
 **Files:**
-- `xmppserver/src/main/java/org/jivesoftware/admin/servlet/CertificateStoreSettingsServlet.java`, `xmppserver/src/main/webapp/security-certificate-store-settings-page.jsp`, `xmppserver/src/main/resources/admin-sidebar.xml`
+- `xmppserver/src/main/java/org/jivesoftware/admin/servlet/CertificateStoresReadOnlyServlet.java`, `xmppserver/src/main/webapp/security-certificate-stores-read-only-page.jsp`, `xmppserver/src/main/resources/admin-sidebar.xml`
 - `xmppserver/src/main/webapp/security-keystore.jsp`, `security-truststore.jsp`, `import-keystore-certificate.jsp`, `import-truststore-certificate.jsp`, `security-keystore-signing-request.jsp`
 - `i18n/src/main/resources/openfire_i18n.properties`
 
 **Tasks:**
-1. Add a Certificate Store Settings page, linked in the TLS Certificates menu next to Backup and Expiry Check, with the read-only checkbox (showing the property's value), a short explanation and a Save button with CSRF protection. Saving sets the property to what the checkbox shows, logs an admin event when the value changes, and shows the page's success or error message.
+1. Add a Read-only Certificate Stores page, linked in the TLS Certificates menu next to Backup and Expiry Check, with the read-only checkbox (showing the property's value), a short explanation and a Save button with CSRF protection. Saving sets the property to what the checkbox shows, logs an admin event when the value changes, and shows the page's success or error message.
 2. On each content page in the screens table, show a notice (an `admin:infobox`) and hide the actions listed there; replace the missing-domain-certificate message on `security-keystore.jsp` with the setting on.
-3. On a running server: the checkbox on the Certificate Store Settings page, turning the setting on and off, without a restart; for each content page, with the setting on, the actions are hidden, a direct POST is refused with a readable error and the store file's checksum is unchanged; with it off, each action still works.
+3. On a running server: the checkbox on the Read-only Certificate Stores page, turning the setting on and off, without a restart; for each content page, with the setting on, the actions are hidden, a direct POST is refused with a readable error and the store file's checksum is unchanged; with it off, each action still works.
 
 **Exit:** Every row of the screens table checked on a running server, with the setting on and off; the test suite passes.
 
@@ -195,7 +195,7 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 - `documentation/ssl-guide.html`
 
 **Tasks:**
-1. Add a section on read-only stores to `ssl-guide.html`: what the setting does, where to set it (the Certificate Store Settings page or the `cert.stores.readonly` System Property), that it applies to every store, that it is a safety guard and not an access control, that changes made by other software are reloaded while the certificate store watcher is on, and that setup does not generate a self-signed certificate with it on.
+1. Add a section on read-only stores to `ssl-guide.html`: what the setting does, where to set it (the Read-only Certificate Stores page or the `cert.stores.readonly` System Property), that it applies to every store, that it is a safety guard and not an access control, that changes made by other software are reloaded while the certificate store watcher is on, and that setup does not generate a self-signed certificate with it on.
 2. Measure coverage of the changed and added code with JaCoCo; add tests where it is short.
 
 **Exit:** Documentation reviewed; coverage recorded.
@@ -211,7 +211,7 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 | Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/keystore/TrustStore.java` | Trusted certificate install |
 | Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/keystore/CertificateStoreManager.java` | Defines `cert.stores.readonly` |
 | Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/XMPPServer.java` | `finalSetupSteps` calls `ensureDomainCertificate` |
-| Openfire | `xmppserver/src/main/java/org/jivesoftware/admin/servlet/CertificateStoreSettingsServlet.java`, `security-certificate-store-settings-page.jsp` | Certificate Store Settings page, with the read-only setting |
+| Openfire | `xmppserver/src/main/java/org/jivesoftware/admin/servlet/CertificateStoresReadOnlyServlet.java`, `security-certificate-stores-read-only-page.jsp` | Read-only Certificate Stores page, with the read-only setting |
 | Openfire | `xmppserver/src/main/webapp/security-keystore.jsp`, `security-truststore.jsp`, the two import pages, `security-keystore-signing-request.jsp` | Pages that change store contents |
 
 ---
@@ -225,7 +225,7 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 - [x] Full `xmppserver` test suite passes
 
 ### Admin console (Session 4)
-- [x] The read-only setting on the Certificate Store Settings page
+- [x] The read-only setting on the Read-only Certificate Stores page
 - [x] Every row of the screens table checked with the setting on and off
 - [x] Direct POSTs to write actions refused with a readable error
 

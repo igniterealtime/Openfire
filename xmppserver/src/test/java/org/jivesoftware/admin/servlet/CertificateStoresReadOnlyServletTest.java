@@ -39,14 +39,14 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Verifies the admin console page that holds the settings of the certificate stores: it shows the cert.stores.readonly
+ * Verifies the admin console's Read-only Certificate Stores page: it shows the cert.stores.readonly
  * setting, sets it to what the checkbox shows on a form submission with a valid CSRF token, and writes an admin event
  * only when the value changed.
  *
  * @author Matthew Vivian
  */
 @ExtendWith(MockitoExtension.class)
-public class CertificateStoreSettingsServletTest
+public class CertificateStoresReadOnlyServletTest
 {
     private static final String CSRF = "csrf-token";
 
@@ -67,7 +67,7 @@ public class CertificateStoreSettingsServletTest
      */
     private final List<String> events = new ArrayList<>();
 
-    private CertificateStoreSettingsServlet servlet;
+    private CertificateStoresReadOnlyServlet servlet;
 
     @BeforeAll
     public static void setUpClass() throws Exception
@@ -87,7 +87,7 @@ public class CertificateStoreSettingsServletTest
     {
         Fixtures.clearExistingProperties();
         events.clear();
-        servlet = new CertificateStoreSettingsServlet()
+        servlet = new CertificateStoresReadOnlyServlet()
         {
             @Override
             protected void logEvent( final HttpServletRequest request, final HttpServletResponse response, final String summary, final String details )
@@ -97,7 +97,7 @@ public class CertificateStoreSettingsServletTest
         };
         lenient().when( request.getSession() ).thenReturn( session );
         lenient().when( request.getServerName() ).thenReturn( "localhost" );
-        lenient().when( request.getRequestDispatcher( CertificateStoreSettingsServlet.PAGE ) ).thenReturn( requestDispatcher );
+        lenient().when( request.getRequestDispatcher( CertificateStoresReadOnlyServlet.PAGE ) ).thenReturn( requestDispatcher );
     }
 
     /**
@@ -125,7 +125,7 @@ public class CertificateStoreSettingsServletTest
     public void testDoGetWithFormParametersDoesNotChangeSetting() throws Exception
     {
         // Setup test fixture.
-        lenient().when( request.getParameter( CertificateStoreSettingsServlet.CHECKBOX_PARAMETER ) ).thenReturn( "true" );
+        lenient().when( request.getParameter( CertificateStoresReadOnlyServlet.CHECKBOX_PARAMETER ) ).thenReturn( "true" );
         lenient().when( request.getParameter( "csrf" ) ).thenReturn( CSRF );
         lenient().when( request.getCookies() ).thenReturn( new Cookie[] { new Cookie( "csrf", CSRF ) } );
 
@@ -153,7 +153,7 @@ public class CertificateStoreSettingsServletTest
         // Verify result.
         assertTrue( CertificateStoreManager.READ_ONLY.getValue(), "saving a ticked checkbox must turn the setting on" );
         assertEquals( List.of( "Updated the read-only setting of the certificate stores: cert.stores.readonly = true" ), events, "turning the setting on must write one admin event" );
-        verify( response, description( "a successful save must redirect to the page with its success message" ) ).sendRedirect( CertificateStoreSettingsServlet.SAVED_REDIRECT );
+        verify( response, description( "a successful save must redirect to the page with its success message" ) ).sendRedirect( CertificateStoresReadOnlyServlet.SAVED_REDIRECT );
     }
 
     /**
@@ -173,7 +173,7 @@ public class CertificateStoreSettingsServletTest
         // Verify result.
         assertFalse( CertificateStoreManager.READ_ONLY.getValue(), "saving an unticked checkbox must turn the setting off" );
         assertEquals( List.of( "Updated the read-only setting of the certificate stores: cert.stores.readonly = false" ), events, "turning the setting off must write one admin event" );
-        verify( response, description( "a successful save must redirect to the page with its success message" ) ).sendRedirect( CertificateStoreSettingsServlet.SAVED_REDIRECT );
+        verify( response, description( "a successful save must redirect to the page with its success message" ) ).sendRedirect( CertificateStoresReadOnlyServlet.SAVED_REDIRECT );
     }
 
     /**
@@ -192,7 +192,7 @@ public class CertificateStoreSettingsServletTest
         // Verify result.
         assertTrue( CertificateStoreManager.READ_ONLY.getValue(), "saving a ticked checkbox must leave the setting on" );
         assertTrue( events.isEmpty(), "saving the value the setting already has must not write an admin event" );
-        verify( response, description( "the save must still redirect to the page with its success message" ) ).sendRedirect( CertificateStoreSettingsServlet.SAVED_REDIRECT );
+        verify( response, description( "the save must still redirect to the page with its success message" ) ).sendRedirect( CertificateStoresReadOnlyServlet.SAVED_REDIRECT );
     }
 
     /**
@@ -204,7 +204,7 @@ public class CertificateStoreSettingsServletTest
     public void testDoPostWithInvalidCsrfIsRefused() throws Exception
     {
         // Setup test fixture.
-        lenient().when( request.getParameter( CertificateStoreSettingsServlet.CHECKBOX_PARAMETER ) ).thenReturn( "true" );
+        lenient().when( request.getParameter( CertificateStoresReadOnlyServlet.CHECKBOX_PARAMETER ) ).thenReturn( "true" );
         lenient().when( request.getParameter( "csrf" ) ).thenReturn( "another-token" );
         lenient().when( request.getCookies() ).thenReturn( new Cookie[] { new Cookie( "csrf", CSRF ) } );
 
@@ -221,7 +221,7 @@ public class CertificateStoreSettingsServletTest
 
     private void submit( final boolean ticked )
     {
-        lenient().when( request.getParameter( CertificateStoreSettingsServlet.CHECKBOX_PARAMETER ) ).thenReturn( ticked ? "true" : null );
+        lenient().when( request.getParameter( CertificateStoresReadOnlyServlet.CHECKBOX_PARAMETER ) ).thenReturn( ticked ? "true" : null );
         lenient().when( request.getParameter( "csrf" ) ).thenReturn( CSRF );
         lenient().when( request.getCookies() ).thenReturn( new Cookie[] { new Cookie( "csrf", CSRF ) } );
     }

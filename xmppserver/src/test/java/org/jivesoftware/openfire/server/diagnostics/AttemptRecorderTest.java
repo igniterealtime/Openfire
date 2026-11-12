@@ -340,7 +340,7 @@ public class AttemptRecorderTest
     }
 
     @Test
-    public void testCloseBeforeAnyStreamIsRecordedAsClosedByTheRemote()
+    public void testCloseBeforeAnyStreamIsRecordedAsClosed()
     {
         // Setup test fixture: connected, and nothing received yet.
         final AttemptRecorder recorder = new AttemptRecorder("example.com", "remote.example.org");
@@ -350,7 +350,7 @@ public class AttemptRecorderTest
         recorder.connectionClosed();
 
         // Verify results.
-        assertEquals(AttemptMilestones.Stream.closedByRemote(), recorder.snapshot().getStream().orElseThrow(), "a connection closed before any stream must be recorded as closed by the remote");
+        assertEquals(AttemptMilestones.Stream.closed(), recorder.snapshot().getStream().orElseThrow(), "a connection closed before any stream must be recorded as closed by the remote");
     }
 
     @Test
@@ -615,7 +615,7 @@ public class AttemptRecorderTest
         recorder.gaveUpWaiting(Duration.ofSeconds(5));
 
         // Verify results.
-        assertEquals(AttemptMilestones.Stream.closedByRemote(), recorder.snapshot().getStream().orElseThrow(), "a remote that closed the connection must not be reported as silent");
+        assertEquals(AttemptMilestones.Stream.closed(), recorder.snapshot().getStream().orElseThrow(), "a remote that closed the connection must not be reported as silent");
     }
 
     @Test

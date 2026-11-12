@@ -503,11 +503,11 @@
                 </tr>
                 <tr>
                     <td>Failed</td>
-                    <td><q data-key="server2server.settings.testing.check.stream.fail.closed">The remote server closed the
-                        connection without opening an XMPP stream. The port may belong to a service other than
-                        XMPP.</q></td>
-                    <td>The connection was accepted and then closed by the remote side before any XMPP stream
-                        started.</td>
+                    <td><q data-key="server2server.settings.testing.check.stream.fail.closed">The connection closed before the
+                        remote server opened an XMPP stream.</q></td>
+                    <td>The connection was accepted and then closed before any XMPP stream started, without a stream
+                        error. This server cannot tell which side closed it; the logs of both servers may say. The
+                        port may belong to a service other than XMPP.</td>
                 </tr>
                 <tr>
                     <td>Failed</td>
@@ -648,10 +648,11 @@
                 </tr>
                 <tr>
                     <td>Failed</td>
-                    <td><q data-key="server2server.settings.testing.check.tls.fail.closed">The remote server closed the
-                        connection before encryption was set up.</q></td>
-                    <td>Over STARTTLS, the stream opened, and the remote server closed the connection while encryption
-                        was being set up, without sending a stream error.</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.closed">The connection closed before
+                        encryption was set up.</q></td>
+                    <td>Over STARTTLS, the stream opened, and the connection closed while encryption was being set up,
+                        without a stream error. This server cannot tell which side closed it; the logs of both servers
+                        may say.</td>
                 </tr>
                 </tbody>
             </table>
@@ -876,10 +877,10 @@
                 </tr>
                 <tr>
                     <td>Failed</td>
-                    <td><q data-key="server2server.settings.testing.check.authentication.fail.closed">The remote server
-                        closed the connection before authentication completed.</q></td>
-                    <td>The remote server closed the connection during authentication, without sending a stream
-                        error.</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.closed">The connection closed
+                        before authentication completed.</q></td>
+                    <td>The connection closed during authentication, without a stream error. This server cannot tell
+                        which side closed it; the logs of both servers may say.</td>
                 </tr>
                 <tr>
                     <td>Failed</td>

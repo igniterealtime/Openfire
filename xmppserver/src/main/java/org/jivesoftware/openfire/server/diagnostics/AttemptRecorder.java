@@ -340,7 +340,7 @@ public final class AttemptRecorder
         }
         if (nothingRecordedAfterTcp()) {
             if (!recorded.isDirectTls()) {
-                milestones.stream(Stream.closedByRemote());
+                milestones.stream(Stream.closed());
             }
             return;
         }
@@ -348,7 +348,7 @@ public final class AttemptRecorder
             return;
         }
         if (recorded.getStream().isEmpty()) {
-            milestones.stream(Stream.closedByRemote());
+            milestones.stream(Stream.closed());
         } else if (recorded.getTls().isEmpty()) {
             milestones.tls(Tls.closedBeforeSetUp());
         } else {

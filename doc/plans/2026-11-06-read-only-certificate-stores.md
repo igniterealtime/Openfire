@@ -176,12 +176,11 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 **Files:**
 - `xmppserver/src/main/java/org/jivesoftware/admin/servlet/CertificateStoreSettingsServlet.java`, `xmppserver/src/main/webapp/security-certificate-store-settings-page.jsp`, `xmppserver/src/main/resources/admin-sidebar.xml`
 - `xmppserver/src/main/webapp/security-keystore.jsp`, `security-truststore.jsp`, `import-keystore-certificate.jsp`, `import-truststore-certificate.jsp`, `security-keystore-signing-request.jsp`
-- a shared notice tag under `xmppserver/src/main/webapp/WEB-INF/classes/META-INF/tags/admin/security/`, registered in `admin.tld`
 - `i18n/src/main/resources/openfire_i18n.properties`
 
 **Tasks:**
 1. Add a Certificate Store Settings page, linked in the TLS Certificates menu next to Backup and Expiry Check, with the read-only checkbox (showing the property's value), a short explanation and a Save button with CSRF protection. Saving sets the property to what the checkbox shows, logs an admin event when the value changes, and shows the page's success or error message.
-2. Add a shared notice, and on each content page in the screens table show it and hide the actions listed there; replace the missing-domain-certificate message on `security-keystore.jsp` with the setting on.
+2. On each content page in the screens table, show a notice (an `admin:infobox`) and hide the actions listed there; replace the missing-domain-certificate message on `security-keystore.jsp` with the setting on.
 3. On a running server: the checkbox on the Certificate Store Settings page, turning the setting on and off, without a restart; for each content page, with the setting on, the actions are hidden, a direct POST is refused with a readable error and the store file's checksum is unchanged; with it off, each action still works.
 
 **Exit:** Every row of the screens table checked on a running server, with the setting on and off; the test suite passes.

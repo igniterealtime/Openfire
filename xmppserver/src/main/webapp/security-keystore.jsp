@@ -233,7 +233,12 @@
         </c:forEach>
 
         <c:if test="${readOnly}">
-            <admin:storeReadOnlyNotice/>
+            <admin:infobox type="info">
+                <fmt:message key="ssl.certificates.read-only.notice">
+                    <fmt:param value="<a href='security-certificate-store-settings.jsp'>"/>
+                    <fmt:param value="</a>"/>
+                </fmt:message>
+            </admin:infobox>
         </c:if>
 
         <c:choose>

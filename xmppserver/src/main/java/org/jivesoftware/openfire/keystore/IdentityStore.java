@@ -431,7 +431,7 @@ public class IdentityStore extends CertificateStore
         Log.debug( "Verifying that a domain certificate is available in this store." );
         if ( !containsDomainCertificate() )
         {
-            if ( isReadOnly() )
+            if ( CertificateStoreManager.READ_ONLY.getValue() )
             {
                 Log.warn( "The identity store in '{}' does not contain a certificate for the XMPP domain '{}'. Openfire is configured not to modify the certificate stores it uses ({}), so it does not generate a self-signed certificate: add a certificate for this domain to the store outside Openfire, or turn the setting off.",
                     configuration.getFile(), XMPPServer.getInstance().getServerInfo().getXMPPDomain(), CertificateStoreManager.READ_ONLY.getKey() );

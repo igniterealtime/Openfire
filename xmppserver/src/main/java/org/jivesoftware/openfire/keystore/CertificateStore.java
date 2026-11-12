@@ -143,7 +143,7 @@ public abstract class CertificateStore
      */
     public void persist() throws CertificateStoreConfigException
     {
-        if ( isReadOnly() )
+        if ( CertificateStoreManager.READ_ONLY.getValue() )
         {
             final CertificateStoreReadOnlyException refusal = readOnlyRefusal();
             try
@@ -280,21 +280,10 @@ public abstract class CertificateStore
      */
     protected final void checkWritable() throws CertificateStoreReadOnlyException
     {
-        if ( isReadOnly() )
+        if ( CertificateStoreManager.READ_ONLY.getValue() )
         {
             throw readOnlyRefusal();
         }
-    }
-
-    /**
-     * Returns whether Openfire is configured not to modify its certificate stores
-     * ({@link CertificateStoreManager#READ_ONLY}). The setting is read on every call.
-     *
-     * @return true if the certificate stores are read-only
-     */
-    protected static boolean isReadOnly()
-    {
-        return CertificateStoreManager.READ_ONLY.getValue();
     }
 
     private CertificateStoreReadOnlyException readOnlyRefusal()

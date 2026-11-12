@@ -604,7 +604,7 @@ public class IdentityStore extends CertificateStore
         }
         catch ( CertificateStoreReadOnlyException ex )
         {
-            throw ex; // persist() has already reloaded the store; report the refusal as such.
+            throw ex; // persist() has already restored the store from its file; report the refusal as such.
         }
         catch ( CertificateStoreConfigException | IOException | GeneralSecurityException ex )
         {
@@ -679,7 +679,7 @@ public class IdentityStore extends CertificateStore
         }
         catch ( CertificateStoreReadOnlyException e )
         {
-            throw e; // persist() has already reloaded the store; report the refusal as such.
+            throw e; // persist() has already restored the store from its file; report the refusal as such.
         }
         catch ( CertificateStoreConfigException | IOException | GeneralSecurityException | RuntimeException e )
         {

@@ -374,6 +374,35 @@ public class CertificateStoreReadOnlyTest
         assertInMemoryMatchesFile( store );
     }
 
+    /**
+     * Verifies that a refused persist reports a trust store as changed, and restores the certificate from the file, when
+     * only the certificate of an entry was replaced in memory, under the same alias.
+     */
+    @Test
+    public void testPersistWhenReadOnlyAndOnlyCertificateDiffersReportsStoreChanged() throws Exception
+    {
+        // Setup test fixture: replace the certificate, keeping the alias.
+        final TrustStore store = new TrustStore( configuration( trustStoreFile ), false );
+        store.getStore().setCertificateEntry( EXISTING_ALIAS, KeystoreTestUtils.generateSelfSignedCertificate().getCertificate() );
+        setReadOnly( true );
+        final List<CertificateStore> changed = new CopyOnWriteArrayList<>();
+        final CertificateEventListener listener = changed::add;
+        CertificateManager.addListener( listener );
+        try
+        {
+            // Execute system under test.
+            assertThrows( CertificateStoreReadOnlyException.class, store::persist, "persisting must be refused when the setting is on" );
+        }
+        finally
+        {
+            CertificateManager.removeListener( listener );
+        }
+
+        // Verify result.
+        assertEquals( List.of( store ), changed, "discarding the replaced certificate must be reported once" );
+        assertInMemoryMatchesFile( store );
+    }
+
     private void assertRefusedPersistReportsNoChange( final CertificateStore store ) throws Exception
     {
         // Setup test fixture.
@@ -1052,7 +1081,7 @@ public class CertificateStoreReadOnlyTest
 
     /**
      * A trust store that records whether {@link CertificateStore#persist()} was reached. persist() refuses when the
-     * setting is on and reloads the store, so the file and the in-memory store end up unchanged even when a method fails
+     * setting is on and restores the store from its file, so the file and the in-memory store end up unchanged even when a method fails
      * to check first; that persist() is never reached shows the method refused before changing the store in memory.
      */
     private TrustStore trustStore() throws CertificateStoreConfigException

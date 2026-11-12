@@ -158,8 +158,9 @@ public abstract class CertificateStore
             }
             catch ( CertificateStoreConfigException e )
             {
-                // The store in memory may now be empty, so say so: the refusal alone would hide it.
-                Log.warn( "Unable to reload {} after refusing to persist it (the certificate stores are read-only).", configuration.getFile(), e );
+                // The file could not be read, so the store in memory may still hold the change, or be empty if the reload
+                // failed part way. Say so: the refusal alone would hide it.
+                Log.warn( "Unable to restore {} from its file after refusing to persist it (the certificate stores are read-only).", configuration.getFile(), e );
                 refusal.addSuppressed( e );
             }
             throw refusal;
@@ -257,7 +258,7 @@ public abstract class CertificateStore
         }
         catch ( CertificateStoreReadOnlyException e )
         {
-            throw e; // persist() has already reloaded the store; report the refusal as such.
+            throw e; // persist() has already restored the store from its file; report the refusal as such.
         }
         catch ( CertificateStoreConfigException | KeyStoreException e )
         {

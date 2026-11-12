@@ -188,6 +188,23 @@ public class S2STestServiceTest
     }
 
     @Test
+    public void testClosingASessionThatLosesItsConnectionMeanwhileDoesNotFail() throws Exception
+    {
+        // Setup test fixture: a session whose connection is detached between two reads, as a server session can be once
+        // it can detach from its connection (OF-2425).
+        final Connection connection = mock(Connection.class);
+        when(connection.getCloseFuture()).thenReturn(CompletableFuture.completedFuture(null));
+        final LocalOutgoingServerSession session = mock(LocalOutgoingServerSession.class);
+        when(session.getConnection()).thenReturn(connection, (Connection) null);
+
+        // Execute system under test.
+        assertDoesNotThrow(() -> S2STestService.closeAndAwaitTeardown(session, Duration.ofSeconds(10)), "a connection detached while the test closes the session must not fail the test");
+
+        // Verify results.
+        verify(session, times(1).description("the existing session must be closed")).close();
+    }
+
+    @Test
     public void testClosingASessionOnAnotherNodeDoesNotWait() throws Exception
     {
         // Setup test fixture: a session held by another cluster node has no connection on this one.

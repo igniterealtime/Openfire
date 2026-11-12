@@ -49,10 +49,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -192,6 +194,21 @@ public class RespondingServerStanzaHandlerRecordingTest
 
         // Verify results.
         assertEquals(Authentication.reusedStreamId(), recorder.snapshot().getAuthentication().orElse(null), "a stream restarted after TLS and refused for reusing the stream ID must be recorded as such");
+    }
+
+    @Test
+    public void testFailureToStartTlsIsRecorded() throws Exception
+    {
+        // Setup test fixture: this server cannot start TLS on the connection, for example as it has no usable certificate.
+        doThrow(new IllegalStateException("Simulated failure to start TLS")).when(connection).startTLS(anyBoolean(), anyBoolean());
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_STARTTLS, reader);
+
+        // Execute system under test.
+        handler.process(TLS_PROCEED, reader);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Tls.handshakeFailed("Simulated failure to start TLS"), recorder.snapshot().getTls().orElse(null), "a failure of this server to start TLS must be recorded against TLS, or the close that follows is all the test can report");
     }
 
     @Test

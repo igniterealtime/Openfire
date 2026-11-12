@@ -52,8 +52,9 @@ import java.util.function.Consumer;
  *
  * This handler records each negotiation step (the stream, STARTTLS and authentication) on the attempt's
  * {@link org.jivesoftware.openfire.server.diagnostics.AttemptRecorder} where the step is decided, through
- * {@code record(...)}. A new step or failure path should record its outcome there too, or the S2S connection test and
- * the failed-session page will not show it. See ADR-007.
+ * {@code record(...)}. A new step or failure path should record its outcome there too (a failure that ends initiation
+ * through {@code failInitiation}), or the S2S connection test and the failed-session page show only the close that
+ * follows. See ADR-007.
  *
  * @author Alex Gidman
  * @author Matthew Vivian
@@ -181,9 +182,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                         LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party (remote domain '{}') to supply a new stream ID when it restarts the stream. The peer reused stream ID '{}' of the previous stream: {}", connection, domainPair.getRemote(), streamHeaderId, stanza);
                         // OF-3447: after TLS, the session is not yet bound to the connection, which then would not send the stream error.
                         connection.init(session);
-                        record(recorder -> recorder.authentication(AttemptMilestones.Authentication.reusedStreamId()));
-                        abandonSessionInitiation();
-                        connection.close(new StreamError(StreamError.Condition.invalid_xml, "Expected a new stream ID for the restarted stream, but the stream ID of the previous stream was reused."));
+                        failInitiation(recorder -> recorder.authentication(AttemptMilestones.Authentication.reusedStreamId()),
+                            new StreamError(StreamError.Condition.invalid_xml, "Expected a new stream ID for the restarted stream, but the stream ID of the previous stream was reused."));
                         return;
                     }
                     LOG.debug("Remote domain '{}' restarted the stream reusing stream ID '{}' of the previous stream. Accepted, as '{}' is enabled.", domainPair.getRemote(), streamHeaderId, ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.getKey());
@@ -270,15 +270,13 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 return true;
             } else if (mustUseTls() && !connection.isEncrypted()) {
                 LOG.debug("I MUST use TLS but I have no StartTLS in features from remote domain '{}'", domainPair.getRemote());
-                record(recorder -> recorder.tls(AttemptMilestones.Tls.notOffered()));
-                abandonSessionInitiation();
-                connection.close(new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) required by our server configuration, but not offered by you."));
+                failInitiation(recorder -> recorder.tls(AttemptMilestones.Tls.notOffered()),
+                    new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) required by our server configuration, but not offered by you."));
                 return true;
             } else if (cannotUseTls() && remoteFeaturesRequiresStartTLS(doc)) {
                 LOG.debug("I CANNOT use TLS but remote domain '{}' requires the STARTTLS feature.", domainPair.getRemote());
-                record(recorder -> recorder.tls(AttemptMilestones.Tls.requiredButDisabled()));
-                abandonSessionInitiation();
-                connection.close(new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) disabled by our server configuration, but required by you."));
+                failInitiation(recorder -> recorder.tls(AttemptMilestones.Tls.requiredButDisabled()),
+                    new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) disabled by our server configuration, but required by you."));
                 return true;
             }
 
@@ -316,9 +314,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 dialback.createAndSendDialbackKey(session.getStreamID().getID());
             } else {
                 LOG.debug("No authentication mechanism available.");
-                record(recorder -> recorder.authentication(AttemptMilestones.Authentication.noCommonMechanism()));
-                abandonSessionInitiation();
-                connection.close(new StreamError(StreamError.Condition.policy_violation, "No applicable authentication mechanism available."));
+                failInitiation(recorder -> recorder.authentication(AttemptMilestones.Authentication.noCommonMechanism()),
+                    new StreamError(StreamError.Condition.policy_violation, "No applicable authentication mechanism available."));
             }
             return true;
         }
@@ -444,6 +441,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 connection.startTLS(true, false);
             } catch (Exception e) {
                 LOG.debug("An error occurred while encrypting the connection.", e);
+                record(recorder -> recorder.tls(AttemptMilestones.Tls.handshakeFailed(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage())));
                 session.markNonResumable();
                 session.close();
                 return true;
@@ -504,6 +502,21 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
      */
     private void record(final Consumer<AttemptRecorder> recording) {
         attemptRecorder().ifPresent(recorder -> AttemptRecorder.safely(() -> recording.accept(recorder)));
+    }
+
+    /**
+     * Ends session initiation because of a failure that this server decided on: records the failure for the S2S
+     * connection test, abandons initiation (so that the caller stops waiting), and closes the connection with the stream
+     * error. A new failure exit should use this method, or at least record its failure as this method does, or the test
+     * reports only the close that follows. See ADR-007.
+     *
+     * @param failure records the failure on the attempt's recorder.
+     * @param error the stream error to close the connection with.
+     */
+    private void failInitiation(final Consumer<AttemptRecorder> failure, final StreamError error) {
+        record(failure);
+        abandonSessionInitiation();
+        connection.close(error);
     }
 
     private void abandonSessionInitiation() {

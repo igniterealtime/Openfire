@@ -123,6 +123,9 @@ public class MessageRouter extends BasicModule {
                     }
                 }
                 if (isAcceptable) {
+                    // Evaluate carbons eligibility before routing, as delivery to a local recipient removes the
+                    // <private/> element (on which the eligibility depends) from the stanza.
+                    final boolean carbonsEligible = Forwarded.isEligibleForCarbonsDelivery(packet);
                     try {
                         // Deliver stanza to requested route
                         routingTable.routePacket(recipientJID, packet);
@@ -132,7 +135,7 @@ public class MessageRouter extends BasicModule {
                     }
 
                     // Sent carbon copies to other resources of the sender:
-                    if (session != null && Forwarded.isEligibleForCarbonsDelivery(packet)) {
+                    if (session != null && carbonsEligible) {
                         List<JID> routes = routingTable.getRoutes(packet.getFrom().asBareJID(), null);
                         for (JID route : routes) {
                             // The sending server SHOULD NOT send a forwarded copy to the sending full JID if it is a Carbons-enabled resource.

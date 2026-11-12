@@ -1258,6 +1258,11 @@ public class CertificateStoreReadOnlyTest
             {
                 assertEquals( onDisk.getCertificate( alias ), inMemory.getCertificate( alias ), "the in-memory certificate of '" + alias + "' must match the file" );
             }
+            assertEquals( onDisk.isKeyEntry( alias ), inMemory.isKeyEntry( alias ), "the in-memory entry '" + alias + "' must be of the same kind as in the file" );
+            if ( inMemory.isKeyEntry( alias ) )
+            {
+                assertArrayEquals( onDisk.getKey( alias, PASSWORD ).getEncoded(), inMemory.getKey( alias, PASSWORD ).getEncoded(), "the in-memory private key of '" + alias + "' must match the file" );
+            }
         }
     }
 

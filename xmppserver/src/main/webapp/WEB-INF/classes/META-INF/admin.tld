@@ -153,6 +153,16 @@
         <name>trustStoreConfig</name>
         <path>/META-INF/tags/admin/security/trustStoreConfig.tagx</path>
     </tag-file>
+    <tag-file>
+        <name>storePasswordConfig</name>
+        <path>/META-INF/tags/admin/security/storePasswordConfig.tagx</path>
+    </tag-file>
+    <function>
+        <description>Indicates whether a certificate store password is set, without revealing it.</description>
+        <name>isStorePasswordSet</name>
+        <function-class>org.jivesoftware.admin.CertificateStorePasswordField</function-class>
+        <function-signature>boolean isSet(char[])</function-signature>
+    </function>
     <function>
         <name>replaceAll</name>
         <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>

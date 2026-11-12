@@ -15,7 +15,7 @@
   -->
 <!--
   ~ The notice that the certificate stores are read-only (cert.stores.readonly), shown on the admin console pages that
-  ~ change a store's contents. It links to the read-only section of the Certificate Stores page, where the setting is
+  ~ change a store's contents. It links to the Certificate Store Settings page, where the setting is
   ~ changed. The page decides whether to show it; this tag only renders it.
   -->
 <jsp:root xmlns:jsp="http://java.sun.com/JSP/Page"
@@ -24,7 +24,7 @@
           version="2.0">
     <admin:infobox type="info">
         <fmt:message key="ssl.certificates.read-only.notice">
-            <fmt:param value="&lt;a href='security-certificate-store-management.jsp#read-only'&gt;"/>
+            <fmt:param value="&lt;a href='security-certificate-store-settings.jsp'&gt;"/>
             <fmt:param value="&lt;/a&gt;"/>
         </fmt:message>
     </admin:infobox>

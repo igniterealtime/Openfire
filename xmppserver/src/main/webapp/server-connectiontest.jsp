@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
-  ~ Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  ~ Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -99,12 +99,7 @@
 <head>
     <title><fmt:message key="server2server.settings.testing.title"/></title>
     <meta name="pageID" content="server-connectiontest"/>
-    <script>
-        function startSpinner() {
-            document.getElementById('spinner').style.display = "inline-block";
-            return true;
-        }
-    </script>
+    <script src="js/server-connectiontest.js"></script>
     <style>
         #spinner {
             border: 0.5rem solid #f3f3f3;
@@ -143,7 +138,7 @@
     <!-- BEGIN 'S2S Testing' -->
     <fmt:message key="server2server.settings.testing.boxtitle" var="s2sTitle"/>
     <admin:contentBox title="${s2sTitle}">
-        <form action="server-connectiontest.jsp" method="post" onsubmit="return startSpinner();">
+        <form action="server-connectiontest.jsp" method="post" id="s2s-test-form">
             <table>
                 <tr>
                     <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-domain"><fmt:message key="server2server.settings.testing.domain"/></label></td>

@@ -61,7 +61,7 @@ Give every outbound S2S attempt a thread-safe `AttemptRecorder`. `OutgoingSessio
 - ✅ The steps are the real attempt's, including Happy Eyeballs, direct TLS and DNS overrides, and the S2S access policy applies as for any connection
 - ✅ The OF-3037 failed-session page gains one line per step for any failed attempt, not only for tests
 - ✅ Each recording hook is testable with the existing outbound session test harness
-- ❌ Every outbound attempt carries a recorder, and the connection code gains recording calls that future changes must keep accurate
+- ❌ Every outbound attempt carries a recorder, and the connection code gains recording calls that future changes must keep accurate. A forgotten call breaks nothing at run time; the safeguards below catch it in the build, or make the test report it as a close rather than a wrong cause
 - ❌ Uses extra memory on each cluster node to keep the latest attempt per domain pair: about 1.5 KB for a typical attempt, for at most 1000 pairs; at most about 41 KB for an attempt in which the remote pushes every value it controls to its limit (see Performance)
 
 ## Decision
@@ -72,6 +72,7 @@ Two related choices follow from the same principle, that a check is judged only 
 
 - **A reply is classified by where the ping went.** Openfire routes its own `remote-server-not-found` error through the same router as a reply from the remote, and the incoming side cannot tell them apart. The outgoing side can: `LocalSession.process` passes the session to the packet interceptors when a stanza is sent. If the ping was seen leaving over an outgoing server session that was still open, a reply came from the remote; if it never left, any reply is this server's own. The test takes the reply through an `IQRouter` result listener, so it reaches the test whichever cluster node receives it.
 - **Recording never changes the connection.** Every recording call on the connection path is wrapped in `AttemptRecorder.safely`, so a failure while recording is logged at debug level and the connection proceeds as it would have without it.
+- **A failure path that records nothing fails the build.** When the connection closes or this server stops waiting, the recorder fills in only that, against the step under way, without saying which side closed the connection; the order of the steps is kept in one place (`AttemptRecorder.stepUnderWay`). The failure exits of `RespondingServerStanzaHandler` that end initiation go through one method that records the failure (`failInitiation`). The settings matrix in `LocalOutgoingServerSessionTest` fails when a failed attempt's first recorded failure is such a filled-in close or wait, so a failure path that forgets to record breaks the build there. None of this stops a new exit from closing the connection directly; the matrix test is the backstop.
 
 ### How It Fits Together
 

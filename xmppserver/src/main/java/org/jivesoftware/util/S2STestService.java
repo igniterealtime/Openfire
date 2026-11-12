@@ -25,6 +25,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -243,11 +244,13 @@ public class S2STestService {
      */
     static void closeAndAwaitTeardown(@Nonnull final Session session, @Nonnull final Duration bound) throws InterruptedException {
         session.close();
-        if ( !(session instanceof LocalSession localSession) || localSession.getConnection() == null ) {
+        // Read once: a server session can detach from its connection at any time (OF-2425).
+        final Connection connection = session instanceof LocalSession localSession ? localSession.getConnection() : null;
+        if ( connection == null ) {
             return;
         }
         try {
-            localSession.getConnection().getCloseFuture().toCompletableFuture().get( bound.toMillis(), TimeUnit.MILLISECONDS );
+            connection.getCloseFuture().toCompletableFuture().get( bound.toMillis(), TimeUnit.MILLISECONDS );
         } catch ( final TimeoutException e ) {
             Log.info( "The closed session to {} did not finish its teardown within {}; the test carries on.", session.getAddress(), bound );
         } catch ( final ExecutionException e ) {

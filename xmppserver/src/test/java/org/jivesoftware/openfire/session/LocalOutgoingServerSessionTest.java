@@ -582,7 +582,7 @@ public class LocalOutgoingServerSessionTest
         final AttemptRecorder recorder = attemptOverOptionalTls(false, SHORT_INITIALISE_TIMEOUT);
 
         // Verify results.
-        assertEquals(AttemptMilestones.Stream.closedByRemote(), recorder.snapshot().getStream().orElse(null), "a remote that closes the connection before opening a stream must be recorded as having closed it");
+        assertEquals(AttemptMilestones.Stream.closed(), recorder.snapshot().getStream().orElse(null), "a remote that closes the connection before opening a stream must be recorded as having closed it");
         assertEquals(AttemptRecorder.Outcome.FAILED, recorder.getOutcome(), "no session can be made without a stream");
     }
 
@@ -881,7 +881,7 @@ public class LocalOutgoingServerSessionTest
 
         assertFalse(failures.isEmpty(), "a failed attempt must record the step that failed");
         final Set<Enum<?>> filledIn = Set.of(
-            AttemptMilestones.Stream.Outcome.CLOSED_BY_REMOTE, AttemptMilestones.Stream.Outcome.TIMED_OUT,
+            AttemptMilestones.Stream.Outcome.CLOSED, AttemptMilestones.Stream.Outcome.TIMED_OUT,
             AttemptMilestones.Tls.Outcome.CLOSED_BEFORE_SET_UP, AttemptMilestones.Tls.Outcome.TIMED_OUT, AttemptMilestones.Tls.Outcome.NOT_SET_UP_IN_TIME,
             AttemptMilestones.Authentication.Outcome.CLOSED, AttemptMilestones.Authentication.Outcome.CLOSED_AFTER_EXTERNAL_ACCEPTED, AttemptMilestones.Authentication.Outcome.TIMED_OUT);
         assertFalse(filledIn.contains(failures.get(0)), "a failed attempt must record why it failed where the connection code decided it, not only a close or wait filled in afterwards, but recorded: " + List.of(recorded.getStream(), recorded.getTls(), recorded.getCertificate(), recorded.getAuthentication()));

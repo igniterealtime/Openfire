@@ -484,9 +484,9 @@ public final class AttemptMilestones
             OPENED,
 
             /**
-             * The remote closed the connection before it opened a stream.
+             * The connection closed before the remote opened a stream. Which side closed it is not known.
              */
-            CLOSED_BY_REMOTE,
+            CLOSED,
 
             /**
              * The remote refused the stream with a stream error.
@@ -509,7 +509,7 @@ public final class AttemptMilestones
             Objects.requireNonNull(outcome, "outcome");
             if (outcome == Outcome.STREAM_ERROR || outcome == Outcome.TIMED_OUT) {
                 Objects.requireNonNull(detail, "detail");
-            } else if ((outcome == Outcome.CLOSED_BY_REMOTE || outcome == Outcome.MISSING_ID) && detail != null) {
+            } else if ((outcome == Outcome.CLOSED || outcome == Outcome.MISSING_ID) && detail != null) {
                 throw new IllegalArgumentException("This outcome has no detail: " + outcome);
             }
         }
@@ -524,9 +524,9 @@ public final class AttemptMilestones
             return new Stream(Outcome.OPENED, remoteName);
         }
 
-        public static Stream closedByRemote()
+        public static Stream closed()
         {
-            return new Stream(Outcome.CLOSED_BY_REMOTE, null);
+            return new Stream(Outcome.CLOSED, null);
         }
 
         public static Stream streamError(final String errorText)
@@ -616,7 +616,7 @@ public final class AttemptMilestones
             NOT_SET_UP_IN_TIME,
 
             /**
-             * Over STARTTLS, the remote closed the connection after the stream opened and before TLS was set up.
+             * Over STARTTLS, the connection closed after the stream opened and before TLS was set up.
              */
             CLOSED_BEFORE_SET_UP
         }
@@ -858,7 +858,7 @@ public final class AttemptMilestones
             TIMED_OUT,
 
             /**
-             * The remote closed the connection while authentication was under way.
+             * The connection closed while authentication was under way. Which side closed it is not known.
              */
             CLOSED,
 

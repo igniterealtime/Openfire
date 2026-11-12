@@ -546,7 +546,7 @@ public class S2SChecklistBuilderTest
     {
         // Setup test fixture.
         final S2SChecklistBuilder builder = successfulTest()
-            .milestones(AttemptMilestones.builder().dns(Dns.srvRecords(List.of(Target.plain("a:5269")))).tcp(Tcp.connected("192.0.2.10:5269")).stream(Stream.closedByRemote()).build())
+            .milestones(AttemptMilestones.builder().dns(Dns.srvRecords(List.of(Target.plain("a:5269")))).tcp(Tcp.connected("192.0.2.10:5269")).stream(Stream.closed()).build())
             .sessionRegistered(false)
             .ping(PingOutcome.localError("remote-server-not-found"));
 

@@ -189,6 +189,8 @@ public final class S2SAdvice
 
         add(S2SCheck.STREAM, "fail", Parts.REMOTE);
         add(S2SCheck.STREAM, "fail.timed_out", Parts.LOCAL_AND_REMOTE, AdminPage.SYSTEM_PROPERTIES);
+        // This server learns only that the connection closed, not which side closed it, so the advice points at both logs.
+        add(S2SCheck.STREAM, "fail.closed", Parts.LOCAL_AND_REMOTE, AdminPage.LOGS);
 
         add(S2SCheck.TLS, "warning.unencrypted", Parts.LOCAL_AND_REMOTE, AdminPage.S2S_SETTINGS);
         // A certificate rejected during the handshake gets the advice of the certificate check, which says why.
@@ -196,6 +198,7 @@ public final class S2SAdvice
         add(S2SCheck.TLS, "fail.refused", Parts.REMOTE);
         add(S2SCheck.TLS, "fail.timed_out", Parts.LOCAL_AND_REMOTE, AdminPage.SYSTEM_PROPERTIES);
         add(S2SCheck.TLS, "fail.stalled", Parts.LOCAL_AND_REMOTE, AdminPage.SYSTEM_PROPERTIES);
+        add(S2SCheck.TLS, "fail.closed", Parts.LOCAL_AND_REMOTE, AdminPage.LOGS);
         add(S2SCheck.TLS, "fail.not_offered", Parts.LOCAL_AND_REMOTE, AdminPage.S2S_SETTINGS);
         add(S2SCheck.TLS, "fail.disabled", Parts.LOCAL, AdminPage.S2S_SETTINGS, AdminPage.S2S_IDENTITY_STORE);
         add(S2SCheck.TLS, "fail.not_tls", Parts.REMOTE);
@@ -214,6 +217,7 @@ public final class S2SAdvice
         add(S2SCheck.AUTHENTICATION, "fail.dialback_refused", Parts.LOCAL_AND_REMOTE, AdminPage.S2S_SETTINGS);
         // No advice for fail.dialback_fallback: it follows a failed TLS handshake, so check 5 is always the first failure.
         add(S2SCheck.AUTHENTICATION, "fail.timed_out", Parts.LOCAL_AND_REMOTE, AdminPage.S2S_SETTINGS);
+        add(S2SCheck.AUTHENTICATION, "fail.closed", Parts.LOCAL_AND_REMOTE, AdminPage.LOGS);
         // The remote accepted the certificate of this server for these, so the default advice (on certificates and
         // Server Dialback) does not apply.
         add(S2SCheck.AUTHENTICATION, "fail.closed_after_external", Parts.LOCAL_AND_REMOTE, AdminPage.LOGS);

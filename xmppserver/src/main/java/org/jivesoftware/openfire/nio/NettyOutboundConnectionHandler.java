@@ -130,7 +130,9 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
 
                 final NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
                 final boolean certificatesValid = SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true);
-                if (recorder != null) {
+                // A connection that is already closed had its handshake rejected by the remote (see NettyXMPPDecoder),
+                // which was recorded there.
+                if (recorder != null && !connection.isClosed()) {
                     AttemptRecorder.safely(() -> recordNegotiated(recorder, connection, certificatesValid));
                 }
 

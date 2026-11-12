@@ -358,6 +358,9 @@ public class LocalOutgoingServerSessionTest
             }
             assertStreamTlsAndCertificateMilestones(localServerSettings, remoteServerSettings, recorder.snapshot());
             assertAuthenticationMilestone(expected.getConnectionState(), localServerSettings, remoteServerSettings, recorder.snapshot());
+            if (result == null) {
+                assertFailureRecordedWhereItHappened(recorder.snapshot());
+            }
             AbstractRemoteServerDummy.log("Verify results (done)");
         } finally {
             // Teardown test fixture.
@@ -806,6 +809,14 @@ public class LocalOutgoingServerSessionTest
         } else {
             switch (remote.certificateState) {
                 case VALID -> {
+                    if (local.certificateState == ServerSettings.CertificateState.INVALID) {
+                        // Over TLS 1.3, this server finishes the handshake before the remote has checked this server's
+                        // certificate; the remote's rejection then arrives as an alert.
+                        assertEquals(AttemptMilestones.Tls.Outcome.HANDSHAKE_FAILED, tls == null ? null : tls.outcome(), "a remote that rejects this server's expired certificate must be recorded as failing the handshake, not as negotiated");
+                        // The handshake completed on this side, so the remote certificate may have been judged before the alert arrived.
+                        assertTrue(certificate == null || certificate.equals(AttemptMilestones.Certificate.valid()), "the remote certificate is valid, so it may be recorded as valid or not at all, but was: " + certificate);
+                        return;
+                    }
                     assertEquals(AttemptMilestones.Tls.Outcome.NEGOTIATED, tls == null ? null : tls.outcome(), "TLS with a remote that has a valid certificate must be recorded as negotiated");
                     assertEquals("TLSv1.3", tls.protocol(), "the negotiated protocol must be recorded");
                     assertNotNull(tls.cipherSuite(), "the negotiated cipher suite must be recorded");
@@ -846,6 +857,34 @@ public class LocalOutgoingServerSessionTest
                 // The reasons vary with where the attempt stopped; the focused tests cover each.
             }
         }
+    }
+
+    /**
+     * Verifies that a failed attempt recorded why it failed at the point where the connection code decided it. The
+     * remote dummy always answers, so in this matrix every failure is a decision one of the two sides made. When the
+     * first failure on record (the one the S2S connection test reports) is a close or a wait that the recorder filled in
+     * afterwards, a failure path in the connection code did not record its outcome, and the test would give a vague or
+     * wrong diagnosis for it. A later step can still time out, as Server Dialback over a new connection can be under way
+     * after a failed TLS handshake. See ADR-007.
+     */
+    private static void assertFailureRecordedWhereItHappened(final AttemptMilestones recorded)
+    {
+        // In the order of the checks.
+        final List<Enum<?>> failures = new ArrayList<>();
+        recorded.getStream().map(AttemptMilestones.Stream::outcome).filter(outcome -> outcome != AttemptMilestones.Stream.Outcome.OPENED).ifPresent(failures::add);
+        recorded.getTls().map(AttemptMilestones.Tls::outcome).filter(outcome -> outcome != AttemptMilestones.Tls.Outcome.NEGOTIATED && outcome != AttemptMilestones.Tls.Outcome.UNENCRYPTED).ifPresent(failures::add);
+        recorded.getCertificate().map(AttemptMilestones.Certificate::outcome).filter(outcome -> outcome != AttemptMilestones.Certificate.Outcome.VALID).ifPresent(failures::add);
+        final Set<AttemptMilestones.Authentication.Outcome> authenticated = EnumSet.of(
+            AttemptMilestones.Authentication.Outcome.SASL_EXTERNAL, AttemptMilestones.Authentication.Outcome.DIALBACK,
+            AttemptMilestones.Authentication.Outcome.DIALBACK_AFTER_EXTERNAL_NOT_OFFERED, AttemptMilestones.Authentication.Outcome.DIALBACK_AFTER_EXTERNAL_REFUSED);
+        recorded.getAuthentication().map(AttemptMilestones.Authentication::outcome).filter(outcome -> !authenticated.contains(outcome)).ifPresent(failures::add);
+
+        assertFalse(failures.isEmpty(), "a failed attempt must record the step that failed");
+        final Set<Enum<?>> filledIn = Set.of(
+            AttemptMilestones.Stream.Outcome.CLOSED_BY_REMOTE, AttemptMilestones.Stream.Outcome.TIMED_OUT,
+            AttemptMilestones.Tls.Outcome.CLOSED_BEFORE_SET_UP, AttemptMilestones.Tls.Outcome.TIMED_OUT, AttemptMilestones.Tls.Outcome.NOT_SET_UP_IN_TIME,
+            AttemptMilestones.Authentication.Outcome.CLOSED, AttemptMilestones.Authentication.Outcome.CLOSED_AFTER_EXTERNAL_ACCEPTED, AttemptMilestones.Authentication.Outcome.TIMED_OUT);
+        assertFalse(filledIn.contains(failures.get(0)), "a failed attempt must record why it failed where the connection code decided it, not only a close or wait filled in afterwards, but recorded: " + List.of(recorded.getStream(), recorded.getTls(), recorded.getCertificate(), recorded.getAuthentication()));
     }
 
     /**

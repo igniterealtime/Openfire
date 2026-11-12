@@ -324,46 +324,61 @@ public final class AttemptRecorder
     }
 
     /**
-     * Records that the connection closed, against the step that was under way: the stream, when none opened; TLS, when
-     * the stream opened over STARTTLS but TLS was not set up; otherwise authentication. A close after a step that
-     * recorded a failure (or an unencrypted connection, which this server can refuse) is explained by that step, as
-     * this server closes the connection itself then, and nothing is added; so is a close once authentication was
-     * recorded. Over direct TLS, a close before the handshake finished is recorded by the handshake itself. A close
-     * after this server gave up waiting is this server stopping the connection, and adds nothing. A close after the
-     * remote accepted SASL EXTERNAL, before it restarted the stream, says so.
+     * The steps that a close or a wait can be recorded against. The certificate is recorded with TLS.
+     */
+    private enum Step { STREAM, TLS, AUTHENTICATION }
+
+    /**
+     * @return the step that was under way: the first that has no record, in the order the connection takes them. Over
+     *         STARTTLS that is the stream, then TLS, then authentication; over direct TLS, the TLS handshake comes first.
+     *         This is the one place that knows that order, so a change to it in the connection code is made here.
+     */
+    private static Step stepUnderWay(final AttemptMilestones recorded)
+    {
+        if (recorded.isDirectTls() && recorded.getTls().isEmpty()) {
+            return Step.TLS;
+        }
+        if (recorded.getStream().isEmpty()) {
+            return Step.STREAM;
+        }
+        if (recorded.getTls().isEmpty()) {
+            return Step.TLS;
+        }
+        return Step.AUTHENTICATION;
+    }
+
+    /**
+     * Records that the connection closed, against the step that was under way (see {@link #stepUnderWay}). The record
+     * says only that the connection closed: this server cannot tell which side closed it. A close after a step that
+     * recorded a failure is explained by that step, as this server closes the connection itself then, and nothing is
+     * added; so is a close once authentication was recorded, and a close after this server gave up waiting, which is
+     * this server stopping the connection. Over direct TLS, a close before the handshake finished is recorded by the
+     * handshake itself. A close after the remote accepted SASL EXTERNAL, before it restarted the stream, says so.
      */
     public synchronized void connectionClosed()
     {
         final AttemptMilestones recorded = milestones.build();
-        if (gaveUp || recorded.getAuthentication().isPresent()) {
+        if (gaveUp || recorded.getAuthentication().isPresent() || !nothingFailedSoFar(recorded)) {
             return;
         }
-        if (nothingRecordedAfterTcp()) {
-            if (!recorded.isDirectTls()) {
-                milestones.stream(Stream.closed());
+        switch (stepUnderWay(recorded)) {
+            case STREAM -> milestones.stream(Stream.closed());
+            case TLS -> {
+                if (!recorded.isDirectTls()) {
+                    milestones.tls(Tls.closedBeforeSetUp());
+                }
             }
-            return;
-        }
-        if (!nothingFailedSoFar(recorded)) {
-            return;
-        }
-        if (recorded.getStream().isEmpty()) {
-            milestones.stream(Stream.closed());
-        } else if (recorded.getTls().isEmpty()) {
-            milestones.tls(Tls.closedBeforeSetUp());
-        } else {
-            milestones.authentication(externalAccepted ? Authentication.closedAfterExternalAccepted() : Authentication.closed());
+            case AUTHENTICATION -> milestones.authentication(externalAccepted ? Authentication.closedAfterExternalAccepted() : Authentication.closed());
         }
     }
 
     /**
-     * Records that this server stopped waiting for the session, against the step that was under way: the stream, when
-     * none opened (over direct TLS before that, the handshake); TLS, when the stream opened over STARTTLS but TLS was not
-     * set up; otherwise authentication. Over direct TLS, a failed handshake means that no stream can open on that
-     * connection, so the wait is recorded against authentication, as only the Server Dialback fallback can still be
-     * under way. Once authentication was recorded, nothing is added. A remote that closed the connection first is not
-     * reported as silent, as the close was recorded against the same step. From then on, the record is final:
-     * milestones reported later are ignored.
+     * Records that this server stopped waiting for the session, against the step that was under way (see
+     * {@link #stepUnderWay}). A failed stream explains the wait, and nothing is added. After a failed TLS handshake, no
+     * stream can follow on that connection, so the wait is recorded against authentication, as only the Server Dialback
+     * fallback over a new connection can still be under way. Once authentication was recorded, nothing is added. A
+     * remote that closed the connection first is not reported as silent, as the close was recorded against the same
+     * step. From then on, the record is final: milestones reported later are ignored.
      *
      * @param waited how long this server waited.
      */
@@ -374,27 +389,17 @@ public final class AttemptRecorder
         }
         gaveUp = true;
         final AttemptMilestones recorded = milestones.build();
-        if (recorded.getAuthentication().isPresent()) {
+        if (recorded.getAuthentication().isPresent() || recorded.getStream().map(stream -> stream.outcome() != Stream.Outcome.OPENED).orElse(false)) {
             return;
         }
-        if (nothingRecordedAfterTcp()) {
-            if (recorded.isDirectTls()) {
-                milestones.tls(Tls.timedOut(waited));
-            } else {
-                milestones.stream(Stream.timedOut(waited));
-            }
-        } else if (recorded.isDirectTls() && recorded.getTls().map(tls -> tls.outcome() != Tls.Outcome.NEGOTIATED).orElse(false)) {
-            // The handshake failed, so no stream can open; only the Server Dialback fallback can still be under way.
+        if (recorded.getTls().map(tls -> tls.outcome() != Tls.Outcome.NEGOTIATED && tls.outcome() != Tls.Outcome.UNENCRYPTED).orElse(false)) {
             milestones.authentication(Authentication.timedOut(waited));
-        } else if (recorded.getStream().isEmpty()) {
-            milestones.stream(Stream.timedOut(waited));
-        } else if (recorded.getStream().get().outcome() != Stream.Outcome.OPENED) {
-            // The stream failed, which explains the wait.
             return;
-        } else if (recorded.getTls().isEmpty()) {
-            milestones.tls(Tls.notSetUpInTime(waited));
-        } else {
-            milestones.authentication(Authentication.timedOut(waited));
+        }
+        switch (stepUnderWay(recorded)) {
+            case STREAM -> milestones.stream(Stream.timedOut(waited));
+            case TLS -> milestones.tls(recorded.getStream().isEmpty() ? Tls.timedOut(waited) : Tls.notSetUpInTime(waited));
+            case AUTHENTICATION -> milestones.authentication(Authentication.timedOut(waited));
         }
     }
 
@@ -408,12 +413,6 @@ public final class AttemptRecorder
         return recorded.getStream().map(stream -> stream.outcome() == Stream.Outcome.OPENED).orElse(true)
             && recorded.getTls().map(tls -> tls.outcome() == Tls.Outcome.NEGOTIATED || tls.outcome() == Tls.Outcome.UNENCRYPTED).orElse(true)
             && recorded.getCertificate().map(certificate -> certificate.outcome() == Certificate.Outcome.VALID).orElse(true);
-    }
-
-    private boolean nothingRecordedAfterTcp()
-    {
-        final AttemptMilestones recorded = milestones.build();
-        return recorded.getStream().isEmpty() && recorded.getTls().isEmpty() && recorded.getCertificate().isEmpty() && recorded.getAuthentication().isEmpty();
     }
 
     public synchronized void tls(final Tls tls)

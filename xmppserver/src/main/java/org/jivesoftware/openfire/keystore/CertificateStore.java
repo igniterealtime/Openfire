@@ -134,7 +134,8 @@ public abstract class CertificateStore
      * store.
      *
      * When Openfire is configured not to modify its certificate stores ({@link CertificateStoreManager#READ_ONLY}),
-     * nothing is saved: the store is reloaded from disk, discarding any change made in memory, and a
+     * nothing is saved: when the store in memory differs from the file, it is reloaded from disk, discarding the change
+     * made in memory (a store that matches its file is not reloaded, so it is not reported as changed), and a
      * {@link CertificateStoreReadOnlyException} is thrown. The methods of this class that change the store refuse before
      * changing anything; this covers changes made directly to the {@link KeyStore} from {@link #getStore()}.
      *
@@ -148,7 +149,12 @@ public abstract class CertificateStore
             final CertificateStoreReadOnlyException refusal = readOnlyRefusal();
             try
             {
-                reload(); // discard changes made in memory, so that memory matches the file.
+                // Discard changes made in memory, so that memory matches the file. Reload only when memory differs:
+                // reloading reports the store as changed, and the listeners then reload what uses it.
+                if ( !matchesFile() )
+                {
+                    reload();
+                }
             }
             catch ( CertificateStoreConfigException e )
             {
@@ -283,6 +289,61 @@ public abstract class CertificateStore
         if ( CertificateStoreManager.READ_ONLY.getValue() )
         {
             throw readOnlyRefusal();
+        }
+    }
+
+    /**
+     * Returns whether the store in memory holds the same entries as its file: the same aliases, and for each the same
+     * certificate or certificate chain and, for a key entry, the same private key.
+     *
+     * @return true if memory matches the file, false if it differs or an entry cannot be compared
+     * @throws CertificateStoreConfigException if the file could not be loaded
+     */
+    private boolean matchesFile() throws CertificateStoreConfigException
+    {
+        final KeyStore onDisk;
+        try ( final FileInputStream is = new FileInputStream( configuration.getFile() ) )
+        {
+            onDisk = KeyStore.getInstance( configuration.getType() );
+            onDisk.load( is, configuration.getPassword() );
+        }
+        catch ( IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException ex )
+        {
+            throw new CertificateStoreConfigException( "Unable to load store in '" + configuration.getFile() + "'", ex );
+        }
+
+        try
+        {
+            final Set<String> aliases = new HashSet<>( Collections.list( store.aliases() ) );
+            if ( !aliases.equals( new HashSet<>( Collections.list( onDisk.aliases() ) ) ) )
+            {
+                return false;
+            }
+            for ( final String alias : aliases )
+            {
+                if ( store.isKeyEntry( alias ) != onDisk.isKeyEntry( alias )
+                    || !Objects.equals( store.getCertificate( alias ), onDisk.getCertificate( alias ) )
+                    || !Arrays.equals( store.getCertificateChain( alias ), onDisk.getCertificateChain( alias ) ) )
+                {
+                    return false;
+                }
+                if ( store.isKeyEntry( alias ) )
+                {
+                    final Key inMemoryKey = store.getKey( alias, configuration.getPassword() );
+                    final Key onDiskKey = onDisk.getKey( alias, configuration.getPassword() );
+                    if ( inMemoryKey == null || onDiskKey == null || !MessageDigest.isEqual( inMemoryKey.getEncoded(), onDiskKey.getEncoded() ) )
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        catch ( KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException ex )
+        {
+            // An entry that cannot be compared is treated as changed, so that the store is reloaded.
+            Log.debug( "Unable to compare {} with its file; treating it as changed.", configuration.getFile(), ex );
+            return false;
         }
     }
 

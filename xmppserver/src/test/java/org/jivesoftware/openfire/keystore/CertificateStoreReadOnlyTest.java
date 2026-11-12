@@ -23,6 +23,8 @@ import org.apache.logging.log4j.core.config.Property;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -291,6 +293,106 @@ public class CertificateStoreReadOnlyTest
         // Verify result.
         assertArrayEquals( fileBefore, Files.readAllBytes( trustStoreFile.toPath() ), "the store file must be unchanged" );
         assertTrue( store.getStore().containsAlias( EXISTING_ALIAS ), "the in-memory change must have been discarded by reloading the store" );
+        assertInMemoryMatchesFile( store );
+    }
+
+    /**
+     * Verifies that a refused persist reports the store as changed (so that listeners reload what uses it) when it
+     * discards a change made in memory.
+     */
+    @Test
+    public void testPersistWhenReadOnlyAndMemoryDiffersReportsStoreChanged() throws Exception
+    {
+        // Setup test fixture.
+        final TrustStore store = new TrustStore( configuration( trustStoreFile ), false );
+        store.getStore().deleteEntry( EXISTING_ALIAS );
+        setReadOnly( true );
+        final List<CertificateStore> changed = new CopyOnWriteArrayList<>();
+        final CertificateEventListener listener = changed::add;
+        CertificateManager.addListener( listener );
+        try
+        {
+            // Execute system under test.
+            assertThrows( CertificateStoreReadOnlyException.class, store::persist, "persisting must be refused when the setting is on" );
+        }
+        finally
+        {
+            CertificateManager.removeListener( listener );
+        }
+
+        // Verify result.
+        assertEquals( List.of( store ), changed, "discarding the in-memory change must be reported once" );
+    }
+
+    /**
+     * Verifies that a refused persist does not report a trust store as changed when the store in memory already matches
+     * the file, as the listeners would then reload connection listeners or restart the admin console for no change.
+     */
+    @Test
+    public void testPersistWhenReadOnlyAndTrustStoreMatchesFileDoesNotReportStoreChanged() throws Exception
+    {
+        assertRefusedPersistReportsNoChange( new TrustStore( configuration( trustStoreFile ), false ) );
+    }
+
+    /**
+     * Verifies that a refused persist does not report an identity store (which holds a private key) as changed when the
+     * store in memory already matches the file.
+     */
+    @Test
+    public void testPersistWhenReadOnlyAndIdentityStoreMatchesFileDoesNotReportStoreChanged() throws Exception
+    {
+        assertRefusedPersistReportsNoChange( new IdentityStore( configuration( identityStoreFile ), false ) );
+    }
+
+    /**
+     * Verifies that a refused persist reports an identity store as changed when only the private key of an entry was
+     * changed in memory, with its certificate chain left as it was.
+     */
+    @Test
+    public void testPersistWhenReadOnlyAndOnlyPrivateKeyDiffersReportsStoreChanged() throws Exception
+    {
+        // Setup test fixture: replace the private key, keeping the certificate.
+        final IdentityStore store = new IdentityStore( configuration( identityStoreFile ), false );
+        final PrivateKey otherKey = KeystoreTestUtils.generateValidCertificateChain( Fixtures.XMPP_DOMAIN ).getKeyPair().getPrivate();
+        store.getStore().setKeyEntry( EXISTING_ALIAS, otherKey, PASSWORD, new Certificate[] { existingChain.getCertificate() } );
+        setReadOnly( true );
+        final List<CertificateStore> changed = new CopyOnWriteArrayList<>();
+        final CertificateEventListener listener = changed::add;
+        CertificateManager.addListener( listener );
+        try
+        {
+            // Execute system under test.
+            assertThrows( CertificateStoreReadOnlyException.class, store::persist, "persisting must be refused when the setting is on" );
+        }
+        finally
+        {
+            CertificateManager.removeListener( listener );
+        }
+
+        // Verify result.
+        assertEquals( List.of( store ), changed, "discarding the changed private key must be reported once" );
+        assertInMemoryMatchesFile( store );
+    }
+
+    private void assertRefusedPersistReportsNoChange( final CertificateStore store ) throws Exception
+    {
+        // Setup test fixture.
+        setReadOnly( true );
+        final List<CertificateStore> changed = new CopyOnWriteArrayList<>();
+        final CertificateEventListener listener = changed::add;
+        CertificateManager.addListener( listener );
+        try
+        {
+            // Execute system under test.
+            assertThrows( CertificateStoreReadOnlyException.class, store::persist, "persisting must be refused when the setting is on" );
+        }
+        finally
+        {
+            CertificateManager.removeListener( listener );
+        }
+
+        // Verify result.
+        assertTrue( changed.isEmpty(), "a store that matches its file must not be reported as changed" );
         assertInMemoryMatchesFile( store );
     }
 

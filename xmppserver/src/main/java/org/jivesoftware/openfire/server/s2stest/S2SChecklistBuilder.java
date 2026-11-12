@@ -282,7 +282,7 @@ public final class S2SChecklistBuilder
             case OPENED -> stream.detail() == null
                 ? result(S2SCheck.STREAM, CheckStatus.PASS, "pass.unnamed")
                 : result(S2SCheck.STREAM, CheckStatus.PASS, "pass", stream.detail());
-            case CLOSED_BY_REMOTE -> result(S2SCheck.STREAM, CheckStatus.FAIL, "fail.closed");
+            case CLOSED -> result(S2SCheck.STREAM, CheckStatus.FAIL, "fail.closed");
             case STREAM_ERROR -> result(S2SCheck.STREAM, CheckStatus.FAIL, "fail.error", stream.detail());
             case TIMED_OUT -> result(S2SCheck.STREAM, CheckStatus.FAIL, "fail.timed_out", stream.detail());
             case MISSING_ID -> result(S2SCheck.STREAM, CheckStatus.FAIL, "fail.no_id");

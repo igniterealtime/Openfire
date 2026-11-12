@@ -205,13 +205,34 @@ public class S2SAdviceTest
     }
 
     @Test
+    public void testAClosedConnectionIsNotBlamedOnEitherServer()
+    {
+        // This server learns that the connection closed, not which side closed it, so the result must not say, and the
+        // advice must point at the logs of both servers.
+        for (final String check : new String[] { "stream", "tls", "authentication" }) {
+            // Setup test fixture.
+            final CheckResult result = result(checkOf(S2SCheck.KEY_PREFIX + check + "."), CheckStatus.FAIL, "fail.closed");
+
+            // Execute system under test.
+            final S2SAdvice.Advice advice = S2SAdvice.forResult(result).orElseThrow();
+
+            // Verify results.
+            final String message = BUNDLE.getString(S2SCheck.KEY_PREFIX + check + ".fail.closed");
+            assertFalse(message.contains("remote server closed"), "the result for " + check + " must not say that the remote server closed the connection: " + message);
+            assertTrue(advice.localKey().isPresent() && advice.remoteKey().isPresent(), "the advice for " + check + " must cover both servers");
+            assertTrue(advice.pages().contains(S2SAdvice.AdminPage.LOGS), "the advice for " + check + " must link to the logs of this server");
+        }
+    }
+
+    @Test
     public void testResultsWithADifferentCauseGetTheirOwnAdvice()
     {
         // Each of these has a cause that the default advice for its check would misdescribe.
         for (final String[] expected : new String[][] {
             { "tcp", "fail.refused" }, { "tcp", "fail.none_attempted" }, { "tls", "fail.refused" }, { "tls", "fail.timed_out" },
             { "tls", "fail.stalled" }, { "certificate", "fail.revoked" }, { "authentication", "fail.closed_after_external" },
-            { "authentication", "fail.reused_stream_id" }, { "authentication", "fail.restarted_stream_no_id" }, { "ping", "fail.local_error" } }) {
+            { "authentication", "fail.reused_stream_id" }, { "authentication", "fail.restarted_stream_no_id" }, { "ping", "fail.local_error" },
+            { "stream", "fail.closed" }, { "tls", "fail.closed" }, { "authentication", "fail.closed" } }) {
             final S2SCheck check = checkOf(S2SCheck.KEY_PREFIX + expected[0] + ".");
             final S2SAdvice.Advice advice = S2SAdvice.forResult(result(check, CheckStatus.FAIL, expected[1])).orElseThrow();
             assertEquals(expected[0] + "." + expected[1], advice.id(), "the result " + expected[0] + "." + expected[1] + " needs advice of its own");

@@ -358,7 +358,7 @@ public class S2SConnectionTestServletTest
         final AttemptMilestones milestones = AttemptMilestones.builder()
             .dns(AttemptMilestones.Dns.override(List.of(AttemptMilestones.Dns.Target.plain("xmpp.example.org:5269"))))
             .tcp(Tcp.connected("192.0.2.10:5269"))
-            .stream(AttemptMilestones.Stream.closedByRemote()).build();
+            .stream(AttemptMilestones.Stream.closed()).build();
         nextResult = new S2STestService.Result(PingOutcome.localError("remote-server-not-found"), false, milestones, null, "", "", "");
         post("remote.example.org", CSRF);
 

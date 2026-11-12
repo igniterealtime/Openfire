@@ -45,12 +45,12 @@ Read-only is a safety guard, not an access control. An administrator can turn it
 
 ### 3. Refuse in the store classes, before anything changes
 - Every method that changes a store checks the setting first and throws `CertificateStoreReadOnlyException`, a new subclass of `CertificateStoreConfigException`, so existing `catch` blocks in core and in plugins handle it unchanged.
-- The check comes before the in-memory `KeyStore` is changed, not only in `persist()`: otherwise Openfire would serve a modified store from memory while the file is unchanged. `persist()` also checks, as a backstop for changes made directly through `getStore()`, and reloads the store from disk when it refuses.
+- The check comes before the in-memory `KeyStore` is changed, not only in `persist()`: otherwise Openfire would serve a modified store from memory while the file is unchanged. `persist()` also checks, as a backstop for changes made directly through `getStore()`: when it refuses and the store in memory differs from the file, it reloads the store from disk. A store that already matches its file is not reloaded, as reloading reports the store as changed and its listeners then reload the connection listeners that use it.
 - The constructor does not create a missing store file when the setting is on.
 - Rationale: the admin console is not the only writer. Plugins call these methods, and the setup wizard calls `ensureDomainCertificate`.
 
 ### 4. The admin console shows the setting; the stores enforce it
-- A Read-only Certificate Stores page ("Read-only Stores" in the TLS Certificates menu, next to Backup and Expiry Check) holds one checkbox and a Save button. Saving sets the property to what the checkbox shows. The setting has a page of its own (rather than a section on the Certificate Stores page, as first built) because it will be used far less than the store settings, so it should not sit above them; this was agreed in review.
+- A Read-only Certificate Stores page ("Read-only Stores" in the TLS Certificates menu, next to Backup and Expiry Check) holds one checkbox and a Save button. Saving sets the property to what the checkbox shows. The setting has a page of its own because it will be used far less than the store settings, so it should not sit above them.
 - Pages that change a store's contents show a notice and hide the actions that would fail. A request that reaches a write action anyway (an old link, a direct URL) gets the refusal from the store class, shown as an error.
 - Changing a store's location or password stays allowed: that changes Openfire's configuration, not the store.
 
@@ -73,7 +73,7 @@ Measured by searching the `xmppserver` sources for callers of each store-changin
 | Method | Called from | With the setting on |
 |---|---|---|
 | `CertificateStore` constructor with `createIfAbsent` | `CertificateStoreManager.replaceIdentityStore`/`replaceTrustStore` (the admin console passes false) | Refuse to create the file |
-| `CertificateStore.persist` | the methods below; `security-keystore.jsp` | Refuse and reload from disk |
+| `CertificateStore.persist` | the methods below; `security-keystore.jsp` | Refuse; reload from disk when memory differs from the file |
 | `CertificateStore.delete` | `security-keystore.jsp`, `security-truststore.jsp` | Refuse |
 | `IdentityStore.installCertificate` (both overloads) | `import-keystore-certificate.jsp` | Refuse |
 | `IdentityStore.installCSRReply` | `security-keystore.jsp` | Refuse |
@@ -83,7 +83,7 @@ Measured by searching the `xmppserver` sources for callers of each store-changin
 | `TrustStore.installCertificate` | `import-truststore-certificate.jsp` | Refuse |
 | `IdentityStore.updateIssuerOfSelfSignedCertificates` (moved from a direct `KeyStore` change in the page, decision 5) | `security-keystore-signing-request.jsp` | Refuse |
 
-Unaffected, because they only read the store or write elsewhere: `CertificateStore.reload` and `CertificateStoreWatcher` (reloading on file change keeps working), `CertificateStoreManager.backup` and `security-certificate-store-backup.jsp` (copies the file to the archive directory), TLS setup in `EncryptionArtifactFactory`, `CertificateExpiryChecker`, SASL EXTERNAL, and the domain-certificate warnings in `index.jsp`, `AdminConsolePlugin` and `HttpBindManager`.
+Unaffected, because they only read the store or write elsewhere: `CertificateStore.reload` and `CertificateStoreWatcher` (reloading on file change keeps working), `CertificateStoreManager.backup` and `security-certificate-store-backup.jsp` (copies the file to the archive directory), TLS setup in `EncryptionArtifactFactory`, `CertificateExpiryChecker`, SASL EXTERNAL, and the domain-certificate warnings in `AdminConsolePlugin` and `HttpBindManager`.
 
 Plugins in other repositories (for example ones that install certificates automatically) were not inspected. They call the methods above, so they get `CertificateStoreReadOnlyException` and report it however they report a failed install today.
 
@@ -97,6 +97,7 @@ Plugins in other repositories (for example ones that install certificates automa
 | `import-keystore-certificate.jsp`, `import-truststore-certificate.jsp` | Import form | Notice instead of the form; a POST is refused by the store |
 | `security-keystore-signing-request.jsp` | Issuer details form that re-signs self-signed certificates | Notice instead of the form; a POST is refused by the store |
 | `security-certificate-details.jsp`, `security-certificate-store-backup.jsp` | Read-only view; backs up store files | Unchanged |
+| `index.jsp` (front page) | A small warning icon next to the server name when the client connections identity store has no certificate for the domain | A warning box, shown whether the setting is on or off, linking to that identity store; with the setting on, it says that Openfire does not generate a certificate and that one must be added outside Openfire |
 | Server → System Properties | Lists registered properties | `cert.stores.readonly`, listed whether set or not, with its description |
 | Setup wizard | Generates a self-signed certificate at the end | Skipped, with a warning in the log |
 
@@ -145,7 +146,7 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 - `i18n/src/main/resources/openfire_i18n.properties`
 
 **Tasks:**
-1. Write tests: for each method in the write-paths table (apart from the issuer update and `ensureDomainCertificate`, which session 3 covers), with the setting on the method throws `CertificateStoreReadOnlyException`, the file's bytes are unchanged, and the in-memory store still matches the file; with the setting off, each method still works. Include the constructor with `createIfAbsent` on a missing file, `persist()` after a change made through `getStore()` (refused and reloaded), the default (off), and a change of the setting taking effect without recreating the store.
+1. Write tests: for each method in the write-paths table (apart from the issuer update and `ensureDomainCertificate`, which session 3 covers), with the setting on the method throws `CertificateStoreReadOnlyException`, the file's bytes are unchanged, and the in-memory store still matches the file; with the setting off, each method still works. Include the constructor with `createIfAbsent` on a missing file, `persist()` after a change made through `getStore()` (refused, and reloaded only when memory differs from the file), the default (off), and a change of the setting taking effect without recreating the store.
 2. Add the exception, the `SystemProperty<Boolean>` in `CertificateStoreManager` (decision 1), and a check in `CertificateStore` that every write method calls first; add the check and reload in `persist`.
 3. Add the `system_property.cert.stores.readonly` description, using the OF-1878 wording.
 

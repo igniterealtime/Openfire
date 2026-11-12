@@ -142,7 +142,12 @@
 
                 if (errors.isEmpty())
                 {
-                    AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED.setValue( isXFFEnabled );
+                    // Changes are applied immediately. Disable before, but enable only after the other settings have
+                    // been stored, to never process headers based on a mix of old and new settings (eg: without the
+                    // trusted proxies that were entered).
+                    if (!isXFFEnabled) {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED.setValue( false );
+                    }
 
                     final String fHeader = ParamUtils.getParameter( request, "FHeader" );
                     if (fHeader == null || fHeader.trim().isEmpty()) {
@@ -180,6 +185,10 @@
                     }
 
                     AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES.setValue(newTrustedProxies);
+
+                    if (isXFFEnabled) {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED.setValue( true );
+                    }
 
                     // Log the event
                     webManager.logEvent(

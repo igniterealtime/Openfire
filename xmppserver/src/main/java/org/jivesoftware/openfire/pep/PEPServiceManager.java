@@ -293,6 +293,11 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
                                            @Nonnull final Set<String> identitiesAdded,
                                            @Nonnull final Set<String> identitiesRemoved )
     {
+        // Do nothing if server is not enabled
+        if (!IQPEPHandler.ENABLED.getValue()) {
+            return;
+        }
+
         // Look for new +notify features. Those are the nodes that the entity is now interested in.
         final Set<String> nodeIDs = featuresAdded.stream()
             .filter(feature -> feature.endsWith("+notify"))

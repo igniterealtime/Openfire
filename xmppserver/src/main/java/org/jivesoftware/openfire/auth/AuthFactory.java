@@ -20,6 +20,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -182,12 +184,35 @@ public class AuthFactory {
      */
     public static AuthToken authenticate(String username, String password)
             throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
-        if (LockOutManager.getInstance().isAccountDisabled(username)) {
-            LockOutManager.getInstance().recordFailedLogin(username);
+        // The default provider accepts 'user@domain' for this server's domain; the lockout and the token are for the
+        // account, so use its bare username for them. The provider is asked about the username as given.
+        final String accountName = withoutServerDomain(username);
+        if (LockOutManager.getInstance().isAccountDisabled(accountName)) {
+            LockOutManager.getInstance().recordFailedLogin(accountName);
             throw new UnauthorizedException();
         }
         authProvider.authenticate(username, password);
-        return AuthToken.generateUserToken( username );
+        return AuthToken.generateUserToken( accountName );
+    }
+
+    /**
+     * Returns a username without a trailing '@' and this server's XMPP domain, which {@link DefaultAuthProvider}
+     * accepts in a username; any other username is returned as it is.
+     *
+     * @param username the username as given.
+     * @return the username without this server's domain.
+     */
+    @VisibleForTesting
+    static String withoutServerDomain(final String username) {
+        if (username == null) {
+            return null;
+        }
+        final int index = username.indexOf('@');
+        if (index < 0) {
+            return username;
+        }
+        final String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        return username.substring(index + 1).trim().equalsIgnoreCase(domain) ? username.substring(0, index) : username;
     }
 
     /**

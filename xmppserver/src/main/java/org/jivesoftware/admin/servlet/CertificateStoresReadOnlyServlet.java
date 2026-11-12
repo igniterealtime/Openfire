@@ -71,7 +71,7 @@ public class CertificateStoresReadOnlyServlet extends HttpServlet
         if ( csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) )
         {
             final Map<String, String> errors = new HashMap<>();
-            errors.put( "csrf", "CSRF Failure!" );
+            errors.put( "csrf", null );
             render( request, response, errors );
             return;
         }

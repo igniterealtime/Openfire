@@ -29,7 +29,10 @@
 
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
-        <fmt:message key="admin.error"/>: <c:out value="${err.value}"/> (<c:out value="${err.key}"/>)
+        <c:choose>
+            <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed"/></c:when>
+            <c:otherwise><fmt:message key="admin.error"/>: <c:out value="${err.value}"/> (<c:out value="${err.key}"/>)</c:otherwise>
+        </c:choose>
     </admin:infobox>
 </c:forEach>
 

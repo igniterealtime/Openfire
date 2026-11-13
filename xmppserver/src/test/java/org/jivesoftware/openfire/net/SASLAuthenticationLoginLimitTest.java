@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
+import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslServer;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -382,15 +383,13 @@ public class SASLAuthenticationLoginLimitTest
     }
 
     /**
-     * Verifies that a failed EXTERNAL attempt is not counted, even when an earlier attempt on the same session left
-     * an attempted username behind: a new attempt must not inherit it.
+     * Verifies that a failed EXTERNAL attempt is not counted.
      */
     @Test
-    public void testExternalFailureIsNotCountedAndDoesNotInheritUsername()
+    public void testExternalFailureIsNotCounted()
     {
         // Setup test fixture.
         when(connection.isEncrypted()).thenReturn(true);
-        session.setSessionData(SASLAuthentication.SASL_LOGIN_ATTEMPT, reservation);
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("EXTERNAL", "="), false);
@@ -398,7 +397,33 @@ public class SASLAuthenticationLoginLimitTest
         // Verify result.
         assertEquals(SASLAuthentication.Status.failed, status, "EXTERNAL without a client certificate must fail");
         verify(loginLimits, never().description("an EXTERNAL attempt must not be counted")).tryAcquireAttempt(anyString(), any());
-        assertNull(session.getSessionData(SASLAuthentication.SASL_LOGIN_ATTEMPT), "a new attempt must clear the reservation of an earlier one");
+    }
+
+    /**
+     * Verifies that a new attempt does not inherit the reservation an earlier password attempt on the same session
+     * left behind: a successful EXTERNAL (certificate) login that follows it must not give that attempt back, as the
+     * password attempt did not succeed.
+     */
+    @Test
+    public void testSuccessfulExternalLoginDoesNotGiveBackAnEarlierAttempt() throws Exception
+    {
+        // Setup test fixture: an earlier password attempt left its reservation, and EXTERNAL completes at once, as it
+        // does for a trusted client certificate.
+        session.setSessionData(SASLAuthentication.SASL_LOGIN_ATTEMPT, reservation);
+        final SaslServer external = completedExternal(USER);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status;
+        try (final MockedStatic<Sasl> sasl = mockStatic(Sasl.class)) {
+            sasl.when(() -> Sasl.createSaslServer(eq("EXTERNAL"), anyString(), anyString(), any(), any())).thenReturn(external);
+            status = SASLAuthentication.handle(session, authElement("EXTERNAL", "="), false);
+        }
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.authenticated, status, "the EXTERNAL login must succeed");
+        verify(loginLimits, never().description("a successful EXTERNAL login must not give back an earlier password attempt")).recordSuccessfulLogin(any());
+        verify(loginLimits, never().description("an EXTERNAL attempt must not be counted")).tryAcquireAttempt(anyString(), any());
+        assertNull(session.getSessionData(SASLAuthentication.SASL_LOGIN_ATTEMPT), "no reservation must be left on the session");
     }
 
     /**

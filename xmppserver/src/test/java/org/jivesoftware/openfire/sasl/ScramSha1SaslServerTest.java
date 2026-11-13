@@ -454,26 +454,29 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
     }
 
     /**
-     * Verifies that a refused SCRAM attempt for an account that has no SCRAM salt is sent a fake salt and never causes
-     * one to be created: creating it would reset the account's password, which a refused attempt must not do.
+     * Verifies that a refused SCRAM attempt for an account whose provider has no SCRAM salt for it is sent the salt an
+     * admitted attempt would get: the one created from the account's password, as any SCRAM attempt does, so that the
+     * salt does not show the refusal (OF-2279). No key is looked up.
      */
     @Test
-    public void testRefusedAttemptForAccountWithoutSaltDoesNotCreateOne() throws Exception
+    public void testRefusedAttemptForAccountWithoutSaltIsSentTheCreatedSalt() throws Exception
     {
         // Setup test fixture.
         final String username = "nosalt";
-        authFactory.when(() -> AuthFactory.getSalt(eq(username), anyString())).thenReturn(null);
+        final byte[] createdSalt = "createdsaltcreatedsalt".getBytes(StandardCharsets.UTF_8);
+        authFactory.when(() -> AuthFactory.getSalt(eq(username), anyString())).thenReturn(null, Base64.getEncoder().encodeToString(createdSalt));
+        authFactory.when(() -> AuthFactory.getPassword(username)).thenReturn("secret");
         authFactory.when(() -> AuthFactory.getIterations(eq(username), anyString())).thenReturn(ScramSha1TestFixtures.ITERATIONS);
         final ScramSha1SaslServer refused = refusedServer(username);
 
         // Execute system under test.
         final FirstExchangeResult refusedFirst = FirstExchangeResult.fromFirstServerResponse(new String(refused.evaluateResponse(createClientInitialMessage("n,,", username, ScramSha1TestFixtures.CLIENT_NONCE)), StandardCharsets.UTF_8));
+        assertThrows(SaslException.class, () -> refused.evaluateResponse(finalMessageWithProof(refusedFirst.serverNonce, new byte[expectedProofLengthBytes()])), "a refused attempt must fail at client-final");
 
         // Verify result.
-        assertTrue(refusedFirst.salt.length > 0, "a refused attempt must still be sent a salt");
-        assertEquals(ScramSha1TestFixtures.ITERATIONS, refusedFirst.iterations, "a refused attempt must be sent the account's own iteration count");
-        authFactory.verify(() -> AuthFactory.getPassword(anyString()), never().description("a refused attempt must not read the password to create a salt"));
-        authFactory.verify(() -> AuthFactory.setPassword(anyString(), anyString()), never().description("a refused attempt must not reset the password to create a salt"));
+        assertArrayEquals(createdSalt, refusedFirst.salt, "a refused attempt must be sent the salt created for the account, as an admitted attempt is");
+        authFactory.verify(() -> AuthFactory.setPassword(username, "secret"), times(1).description("the salt must be created from the account's password, as for any SCRAM attempt"));
+        authFactory.verify(() -> AuthFactory.getStoredKey(anyString(), anyString()), never().description("a refused attempt must not look up the stored key"));
     }
 
     private ScramSha1SaslServer refusedServer(final String username) throws Exception

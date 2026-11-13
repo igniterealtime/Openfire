@@ -41,7 +41,6 @@ import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.DefaultAuthProvider;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.ScramUtils;
-import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -493,9 +492,7 @@ public abstract class ScramSaslServer implements SaslServer
 
         nonce = clientNonce + UUID.randomUUID().toString();
 
-        final byte[] salt = refusal != null ? getSaltWithoutCreating(username) : getOrCreateSalt(username);
-        final int iterations = getIterations(username);
-        serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(salt), iterations);
+        serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(getOrCreateSalt(username)), getIterations(username));
 
         // XEP-0474: SASL SCRAM Downgrade Protection
         if (SASLAuthentication.SSDP_ENABLED.getValue()) {
@@ -708,34 +705,6 @@ public abstract class ScramSaslServer implements SaslServer
         gs2CbindName = null;
         refusal = null;
         state = State.INITIAL;
-    }
-
-    /**
-     * Returns the salt a refused attempt is sent: the same as {@link #getOrCreateSalt(String)} returns (the account's
-     * own salt, or a fake salt for a user that does not exist or whose salt cannot be read), except that a missing salt
-     * is never created, as creating one resets the account's password, which a refused attempt must not do (OF-2279).
-     *
-     * The residual difference: for an account that has no SCRAM salt yet (one whose password was stored before SCRAM
-     * credentials were), a refused attempt is sent a fake salt where an attempt that is not refused would be sent a
-     * newly created one. The first successful SCRAM login creates the salt, so this applies only until then.
-     *
-     * @param username the username of the refused attempt.
-     * @return the salt to send.
-     */
-    private byte[] getSaltWithoutCreating(final String username)
-    {
-        try {
-            final String saltBase64 = AuthFactory.getSalt(username, getMechanismBaseName());
-            if (saltBase64 == null) {
-                return generateFakeSalt(username);
-            }
-            return decodeSalt(saltBase64);
-        } catch (UserNotFoundException e) {
-            return generateFakeSalt(username);
-        } catch (UnsupportedOperationException e) {
-            Log.warn("Exception in SCRAM.getSalt() for user '{}'", UserLoginLimitManager.forLog(username), e);
-            return generateFakeSalt(username);
-        }
     }
 
     /**

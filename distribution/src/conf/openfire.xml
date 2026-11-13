@@ -22,7 +22,7 @@
         <securePort>9091</securePort>
     </adminConsole>
 
-    <locale>en</locale>
+    <locale></locale>
 
     <!-- Network settings. By default, Openfire will bind to all network interfaces.
       Alternatively, you can specify a specific network interfaces that the server

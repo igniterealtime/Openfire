@@ -117,7 +117,7 @@ Each has a `system_property.*` description in `openfire_i18n.properties`. With `
 | `user-lockout.jsp` | Says when the login limits set a lock, or refuse a username that is not locked |
 | `XMPPServer` | Creates `UserLoginLimitManager` at start-up and after setup, so its unlock listener is registered on every node |
 | `util/cache/CacheFactory` | Registers the new caches |
-| `admin/servlet/UserLoginLimitsServlet` (new), `user-login-limits-page.jsp` (new), `admin-sidebar.xml` | The Login Limits page under Server Manager |
+| `admin/servlet/UserLoginLimitsServlet` (new), `user-login-limits-page.jsp` (new), `admin-sidebar.xml` | The Login Limits page under Server Settings, after Registration & Login |
 | `i18n/openfire_i18n.properties` | Property descriptions and page text |
 | `documentation/login-limits-guide.html` (new), `documentation/index.html` | Admin guide |
 

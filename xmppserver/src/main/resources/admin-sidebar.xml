@@ -65,11 +65,6 @@
             <item id="security-audit-viewer" name="${sidebar.security-audit-viewer}"
                   url="security-audit-viewer.jsp"
                   description="${sidebar.security-audit-viewer.descr}"/>
-
-            <!-- Login Limits -->
-            <item id="user-login-limits" name="${sidebar.user-login-limits}"
-                  url="user-login-limits.jsp"
-                  description="${sidebar.user-login-limits.descr}"/>
         </sidebar>
 
         <!-- Server Settings -->
@@ -119,6 +114,11 @@
             <item id="server-reg-and-login" name="${sidebar.server-reg-and-login}"
                   url="reg-settings.jsp"
                   description="${sidebar.server-reg-and-login.descr}"/>
+
+            <!-- Login Limits -->
+            <item id="user-login-limits" name="${sidebar.user-login-limits}"
+                  url="user-login-limits.jsp"
+                  description="${sidebar.user-login-limits.descr}"/>
 
             <!-- Resource Policy -->
             <item id="server-session-conflict" name="${sidebar.server-session-conflict}"

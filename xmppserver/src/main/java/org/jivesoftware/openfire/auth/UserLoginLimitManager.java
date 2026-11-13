@@ -373,8 +373,8 @@ public class UserLoginLimitManager implements LockOutEventListener
             if (addressTier) {
                 lock(held, addressFailures.getLock(addressKey));
             }
-            if (userKey != null) {
-                // Guards both the username's count and its block.
+            if (usernameTier) {
+                // Guards both the username's count and its block. With tier 3 off neither is read or written.
                 lock(held, usernameFailures.getLock(userKey));
             }
             // Read once the locks are held, so that time does not pass between reading it and acting on the counts.
@@ -602,7 +602,7 @@ public class UserLoginLimitManager implements LockOutEventListener
      * Returns whether a lock was set by the per-username limit (tier 3): its username has a tier 3 block in force, and
      * the lock ends when the block does, as a lock set by the limit is given the block's end. A lock set by hand while
      * the username is blocked (which tier 3 leaves in place), a lock without an end, and every lock once the block has
-     * ended or while the limits are disabled, are not.
+     * ended, while tier 3 is off or while the limits are disabled, are not.
      *
      * Ends within a second of each other count as the same, for lockout providers that store times to the second.
      *

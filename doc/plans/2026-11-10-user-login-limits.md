@@ -53,7 +53,7 @@ OF-2279: "Presently, Openfire has a LoginLimitManager to lock out admin account 
 - A `LockOutManager` lock applies to the account from every address. If it were triggered by the pair count (tier 1), anyone at any address could lock any user out by guessing on purpose. Tiers 1 and 2 therefore block only their own key, and only tier 3 (failures for one username from anywhere, at a higher limit) locks the account.
 - Tier 3 is the only tier an attacker can use to lock out a genuine user; the lock expires, and its limit is 0 (off) by default.
 - Tier 2 can affect genuine users who share an address (NAT, a reverse proxy, a connection manager); its limit is 0 (off) by default.
-- Tier 1 blocks no one but the pair that reached it, so it is on by default and stops one machine guessing as fast as it can on every installation.
+- Tier 1 refuses only the username that reached it, from that address, so it is on by default and stops one machine guessing as fast as it can on every installation. Where clients share an address (a reverse proxy, a connection manager, NAT), it refuses that username to everyone behind the address; the guide and the ADR say to turn it off there unless Openfire sees each client's address.
 
 ### 3. Settings
 Registered `SystemProperty` values, all dynamic, defined in `UserLoginLimitManager`:

@@ -74,8 +74,8 @@ import static org.mockito.Mockito.when;
  * Verifies, through {@link SASLAuthentication} with the real {@link UserLoginLimitManager} and the login limits on,
  * how attempts that give the username with this server's domain ('alice@domain') are counted.
  *
- * SCRAM looks the credentials up under the username as sent, and the SCRAM username is the localpart (RFC 6120 section
- * 6.3.7), so such an attempt can never succeed; it must therefore not be counted against 'alice', or a client set up
+ * Openfire looks SCRAM credentials up under the username as sent, and no account has an '@' in its name, so such an
+ * attempt can never succeed; it must therefore not be counted against 'alice', or a client set up
  * this way would block or lock the account with the right password. DIGEST-MD5 reads the password through the
  * authentication provider, which accepts 'user@domain', so such an attempt can succeed and gives its attempt back.
  *

@@ -477,8 +477,8 @@ public abstract class ScramSaslServer implements SaslServer
         // for a user that does not exist), looks up no key and fails at client-final, so the answer does not depend on
         // the password.
         if (username.indexOf('@') >= 0) {
-            // The SCRAM username is the localpart (RFC 6120 section 6.3.7), and no account has an '@' in its name, so
-            // this attempt cannot succeed. It is refused without being counted: the limits normalise 'alice@domain' to
+            // Openfire looks SCRAM credentials up under the username as sent, and no account has an '@' in its name,
+            // so this attempt cannot succeed. It is refused without being counted: the limits normalise 'alice@domain' to
             // 'alice', so counting it would build up failures against alice from a client that has her right password.
             refusal = Failure.NOT_AUTHORIZED;
         } else {

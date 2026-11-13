@@ -46,7 +46,7 @@
 
         <p>A refused attempt's password is not checked, so the answer does not depend on it and a client cannot tell whether a guess would have been right. An attempt refused by a block from one IP address, or of an IP address, gets the same answer as a wrong password. An attempt for a locked account, or for a username blocked from all IP addresses, is told that the account is disabled, so that its user knows why they cannot log in; anyone who knows a username can therefore see whether it is locked. A locked account is refused in this way whether or not the login limits are on. Refused attempts are not counted, so a block does not extend itself.</p>
 
-        <p>Clients should log in with the bare username (<code>alice</code>). Over SCRAM, the username is the account's local part (RFC 6120 section 6.3.7), so a SCRAM login as <code>alice@example.org</code> fails whatever the password; such attempts are not counted, so they cannot block or lock the account.</p>
+        <p>Clients should log in with the bare username (<code>alice</code>). Openfire looks SCRAM credentials up under the username as the client sends it, so a SCRAM login as <code>alice@example.org</code> fails whatever the password; such attempts are not counted, so they cannot block or lock the account.</p>
 
         <p>Attempts for usernames that have no account are counted in the same way, so the answers do not reveal which accounts exist. In a cluster, every node shares the same counts.</p>
 

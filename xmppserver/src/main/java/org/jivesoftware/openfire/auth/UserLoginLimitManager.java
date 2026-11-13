@@ -88,7 +88,10 @@ import java.util.function.Supplier;
  * An attempt is counted when it is admitted ({@link #tryAcquireAttempt(String, String)}) and given back when it
  * succeeds ({@link #recordSuccessfulLogin(Reservation)}), so checking and counting are one step and concurrent
  * attempts cannot together exceed a limit. The counts are kept in clustered caches, so all cluster nodes share them.
- * The feature is off by default; while it is off, nothing is counted and only account locks refuse an attempt.
+ * The feature is on by default with only tier 1 active, as a tier 1 block refuses no one but the pair that reached it;
+ * tiers 2 and 3 can affect other users (everyone behind a shared address, or a user whose username others guess at),
+ * so they are off (a limit of 0) until an administrator turns them on. While the feature is off, nothing is counted
+ * and only account locks refuse an attempt.
  *
  * @author Matthew Vivian
  */
@@ -136,7 +139,7 @@ public class UserLoginLimitManager implements LockOutEventListener
     public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("xmpp.auth.loginlimit.enabled")
         .setDynamic(true)
-        .setDefaultValue(false)
+        .setDefaultValue(true)
         .build();
 
     public static final SystemProperty<Long> MAX_ATTEMPTS_PER_PAIR = SystemProperty.Builder.ofType(Long.class)
@@ -167,7 +170,7 @@ public class UserLoginLimitManager implements LockOutEventListener
     public static final SystemProperty<Long> MAX_ATTEMPTS_PER_ADDRESS = SystemProperty.Builder.ofType(Long.class)
         .setKey("xmpp.auth.loginlimit.maxAttemptsPerAddress")
         .setDynamic(true)
-        .setDefaultValue(40L)
+        .setDefaultValue(0L)
         .setMinValue(0L)
         .build();
 
@@ -192,7 +195,7 @@ public class UserLoginLimitManager implements LockOutEventListener
     public static final SystemProperty<Long> MAX_ATTEMPTS_PER_USERNAME = SystemProperty.Builder.ofType(Long.class)
         .setKey("xmpp.auth.loginlimit.maxAttemptsPerUsername")
         .setDynamic(true)
-        .setDefaultValue(50L)
+        .setDefaultValue(0L)
         .setMinValue(0L)
         .build();
 

@@ -223,19 +223,20 @@ public class UserLoginLimitManagerTest
     }
 
     /**
-     * Verifies the defaults the plan specifies: the feature is off unless an administrator turns it on.
+     * Verifies the defaults the plan specifies: the feature is on, with only tier 1 active, as it blocks no one but the
+     * pair that reached it; tiers 2 and 3 are off until an administrator who knows their network turns them on.
      */
     @Test
     public void testDefaults()
     {
-        assertFalse(UserLoginLimitManager.ENABLED.getDefaultValue(), "the login limits must be off by default");
+        assertTrue(UserLoginLimitManager.ENABLED.getDefaultValue(), "the login limits must be on by default");
         assertEquals(10L, UserLoginLimitManager.MAX_ATTEMPTS_PER_PAIR.getDefaultValue(), "tier 1 must allow 10 failures by default");
         assertEquals(Duration.ofMinutes(15), UserLoginLimitManager.PER_PAIR_INTERVAL.getDefaultValue(), "tier 1 must count over 15 minutes by default");
         assertEquals(Duration.ofMinutes(15), UserLoginLimitManager.PER_PAIR_BLOCK_DURATION.getDefaultValue(), "tier 1 must block for 15 minutes by default");
-        assertEquals(40L, UserLoginLimitManager.MAX_ATTEMPTS_PER_ADDRESS.getDefaultValue(), "tier 2 must allow 40 failures by default");
+        assertEquals(0L, UserLoginLimitManager.MAX_ATTEMPTS_PER_ADDRESS.getDefaultValue(), "tier 2 must be off by default");
         assertEquals(Duration.ofMinutes(15), UserLoginLimitManager.PER_ADDRESS_INTERVAL.getDefaultValue(), "tier 2 must count over 15 minutes by default");
         assertEquals(Duration.ofMinutes(15), UserLoginLimitManager.PER_ADDRESS_BLOCK_DURATION.getDefaultValue(), "tier 2 must block for 15 minutes by default");
-        assertEquals(50L, UserLoginLimitManager.MAX_ATTEMPTS_PER_USERNAME.getDefaultValue(), "tier 3 must allow 50 failures by default");
+        assertEquals(0L, UserLoginLimitManager.MAX_ATTEMPTS_PER_USERNAME.getDefaultValue(), "tier 3 must be off by default");
         assertEquals(Duration.ofHours(1), UserLoginLimitManager.PER_USERNAME_INTERVAL.getDefaultValue(), "tier 3 must count over 1 hour by default");
         assertEquals(Duration.ofMinutes(30), UserLoginLimitManager.LOCKOUT_DURATION.getDefaultValue(), "tier 3 must lock for 30 minutes by default");
     }

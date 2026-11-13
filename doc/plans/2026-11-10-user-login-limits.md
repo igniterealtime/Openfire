@@ -17,6 +17,7 @@ session_status:
   session_5_running_server_and_coverage: completed (2026-11-10)
   session_6_block_duration: completed (2026-11-11)
   session_7_final_review_fixes: completed (2026-11-11)
+  session_8_upstream_review_changes: completed (2026-11-13)
 ---
 
 # Login limits for user accounts
@@ -28,10 +29,10 @@ Add brute-force protection for XMPP user logins, equivalent to the protection th
 | Tier | Counts failures for | On reaching the limit | Default limit |
 |---|---|---|---|
 | 1 | one username from one address | that address may not attempt that username for the block duration | 10 in 15 minutes, blocked for 15 minutes |
-| 2 | one address, any username | that address may not attempt any username for the block duration | 40 in 15 minutes, blocked for 15 minutes |
-| 3 | one username, from any address | the account is locked through `LockOutManager` for a set duration | 50 in 1 hour, locked for 30 minutes |
+| 2 | one address, any username | that address may not attempt any username for the block duration | off; 15-minute window and block once a limit is set |
+| 3 | one username, from any address | the account is locked through `LockOutManager` for a set duration | off; 1-hour window and 30-minute lock once a limit is set |
 
-The feature is off by default. While a block or lock applies, every attempt is refused before the password is evaluated: with `account-disabled` for a locked account or a username blocked by tier 3, and with `not-authorized` for a tier 1 or tier 2 block. An admin console page sets the limits and lists the active blocks.
+The feature is on by default with only tier 1 active. While a block or lock applies, every attempt is refused before the password is evaluated: with `account-disabled` for a locked account or a username blocked by tier 3, and with `not-authorized` for a tier 1 or tier 2 block. An admin console page sets the limits and lists the active blocks.
 
 The decision and the options considered are recorded in `doc/adr/008-login-limits-for-user-accounts.md`.
 
@@ -50,22 +51,23 @@ OF-2279: "Presently, Openfire has a LoginLimitManager to lock out admin account 
 
 ### 2. Three tiers, and only tier 3 locks the account
 - A `LockOutManager` lock applies to the account from every address. If it were triggered by the pair count (tier 1), anyone at any address could lock any user out by guessing on purpose. Tiers 1 and 2 therefore block only their own key, and only tier 3 (failures for one username from anywhere, at a higher limit) locks the account.
-- Tier 3 is the only tier an attacker can use to lock out a genuine user; its limit is high, the lock expires, and setting its limit to 0 turns it off on its own.
-- Tier 2 can affect genuine users who share an address (NAT, a reverse proxy). Its limit matches the admin console default; setting it to 0 turns it off.
+- Tier 3 is the only tier an attacker can use to lock out a genuine user; the lock expires, and its limit is 0 (off) by default.
+- Tier 2 can affect genuine users who share an address (NAT, a reverse proxy, a connection manager); its limit is 0 (off) by default.
+- Tier 1 blocks no one but the pair that reached it, so it is on by default and stops one machine guessing as fast as it can on every installation.
 
 ### 3. Settings
 Registered `SystemProperty` values, all dynamic, defined in `UserLoginLimitManager`:
 
 | Property | Type | Default |
 |---|---|---|
-| `xmpp.auth.loginlimit.enabled` | Boolean | false |
+| `xmpp.auth.loginlimit.enabled` | Boolean | true |
 | `xmpp.auth.loginlimit.maxAttemptsPerUsernameAddressPair` | Long, 0 turns tier 1 off | 10 |
 | `xmpp.auth.loginlimit.perUsernameAddressPairInterval` | Duration | 15 minutes |
 | `xmpp.auth.loginlimit.perUsernameAddressPairBlockDuration` | Duration, at least 1 second | 15 minutes |
-| `xmpp.auth.loginlimit.maxAttemptsPerAddress` | Long, 0 turns tier 2 off | 40 |
+| `xmpp.auth.loginlimit.maxAttemptsPerAddress` | Long, 0 turns tier 2 off | 0 |
 | `xmpp.auth.loginlimit.perAddressInterval` | Duration | 15 minutes |
 | `xmpp.auth.loginlimit.perAddressBlockDuration` | Duration, at least 1 second | 15 minutes |
-| `xmpp.auth.loginlimit.maxAttemptsPerUsername` | Long, 0 turns tier 3 off | 50 |
+| `xmpp.auth.loginlimit.maxAttemptsPerUsername` | Long, 0 turns tier 3 off | 0 |
 | `xmpp.auth.loginlimit.perUsernameInterval` | Duration | 1 hour |
 | `xmpp.auth.loginlimit.lockoutDuration` | Duration | 30 minutes |
 
@@ -243,6 +245,20 @@ Tests are written before the code in each session. Inside a worktree, pass `-Dma
 
 **Exit:** The tests pass, coverage is recorded, and the demo passes.
 
+### Session 8: Upstream review changes
+
+**Goal:** Address the review of the pull request (2026-11-12), one commit per point.
+
+**Tasks:**
+1. Answer a refused attempt for a username locked out from every address (its account is locked, or tier 3 has blocked it) `account-disabled`, still without checking the password, for every mechanism (PLAIN and FAST tokens included) and for the lock check after a successful exchange; tier 1 and tier 2 blocks stay `not-authorized` (decision 6).
+2. Say on the user's lockout page when the login limits set a lock, and when they refuse a username that is not locked.
+3. Move the Login Limits page to Server Settings, after Registration & Login.
+4. Look a refused SCRAM attempt's salt up as for any attempt (the separate lookup that was meant not to create a missing salt did create one with `DefaultAuthProvider`), and stop citing RFC 6120 for the SCRAM username form: Openfire looks the credentials up under the name as sent.
+5. Replace the test of a new attempt clearing an earlier reservation with one that ends in a successful EXTERNAL login, which fails when the clear is removed.
+6. Turn the limits on by default with only tier 1 active; tiers 2 and 3 have a limit of 0.
+
+**Exit:** The full `i18n` and `xmppserver` suites pass and the demo passes.
+
 ---
 
 ## Critical Files
@@ -260,7 +276,7 @@ Tests are written before the code in each session. Inside a worktree, pass `-Dma
 
 ## Verification Checklist
 
-- [x] Disabled by default; with it disabled, nothing is counted or blocked
+- [x] On by default with only tier 1 active; with it disabled, nothing is counted or blocked
 - [x] Each tier blocks after its limit, scoped to its key; a tier 1 or 2 block lasts its block duration from the attempt that reached the limit
 - [x] Tier 3 locks through `LockOutManager`, leaves existing locks alone, and an administrator's unlock resets it
 - [x] A refused attempt gets an answer that does not depend on the password, for PLAIN, SCRAM, DIGEST-MD5 and FAST tokens: `account-disabled` for a locked account or a username blocked by tier 3, `not-authorized` for a tier 1 or tier 2 block; over SCRAM a refused attempt gets the same salt and iteration count as an admitted one
@@ -275,4 +291,4 @@ Tests are written before the code in each session. Inside a worktree, pass `-Dma
 
 ## Open Questions
 
-- Should the feature be on or off by default? It is off in this change, because it can refuse logins that succeed today; to be settled in review.
+None. Review settled the default: on, with only tier 1 active.

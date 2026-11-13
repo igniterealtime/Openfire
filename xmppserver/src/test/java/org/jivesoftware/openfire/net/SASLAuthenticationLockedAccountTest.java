@@ -106,6 +106,8 @@ public class SASLAuthenticationLockedAccountTest
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         XMPPServer.setInstance(Fixtures.mockXMPPServer());
         SaslMechanismCatalog.setEnabledMechanisms(List.of("SCRAM-SHA-1", "DIGEST-MD5", "PLAIN"));
+        // These tests are about locks, which apply whether or not the login limits are on; they run with the limits off.
+        UserLoginLimitManager.ENABLED.setValue(false);
 
         lockOutManager = mock(LockOutManager.class);
         when(lockOutManager.isAccountDisabled(USER)).thenReturn(true);

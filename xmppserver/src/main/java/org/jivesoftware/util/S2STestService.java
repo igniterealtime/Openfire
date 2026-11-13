@@ -42,7 +42,7 @@ import org.xmpp.packet.IQ.Type;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
-import javax.xml.bind.DatatypeConverter;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.security.cert.Certificate;
@@ -193,37 +193,49 @@ public class S2STestService {
 
     /**
      * @return A String representation of the certificate chain for the connection to the domain under test.
+     * @throws IOException when a certificate cannot be encoded.
      */
-    private String getCertificates() {
+    private String getCertificates() throws IOException {
         final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain.getDomain());
         Session session = XMPPServer.getInstance().getSessionManager().getOutgoingServerSession(pair);
+        if (session == null) {
+            return "";
+        }
+        Log.info("Successfully negotiated TLS connection.");
+        return formatCertificates(session.getPeerCertificates());
+    }
+
+    /**
+     * Describes each certificate (subject, alternative names, validity) followed by the certificate itself in PEM
+     * format, so that it can be copied into other tools.
+     *
+     * @param certificates the certificate chain presented by the remote server.
+     * @return the description, never null.
+     * @throws IOException when a certificate cannot be encoded.
+     */
+    static String formatCertificates(final Certificate[] certificates) throws IOException {
         StringBuilder certs = new StringBuilder();
-        if (session != null) {
-            Log.info("Successfully negotiated TLS connection.");
-            Certificate[] certificates = session.getPeerCertificates();
-            for (Certificate certificate : certificates) {
-                X509Certificate x509cert = (X509Certificate) certificate;
-                certs.append("--\nSubject: ");
-                certs.append(x509cert.getSubjectDN());
+        for (Certificate certificate : certificates) {
+            X509Certificate x509cert = (X509Certificate) certificate;
+            certs.append("--\nSubject: ");
+            certs.append(x509cert.getSubjectDN());
 
-                List<String> subjectAltNames = new SANCertificateIdentityMapping().mapIdentity(x509cert);
-                if (!subjectAltNames.isEmpty()) {
-                    certs.append("\nSubject Alternative Names: ");
-                    for (String subjectAltName : subjectAltNames) {
-                        certs.append("\n  ");
-                        certs.append(subjectAltName);
-                    }
+            List<String> subjectAltNames = new SANCertificateIdentityMapping().mapIdentity(x509cert);
+            if (!subjectAltNames.isEmpty()) {
+                certs.append("\nSubject Alternative Names: ");
+                for (String subjectAltName : subjectAltNames) {
+                    certs.append("\n  ");
+                    certs.append(subjectAltName);
                 }
-
-                certs.append("\nNot Before: ");
-                certs.append(x509cert.getNotBefore());
-                certs.append("\nNot After: ");
-                certs.append(x509cert.getNotAfter());
-                certs.append("\n\n-----BEGIN CERTIFICATE-----\n");
-                certs.append(DatatypeConverter.printBase64Binary(
-                        certificate.getPublicKey().getEncoded()).replaceAll("(.{64})", "$1\n"));
-                certs.append("\n-----END CERTIFICATE-----\n\n");
             }
+
+            certs.append("\nNot Before: ");
+            certs.append(x509cert.getNotBefore());
+            certs.append("\nNot After: ");
+            certs.append(x509cert.getNotAfter());
+            certs.append("\n\n");
+            certs.append(CertificateManager.toPemRepresentation(x509cert));
+            certs.append("\n");
         }
         return certs.toString();
     }

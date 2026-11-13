@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: S2S Connection Test Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>S2S Connection Test Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            Openfire connects to other XMPP domains (federates, so that the users of both domains can exchange
+            messages) through server-to-server (S2S) connections. Setting up such a connection takes several steps:
+            finding the remote server in DNS, connecting to it, opening an XMPP stream (the exchange of XML that
+            carries all XMPP traffic over the connection), encrypting the connection with TLS, checking the remote
+            certificate, and authenticating. When federation with a domain does not work, any one of these steps may
+            be the cause.
+        </p>
+        <p>
+            The S2S Connection Test in the admin console makes a connection attempt to a remote domain and reports
+            each of these steps as a check, with a pass, warning or failure, and a description of what happened. This
+            guide describes what the test does, what each check verifies, and what each result means.
+        </p>
+
+        <p>This guide contains the following topics:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#running">Running the test</a></li>
+                <li><a href="#reading">Reading the results</a></li>
+                <li><a href="#checks">The checks</a></li>
+                <li><a href="#failure-effects">How a failure affects later checks</a></li>
+                <li><a href="#details">The raw details</a></li>
+                <li><a href="#failed-sessions">Failed connections outside the test</a></li>
+                <li><a href="#limitations">Limitations</a></li>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="running">
+
+        <h2>Running the test</h2>
+
+        <p>
+            The test is in the admin console under <code>Sessions / Tools / S2S Connection Test</code>; the page
+            heading reads "Server to Server Test". Enter the XMPP domain of the remote server (for example
+            <code>example.org</code>) and press <code>Test</code>.
+        </p>
+
+        <p>
+            The test makes a real connection attempt from this server's XMPP domain to the remote domain, through the
+            same code that Openfire uses for federation, and then sends an XMPP ping
+            (<a href="https://xmpp.org/extensions/xep-0199.html">XEP-0199</a>) to the remote domain over the new
+            connection. It reports what happened at each step of that attempt, and what came back from the ping.
+        </p>
+
+        <p>
+            To observe a new connection rather than one that already exists, the test first closes every existing
+            server-to-server session with the remote domain, incoming and outgoing. This interrupts federation with
+            that domain until the sessions are set up again. The page warns about this above the form.
+        </p>
+
+        <p>
+            The page shows the results when the test has finished. After closing the existing outgoing session, the
+            test waits for its connection to finish closing, for up to 5 seconds by default (the
+            <code>xmpp.server.outgoing.close-wait-timeout</code> property). It then waits for the ping reply for up to
+            the socket timeout (the <code>xmpp.server.read.timeout</code> property, 120 seconds by default), up to 10
+            more seconds for a connection attempt that is still in progress, and, when that attempt set up the session
+            only after the wait for the reply ran out, up to 5 more seconds for the reply. With the default close wait,
+            a test can therefore take up to the socket timeout plus 20 seconds. A test waits that long when the remote
+            server does not answer, for example when a firewall drops the connection or when the remote server cannot
+            connect back to this one.
+        </p>
+
+        <p>
+            If two administrators test the same domain on the same server at the same time, the second test waits for
+            the first to finish.
+        </p>
+
+    </section>
+
+    <section id="reading">
+
+        <h2>Reading the results</h2>
+
+        <p>
+            The results consist of a summary line, a table with one row for each of the 11 checks, and the raw details
+            of the test, collapsed below the table.
+        </p>
+
+        <section id="summary">
+
+            <h3>The summary line</h3>
+
+            <p>
+                The summary line gives the overall outcome. It shows the first of these that applies:
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr>
+                    <th>Outcome</th>
+                    <th>Summary line</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>A check failed</td>
+                    <td><q data-key="server2server.settings.testing.summary.failed">The connection to <var data-p="0">domain</var>
+                        failed at check <var data-p="1">number</var>.</q></td>
+                </tr>
+                <tr>
+                    <td>No check failed, but one or more checks show a warning</td>
+                    <td><q data-key="server2server.settings.testing.summary.warnings">The connection to <var data-p="0">domain</var>
+                        works, with <var data-p="1">number</var> warnings.</q> (with one warning: "with one warning")</td>
+                </tr>
+                <tr>
+                    <td>No check failed or warned, but one or more checks show "Not observed"</td>
+                    <td><q data-key="server2server.settings.testing.summary.not_observed">No check failed for
+                        <var data-p="0">domain</var>, but some steps were not observed during this test.</q></td>
+                </tr>
+                <tr>
+                    <td>Every check passed</td>
+                    <td><q data-key="server2server.settings.testing.summary.passed">All 11 checks passed: federation with
+                        <var data-p="0">domain</var> works.</q></td>
+                </tr>
+                </tbody>
+            </table>
+
+        </section>
+
+        <section id="table">
+
+            <h3>The table</h3>
+
+            <p>
+                Each row of the table is one check, numbered in the order the steps of a connection attempt take place.
+                The <em>Result</em> column gives the status of the check, and the <em>Detail</em> column says what
+                happened. The row of the first failed check, which the summary line names, is highlighted.
+            </p>
+
+            <dl>
+                <dt style="color: #000"><img src="images/success-16x16.gif" width="16" height="16" alt="" style="vertical-align: text-bottom; margin-right: 4px">Pass</dt>
+                <dd>The step took place during this test and succeeded.</dd>
+
+                <dt style="color: #000"><img src="images/warning-16x16.gif" width="16" height="16" alt="" style="vertical-align: text-bottom; margin-right: 4px">Warning</dt>
+                <dd>The step succeeded in a way that is weaker than expected. For example, the remote server
+                    authenticated this server with Server Dialback (in which the receiving server checks the sender
+                    through DNS and a connection back to the sender's domain) instead of with its certificate.</dd>
+
+                <dt style="color: #000"><img src="images/error-16x16.gif" width="16" height="16" alt="" style="vertical-align: text-bottom; margin-right: 4px">Failed</dt>
+                <dd>The step took place and failed. The detail says why.</dd>
+
+                <dt style="color: #767676">Not reached</dt>
+                <dd>The step did not take place, or did not succeed, because an earlier check failed. The detail reads:
+                    <q data-key="server2server.settings.testing.check.not_reached">The test stopped at an earlier check.</q>
+                    On a connection that went ahead without encryption, <a href="#check-6">check 6</a> (the remote
+                    certificate) also shows "Not reached", with its own reason.</dd>
+
+                <dt style="color: #767676">Not observed</dt>
+                <dd>The test has no record of this step from this test's connection attempt, although no earlier check
+                    failed. The detail reads:
+                    <q data-key="server2server.settings.testing.check.not_observed">This step did not take place on this
+                        server during this test, for example because another server in the cluster holds the connection
+                        to the remote domain.</q>
+                    A step that was not observed is never shown as passed.</dd>
+            </dl>
+
+            <p>
+                After a failed check, some later checks still show their own result and others show "Not reached".
+                <a href="#failure-effects">How a failure affects later checks</a> explains which, once the checks
+                themselves have been described.
+            </p>
+
+            <figure>
+                <img src="images/s2s-connection-test-success.png" alt="S2S Connection Test results in which all 11 checks pass.">
+                <figcaption>A successful test: all 11 checks pass.</figcaption>
+            </figure>
+
+            <figure>
+                <img src="images/s2s-connection-test-warning.png" alt="S2S Connection Test results in which the remote server answered the ping with an error, shown as a warning on check 10, the reply.">
+                <figcaption>A test with a warning: the remote server answered the ping with an error.</figcaption>
+            </figure>
+
+            <figure>
+                <img src="images/s2s-connection-test-failure.png" alt="S2S Connection Test results in which the TLS handshake was stopped because this server does not trust the remote certificate.">
+                <figcaption>A failed test: this server does not trust the remote certificate.</figcaption>
+            </figure>
+
+        </section>
+
+        <section id="suggested-next-steps">
+
+            <h3>Suggested next steps</h3>
+
+            <p>
+                Below the table, a <em>Suggested next steps</em> box gives advice on the first failed check, where to start,
+                or, when no check failed, on each check that shows a warning. A test in which every check passes has
+                no box. When this server stopped the TLS handshake because it rejected the remote certificate, the
+                advice is that of <a href="#check-6">check 6</a> (the remote certificate), which says why. The advice for a
+                check has up to three parts:
+            </p>
+
+            <ul>
+                <li><em>On this server</em>: what to look at on this server, such as a setting, a firewall rule or the
+                    server's own certificate. It is left out where nothing on this server can change the result, as
+                    for an expired remote certificate. Advice on a certificate failure also points to the settings
+                    that can let such a connection go ahead, which apply to every remote server, except for a revoked
+                    certificate: its issuer withdrew it, so the advice offers no way around it. When a DNS override
+                    on this server decided where the connection went (<a href="#check-2">check 2</a> says so) and a
+                    later step failed, the advice names where the override sent it.</li>
+                <li><em>Admin console</em>: links to the admin console pages that hold those settings, for example the
+                    Server to Server settings page, the Server to Server trust store or DNS Overrides.</li>
+                <li><em>Possible causes on the remote server</em>: what could be wrong on the other side. The test sees
+                    only this server's side of the connection, so these are possibilities to consider with the
+                    administrator of the remote server.</li>
+            </ul>
+
+        </section>
+
+    </section>
+
+    <section id="checks">
+
+        <h2>The checks</h2>
+
+        <p>
+            This section describes each check: what it verifies, every message it can show, and the settings of this
+            server that affect it. In the messages, the parts in <var>italics</var> are filled in with the values of
+            the test. Most settings named below are on the <code>Server / Server Settings / Server to Server</code>
+            page of the admin console, or on its <code>Advanced configuration</code> pages; the others are system
+            properties.
+        </p>
+
+        <section id="check-1">
+
+            <h3>1. Target XMPP domain valid</h3>
+
+            <p>
+                Verifies, before any connection is made, that the entered value is an XMPP domain that this server can
+                connect to: a valid domain name, not served by this server, and allowed by the server-to-server policy
+                of this server. Before the check, surrounding spaces, a leading <code>http://</code> or
+                <code>https://</code>, trailing slashes and a user part (as in <code>user@example.org</code>) are
+                removed from the entered value. When this check fails, the test does not close any sessions or make a
+                connection attempt.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.domain.pass"><var data-p="0">domain</var> is a
+                        valid remote XMPP domain, allowed by the server-to-server policy.</q></td>
+                    <td>The test goes ahead.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.domain.fail.invalid"><var data-p="0">domain</var>
+                        is not a valid XMPP domain.</q></td>
+                    <td>The value cannot be read as an XMPP domain name, for example because it holds spaces or other
+                        characters that a domain name cannot contain.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.domain.fail.local"><var data-p="0">domain</var>
+                        is served by this server, so there is no remote server to test.</q></td>
+                    <td>The domain is the XMPP domain of this server.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.domain.fail.component"><var data-p="0">domain</var>
+                        is a component of this server, so there is no remote server to test.</q></td>
+                    <td>The domain belongs to a service of this server, such as a group chat service or an external
+                        component.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.domain.fail.blocked"><var data-p="0">domain</var>
+                        is blocked by the server-to-server policy of this server.</q></td>
+                    <td>This server's settings do not allow server-to-server connections with the domain.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                <strong>Settings:</strong> the lists of allowed and blocked servers on the
+                <code>Server to Server</code> settings page.
+            </p>
+
+        </section>
+
+        <section id="check-2">
+
+            <h3>2. DNS resolved to server address</h3>
+
+            <p>
+                Verifies that this server found an address for the remote domain. Openfire looks up the DNS SRV records
+                that a domain publishes for server-to-server connections (<code>_xmpp-server._tcp</code>, and
+                <code>_xmpps-server._tcp</code> for direct TLS, in which the connection is encrypted from the start
+                instead of being switched to TLS after it opens, with STARTTLS), as described in the
+                <a href="network-configuration-guide.html#dns-srv-records">Network Configuration Guide</a>. It also
+                tries the domain name itself, last; when the domain publishes no SRV records, that is the only address,
+                as <a href="https://datatracker.ietf.org/doc/html/rfc6120#section-3.2">RFC 6120</a> allows. A DNS
+                override configured on this server replaces the lookup. The detail lists the hosts and ports found (at most
+                10, followed by how many more there were); an entry for direct TLS is marked <code>(direct TLS)</code>. When the domain publishes SRV records but the
+                connection could be made only to the domain name itself, <a href="#check-3">check 3</a> (TCP) warns.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.dns.pass">DNS SRV records found:
+                        <var data-p="0">hosts and ports</var></q></td>
+                    <td>The domain publishes SRV records, and these are their targets.</td>
+                </tr>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.dns.pass.override">A DNS override configured on
+                        this server was used: <var data-p="0">hosts and ports</var></q></td>
+                    <td>DNS was not consulted for this domain; the address comes from this server's configuration.</td>
+                </tr>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.dns.pass.fallback">No DNS SRV records were found,
+                        so the domain name itself was used: <var data-p="0">host and port</var></q></td>
+                    <td>The domain publishes no SRV records, so Openfire uses the domain name as the host name. This is
+                        allowed, and works when the domain name resolves to the remote server.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.dns.fail.no_address">No address was found for
+                        <var data-p="0">domain</var>. The domain may be misspelled, or it may not be set up for
+                        server-to-server connections.</q></td>
+                    <td>Neither SRV records nor an address for the domain name itself were found.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                <strong>Settings:</strong> DNS overrides (<code>Server / Server Settings / DNS Overrides</code>); the
+                port used for the domain name itself, which is the port on the domain's entry in the list of allowed
+                servers on the <code>Server to Server</code> settings page, or otherwise
+                <code>xmpp.server.socket.remotePort</code> (5269 by default). DNS itself is resolved by the operating
+                system of this server.
+            </p>
+
+        </section>
+
+        <section id="check-3">
+
+            <h3>3. TCP connection established to an S2S endpoint</h3>
+
+            <p>
+                Verifies that this server opened a network connection to one of the addresses found in <a href="#check-2">check 2</a> (DNS).
+                Openfire tries the addresses in the order of their DNS priority, and may try several at the same time
+                (see <a href="network-configuration-guide.html#ipv6-happy-eyeballs">Happy Eyeballs</a>). When every
+                address refused the connection, or every address timed out, the check says so; when the addresses
+                failed in different ways, or for another reason, the detail lists what happened at each address. When
+                a connection was made only after every address of a higher DNS priority failed, the check warns and
+                lists them: Openfire moves to the next priority only when every address of the current one has failed,
+                so those addresses slow down every new connection. An address that fails while another address of the
+                same priority connects, such as an IPv6 address that this server cannot reach beside an IPv4 address
+                that works, delays nothing and does not cause a warning. A detail lists at most 10 addresses, followed
+                by how many more there were.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.tcp.pass">Connected to
+                        <var data-p="0">address and port</var>.</q></td>
+                    <td>The address and port of the connection that the rest of the attempt used. No address of a
+                        higher DNS priority failed before it.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.tcp.warning.earlier_failures">Connected to
+                        <var data-p="0">address and port</var>, after the connection to other addresses failed:
+                        <var data-p="1">what happened at each address</var>. Those addresses may be out of date, or the
+                        servers at them may be down.</q></td>
+                    <td>The connection works, but every address of a higher DNS priority (such as the server that the
+                        highest-priority SRV record names) did not answer or refused the connection, and each new
+                        connection waits for them to fail. Each is listed with what happened to it.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.tcp.warning.fallback">Connected to
+                        <var data-p="0">address and port</var>, the address of the domain name itself, after the
+                        connection to the servers that the DNS SRV records name failed: <var data-p="1">what happened at
+                        each address</var>. The SRV records of the domain may be out of date, or those servers may be
+                        down.</q></td>
+                    <td>The domain publishes SRV records, but no server they name accepted the connection; Openfire
+                        then tried the domain name itself, and that worked. Servers that follow
+                        <a href="https://datatracker.ietf.org/doc/html/rfc6120#section-3.2.1">RFC 6120</a>, which says
+                        not to try the domain name itself once SRV records are found, cannot connect.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.tcp.warning.fallback.unresolved">Connected to
+                        <var data-p="0">address and port</var>, the address of the domain name itself, as none of the
+                        servers that the DNS SRV records name had an address that this server could try. The SRV records
+                        of the domain may be out of date.</q></td>
+                    <td>The domain publishes SRV records, but the hosts they name have no address in DNS (or only
+                        addresses of a connection type that this server does not use); Openfire then tried the domain
+                        name itself, and that worked. Servers that follow RFC 6120 cannot connect.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tcp.fail.refused">The connection to
+                        <var data-p="0">addresses and ports</var> was refused: nothing is accepting connections on that
+                        port. The remote server may not be running, or may not accept server-to-server
+                        connections.</q></td>
+                    <td>The remote host answered, and rejected the connection on that port.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tcp.fail.timed_out">The connection to
+                        <var data-p="0">addresses and ports</var> timed out. A firewall may be blocking the connection,
+                        on this network or on the remote one.</q></td>
+                    <td>No answer came back to the connection request before this server, or its operating system,
+                        stopped waiting.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tcp.fail.other">The connection to
+                        <var data-p="0">addresses and ports</var> failed: <var data-p="1">reason</var></q></td>
+                    <td>The connection failed for another reason given by the network, such as no route to the host,
+                        or the addresses failed in different ways. The reason lists each address with what happened
+                        to it.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tcp.fail.none_attempted">Addresses were found,
+                        but no connection to any of them was attempted, for example because each uses a connection type
+                        (direct TLS or not) that this server does not accept for server-to-server connections.</q></td>
+                    <td>DNS found addresses, but this server tried none of them, for example because its own listener
+                        for that connection type is disabled.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                <strong>Settings:</strong> <code>xmpp.server.read.timeout</code> (the socket timeout, also used for the
+                connection, 120 seconds by default; an operating system may give up on a connection earlier); the
+                Happy Eyeballs properties described in the
+                <a href="network-configuration-guide.html#ipv6-happy-eyeballs">Network Configuration Guide</a>; DNS
+                overrides, which decide the addresses tried.
+            </p>
+
+        </section>
+
+        <section id="check-4">
+
+            <h3>4. XMPP server stream opened</h3>
+
+            <p>
+                Verifies that the remote server answered the connection with an XMPP stream header, which shows that an
+                XMPP server is listening on the port. The detail gives the domain name that the remote server stated in
+                its stream header.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.stream.pass">The remote server opened an XMPP
+                        stream, naming itself <var data-p="0">name</var>.</q></td>
+                    <td>An XMPP server answered, under the name shown.</td>
+                </tr>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.stream.pass.unnamed">The remote server opened an
+                        XMPP stream without stating its name.</q></td>
+                    <td>An XMPP server answered. Stating a name in the stream header is optional.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.stream.fail.closed">The connection closed before the
+                        remote server opened an XMPP stream.</q></td>
+                    <td>The connection was accepted and then closed before any XMPP stream started, without a stream
+                        error. This server cannot tell which side closed it; the logs of both servers may say. The
+                        port may belong to a service other than XMPP.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.stream.fail.error">The remote server refused the
+                        stream with the error: <var data-p="0">error</var></q></td>
+                    <td>The remote server sent an XMPP stream error before the TLS step (<a href="#check-5">check 5</a>)
+                        had a result. The error gives the
+                        condition (for example <code>host-unknown</code>, when the remote server does not serve the
+                        domain), and any text the remote server added.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.stream.fail.timed_out">The remote server accepted
+                        the connection, but did not open an XMPP stream within <var data-p="0">number</var> seconds,
+                        after which this server stopped waiting. The remote server may be overloaded, or the port may
+                        belong to a service other than XMPP.</q></td>
+                    <td>The connection stayed open without an answer until this server gave up on setting up the
+                        session.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.stream.fail.no_id">The remote server answered
+                        without a stream ID, which XMPP requires, so this server closed the connection. Some servers
+                        leave out the stream ID when they refuse a stream with an error.</q></td>
+                    <td>The remote server's stream header was incomplete.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                <strong>Settings:</strong> <code>xmpp.server.session.initialise-timeout</code> (how long this server
+                waits for an outgoing session to be set up, 10 seconds by default).
+            </p>
+
+        </section>
+
+        <section id="check-5">
+
+            <h3>5. TLS negotiated successfully</h3>
+
+            <p>
+                Verifies that the connection was encrypted with TLS. Over STARTTLS, the remote server offers
+                encryption in its stream features (the list of options a server announces at the start of a stream)
+                and this server asks to start it; over direct TLS, the handshake starts as soon as the connection is
+                made. During the handshake, this server checks the remote certificate chain against its trust store
+                (the certificates and certificate authorities that this server trusts), so an untrusted, expired, not
+                yet valid or revoked
+                certificate stops the handshake here, and <a href="#check-6">check 6</a> (the remote certificate) says which.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.pass">Encrypted with <var data-p="0">protocol</var>,
+                        cipher suite <var data-p="1">cipher suite</var>.</q></td>
+                    <td>The TLS protocol version and cipher suite that the connection uses.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.not_offered">The remote server does not
+                        offer TLS encryption, which this server requires.</q></td>
+                    <td>The remote server's stream features hold no STARTTLS offer, and this server's STARTTLS policy is
+                        Required, so the attempt ends.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.refused">The remote server offers TLS
+                        encryption, but refused it when this server asked to start it. The TLS setup of the remote
+                        server may be incomplete, for example without a certificate.</q></td>
+                    <td>The remote server answered the request to start TLS with a failure.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.handshake">The TLS handshake failed:
+                        <var data-p="0">reason</var></q></td>
+                    <td>The handshake failed for a reason other than this server rejecting the remote certificate, for
+                        example because the two servers have no TLS protocol version or cipher suite in common. The
+                        reason is the one given by Java's TLS implementation, cut to 200 characters. When Server
+                        Dialback is enabled and the STARTTLS policy is not Required, Server Dialback over a new
+                        unencrypted connection may follow; <a href="#check-7">check 7</a> (authentication) reports
+                        it.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.not_tls">The remote server did not
+                        answer with TLS. The port it was reached on may expect an unencrypted connection, for example
+                        when a DNS SRV record for direct TLS (xmpps-server) names a port that does not use it.</q></td>
+                    <td>Over direct TLS, the remote server answered the TLS handshake with something other than TLS,
+                        such as the start of an unencrypted XMPP stream. Check the domain's
+                        <code>_xmpps-server</code> SRV records against the ports its server listens on.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.certificate">This server stopped the TLS
+                        handshake because it rejected the remote certificate, for the reason given in the next
+                        check.</q></td>
+                    <td>The handshake reached the certificate, and this server's trust store did not accept it. <a href="#check-6">Check 6</a> (the remote certificate)
+                        gives the reason.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.warning.unencrypted">The connection works,
+                        but is not encrypted. The STARTTLS policy of this server allows server-to-server connections
+                        without TLS, and TLS was not set up.</q></td>
+                    <td>The remote server did not offer TLS and this server's STARTTLS policy is Optional, or this
+                        server's STARTTLS policy is Disabled and the remote server does not require TLS. The attempt
+                        carries on without encryption: <a href="#check-6">check 6</a> (the remote certificate) shows
+                        "Not reached", as no certificate is exchanged, and the later checks show their own results.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.disabled">The remote server requires
+                        TLS encryption, but the STARTTLS policy of this server disables it, so this server closed the
+                        connection.</q></td>
+                    <td>This server's STARTTLS policy is Disabled, and the remote server requires TLS. The attempt ends
+                        here, and the later checks show "Not reached".</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.timed_out">The remote server accepted the
+                        connection, but did not complete the TLS handshake within <var data-p="0">number</var> seconds,
+                        after which this server stopped waiting. The remote server may be overloaded, or the port may
+                        not serve direct TLS.</q></td>
+                    <td>Over direct TLS, the connection stayed open without completing the handshake until this server
+                        gave up on setting up the session.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.stalled">The remote server opened an XMPP
+                        stream, but encryption was not set up within <var data-p="0">number</var> seconds, after which
+                        this server stopped waiting.</q></td>
+                    <td>Over STARTTLS, the stream opened, but encryption was still being set up when this server gave up
+                        on setting up the session.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.closed">The connection closed before
+                        encryption was set up.</q></td>
+                    <td>Over STARTTLS, the stream opened, and the connection closed while encryption was being set up,
+                        without a stream error. This server cannot tell which side closed it; the logs of both servers
+                        may say.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                <strong>Settings:</strong> the STARTTLS policy (Disabled, Optional or Required) under
+                <code>Advanced configuration</code> on the <code>Server to Server</code> settings page
+                (<code>xmpp.server.tls.policy</code>); the certificate settings listed under <a href="#check-6">check 6</a> (the remote certificate), which decide
+                whether the handshake accepts the remote certificate; <code>xmpp.server.session.initialise-timeout</code>
+                for the direct TLS timeout.
+            </p>
+
+        </section>
+
+        <section id="check-6">
+
+            <h3>6. Remote certificate received, valid, trusted and matches target</h3>
+
+            <p>
+                Verifies four properties of the certificate that the remote server presented: that there is one, that
+                it is within its validity dates, that this server trusts it (it is issued by an authority in this
+                server's trust store, or is itself in that store), and that it is issued for the remote domain. A
+                certificate that passes all four shows that the remote server is the one it claims to be. Dates are
+                shown in UTC.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.certificate.pass">The remote certificate is valid,
+                        trusted and issued for this domain.</q></td>
+                    <td>All four properties hold.</td>
+                </tr>
+                <tr>
+                    <td>Not reached</td>
+                    <td><q data-key="server2server.settings.testing.check.certificate.not_reached.unencrypted">No
+                        certificate is exchanged on an unencrypted connection.</q></td>
+                    <td>The connection went ahead without TLS, as this server's STARTTLS policy allows
+                        (<a href="#check-5">check 5</a> shows a warning).</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.certificate.fail.not_received">The remote server
+                        did not present a certificate.</q></td>
+                    <td>The encrypted connection carries no certificate from the remote server.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.certificate.fail.expired">The remote certificate
+                        expired on <var data-p="0">date and time</var>.</q></td>
+                    <td>The certificate's end date has passed.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.certificate.fail.not_yet_valid">The remote
+                        certificate is not valid until <var data-p="0">date and time</var>.</q></td>
+                    <td>The certificate's start date is in the future, as seen by this server's clock.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.certificate.fail.untrusted">This server does not
+                        trust the remote certificate. It may be self-signed or issued by an authority that is not in the
+                        trust store of this server, or the certificate in the trust store that it relies on may have
+                        expired.</q></td>
+                    <td>No chain could be built from the certificate to a certificate in this server's trust store
+                        that is currently valid.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.certificate.fail.revoked">The remote certificate
+                        has been revoked by its issuer.</q></td>
+                    <td>Revocation checking found the certificate on its issuer's revocation list or OCSP response.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.certificate.fail.name_mismatch">The remote
+                        certificate is not issued for <var data-p="0">domain</var>. It names:
+                        <var data-p="1">names</var></q></td>
+                    <td>The certificate is valid and trusted, but none of the names it holds is the remote domain. The
+                        detail lists at most 10 names, followed by how many more there were. This is found after the
+                        handshake, so <a href="#check-5">check 5</a> (TLS) passes.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                After a certificate failure, the attempt ends when strict certificate validation is on (the default),
+                and the later checks show "Not reached". When it is off, what happens next depends on whether the
+                handshake completed. When this server stopped the handshake, it tries Server Dialback over a new
+                unencrypted connection, provided that Server Dialback is enabled and the STARTTLS policy is not
+                Required; otherwise the attempt ends. When the handshake completed and the certificate failed after
+                it (for example on its name), authentication goes ahead over the encrypted connection, provided that
+                Server Dialback is enabled or self-signed certificates are accepted. <a href="#check-7">Check 7</a>
+                (authentication) reports the outcome.
+            </p>
+
+            <p>
+                Accepting self-signed certificates, or not verifying certificate validity dates, lets the TLS handshake
+                complete with such a certificate. These settings do not change the verdict on the certificate: this
+                check still fails, with the reason the certificate falls short, and <a href="#check-5">check 5</a> (TLS) passes.
+            </p>
+
+            <p>
+                <strong>Settings:</strong> the trust store for server-to-server connections
+                (<code>Server / TLS Certificates / Certificate Stores</code>, the Server to Server trust store); under <code>Advanced configuration</code> on the
+                <code>Server to Server</code> settings page, the "Certificate chain checking" options (allow peer
+                certificates to be self-signed, <code>xmpp.socket.ssl.certificate.accept-selfsigned</code>; verify that the
+                certificate is currently valid, <code>xmpp.socket.ssl.certificate.verify.validity</code>; verify that
+                certificates have not been revoked, described in the
+                <a href="ssl-guide.html#revocation">TLS Guide</a>) and the option to treat invalid TLS certificates as
+                fatal (strict certificate validation, <code>xmpp.socket.ssl.certificate.strict-validation</code>).
+                These settings apply to every server-to-server connection, not only to connections to one remote
+                domain.
+            </p>
+
+        </section>
+
+        <section id="check-7">
+
+            <h3>7. Authentication succeeded using SASL EXTERNAL</h3>
+
+            <p>
+                Verifies how the remote server authenticated this server's connection. With SASL EXTERNAL, the remote
+                server accepts this server's certificate as proof of its identity. With Server Dialback
+                (<a href="https://xmpp.org/extensions/xep-0220.html">XEP-0220</a>), the remote server verifies this
+                server through DNS and a connection back to it, without relying on certificates. Authentication with
+                Server Dialback shows a warning; failed authentication is a failure.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.pass">Authenticated with the server
+                        certificate (SASL EXTERNAL).</q></td>
+                    <td>The remote server accepted this server's certificate.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.warning.dialback.not_offered">Authenticated
+                        with Server Dialback, because the remote server did not offer certificate login (SASL
+                        EXTERNAL).</q></td>
+                    <td>The remote server's stream features held no SASL EXTERNAL offer, so this server used Server
+                        Dialback. Openfire offers SASL EXTERNAL only to a server whose certificate it trusts, so when
+                        the remote server is Openfire, this usually means it does not trust this server's
+                        certificate.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.warning.dialback.refused">Authenticated
+                        with Server Dialback, because the remote server refused certificate login (SASL EXTERNAL). The
+                        remote server may not trust the certificate of this server.</q></td>
+                    <td>This server tried SASL EXTERNAL, the remote server refused it, and Server Dialback
+                        succeeded.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.warning.dialback">Authenticated with
+                        Server Dialback rather than with the server certificate (SASL EXTERNAL).</q></td>
+                    <td>Server Dialback succeeded, and the test does not know why SASL EXTERNAL was not used. This is
+                        the message after a failed TLS handshake, when Server Dialback over a new unencrypted
+                        connection succeeded (the TLS check, <a href="#check-5">check 5</a>, then shows the handshake failure).</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.external_refused_dialback_disabled">The
+                        remote server refused certificate login (SASL EXTERNAL), and Server Dialback is disabled on this
+                        server. The remote server may not trust the certificate of this server.</q></td>
+                    <td>SASL EXTERNAL was refused, and this server had no other method to try.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.dialback_refused">The remote
+                        server refused Server Dialback. It may be unable to connect back to this server to verify
+                        it.</q></td>
+                    <td>The remote server answered the dialback request with a failure. To verify this server, the
+                        remote server looks up this server's domain in DNS and connects to it, so a DNS or firewall
+                        problem in that direction makes dialback fail.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.no_common_mechanism">The remote
+                        server offered no authentication method that this server can use: neither certificate login
+                        (SASL EXTERNAL) nor Server Dialback. Certificate login needs an encrypted connection; Server
+                        Dialback may be disabled on either server.</q></td>
+                    <td>The remote server offered neither method, or offered only Server Dialback while it is disabled
+                        on this server.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.stream_error">The remote
+                        server ended the stream during authentication with the error: <var data-p="0">error</var></q></td>
+                    <td>The remote server sent an XMPP stream error during authentication. The stream itself had opened,
+                        so <a href="#check-4">check 4</a> (the XMPP stream) passes.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.dialback_fallback">After the
+                        TLS handshake failed, this server tried Server Dialback over an unencrypted connection, and that
+                        failed too.</q></td>
+                    <td>The handshake failed (<a href="#check-5">check 5</a>, TLS), Server Dialback is enabled and the
+                        STARTTLS policy is not Required (and, when the handshake failed on the certificate, strict
+                        certificate validation is off), so this server opened a new connection without TLS for Server
+                        Dialback, which failed.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.timed_out">Authentication did
+                        not complete within <var data-p="0">number</var> seconds, after which this server stopped waiting.
+                        With Server Dialback, the remote server may be unable to connect back to this server to verify
+                        it.</q></td>
+                    <td>Authentication was under way when this server gave up on setting up the session. With Server
+                        Dialback the remote server checks this server by connecting back to it, so a DNS or firewall
+                        problem in that direction can leave authentication waiting.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.closed">The connection closed
+                        before authentication completed.</q></td>
+                    <td>The connection closed during authentication, without a stream error. This server cannot tell
+                        which side closed it; the logs of both servers may say.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.closed_after_external">The
+                        remote server accepted the certificate of this server (SASL EXTERNAL), but the connection closed
+                        before the remote server restarted the stream, which it must do before the session can be
+                        used.</q></td>
+                    <td>After SASL EXTERNAL succeeds, the remote server restarts the stream, and only then is this
+                        server authenticated. The connection closed in between, without a stream error. The
+                        certificates are not the cause, as the remote server had accepted them.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.reused_stream_id">The remote
+                        server restarted the stream with the stream ID of the previous stream, where XMPP requires a new
+                        one, so this server closed the connection.</q></td>
+                    <td>RFC 6120 requires a new stream ID each time the stream is restarted, after TLS and after SASL.
+                        This server refuses a stream that keeps the previous ID only when
+                        <code>xmpp.server.outgoing.accept-reused-stream-id</code> is set to false; by default it accepts
+                        one. Openfire versions before 5.2.0 keep the stream ID when they restart the stream after SASL
+                        EXTERNAL.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.authentication.fail.restarted_stream_no_id">The
+                        remote server restarted the stream without a stream ID, which XMPP requires, so this server
+                        closed the connection.</q></td>
+                    <td>The first stream had a stream ID, so <a href="#check-4">check 4</a> (the XMPP stream) passes;
+                        the stream that the remote server restarted after TLS or SASL had none.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                <strong>Settings:</strong> Server Dialback (<code>xmpp.server.dialback.enabled</code>; this server also
+                uses Server Dialback when it accepts self-signed certificates); strict certificate validation and the
+                STARTTLS policy, which decide whether Server Dialback is tried after a certificate or handshake
+                failure (see <a href="#check-5">check 5</a>, TLS, and <a href="#check-6">check 6</a>, the remote certificate); this server's own certificate, which the remote server checks for SASL
+                EXTERNAL; whether a restarted stream may keep the stream ID of the previous stream
+                (<code>xmpp.server.outgoing.accept-reused-stream-id</code>).
+            </p>
+
+        </section>
+
+        <section id="check-8">
+
+            <h3>8. Authenticated outgoing S2S session registered</h3>
+
+            <p>
+                Verifies that, after the attempt, this server holds an authenticated outgoing session to the remote
+                domain, through which it can send to that domain.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.session.pass">An authenticated outgoing session to
+                        the remote server is registered.</q></td>
+                    <td>The session is in place. It is listed under <code>Sessions / Active Sessions / Server Sessions</code>.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.session.fail">No outgoing session to the remote
+                        server was registered.</q></td>
+                    <td>No session was set up. When <a href="#check-7">check 7</a> (authentication) failed or was not
+                        reached, this check shows "Not reached" instead.</td>
+                </tr>
+                </tbody>
+            </table>
+
+        </section>
+
+        <section id="check-9">
+
+            <h3>9. XMPP ping successful</h3>
+
+            <p>
+                Verifies that the ping reached the remote server and that a reply came back from it. Any reply from the
+                remote server passes this check, including an error, because it shows that traffic reaches the remote
+                server and returns. Server-to-server connections carry traffic in one direction, so the remote server
+                sends its reply over its own connection to this server; this check therefore also depends on the
+                remote server being able to connect to this one.
+            </p>
+            <p>
+                When Openfire cannot deliver a stanza (a single unit of XMPP traffic, such as a message or the ping)
+                to a remote domain, it answers the sender itself with an error
+                such as <code>remote-server-not-found</code>, addressed as if from the remote domain. The test tells
+                this apart from a reply by the remote server: when the ping never left this server, any reply is this
+                server's own.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.ping.pass">The remote server replied to the
+                        ping.</q></td>
+                    <td>The ping was sent over the outgoing session, and the remote server replied.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.ping.fail.timed_out">No reply to the ping arrived in
+                        time. The remote server may be unable to connect back to this server.</q></td>
+                    <td>No reply arrived within the socket timeout. When the session was set up only after that wait
+                        ran out (for example because an address that did not answer used up most of it), the ping was
+                        sent late, and the test waits up to 5 more seconds for its reply before this check fails.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.ping.fail.local_error">Only this server answered the
+                        ping, with the error <var data-p="0">condition</var>: the ping did not reach the remote
+                        server.</q></td>
+                    <td>The ping was never sent to the remote server, and the error came from this server.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                <strong>Settings:</strong> <code>xmpp.server.read.timeout</code> (how long the test waits for the
+                reply).
+            </p>
+
+        </section>
+
+        <section id="check-10">
+
+            <h3>10. Expected response received</h3>
+
+            <p>
+                Verifies that the remote server answered the ping with a result, which shows that it understood and
+                answered the ping itself. A server that does not support XMPP ping, or a domain that belongs to a
+                service rather than to a server, may answer with an error instead; that error still proves the round
+                trip, so it is a warning.
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.response.pass">The remote server answered the ping
+                        with a result.</q></td>
+                    <td>The ping was answered.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.response.warning.error">The remote server replied to
+                        the ping with the error <var data-p="0">condition</var>. The ping arrived and a reply came back,
+                        but the reply is an error instead of an answer to the ping, for example because the remote does
+                        not support XMPP ping.</q></td>
+                    <td>The remote server replied with an error, for example <code>service-unavailable</code>.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                When no reply came from the remote server, <a href="#check-9">check 9</a> (the ping) has failed, and this check shows "Not reached".
+            </p>
+
+        </section>
+
+        <section id="check-11">
+
+            <h3>11. No errors appear in the log</h3>
+
+            <p>
+                Verifies that this server logged no warnings or errors for this connection attempt. A warning or error
+                counts for the attempt when it is in the attempt's step-by-step diagnostic log (see
+                <a href="#failed-sessions">Failed connections outside the test</a>), or when the outbound connection
+                code logged it while handling this attempt. A warning logged for the attempt makes this check a
+                warning; an error makes it a failure.
+            </p>
+            <p>
+                The server may log other warnings and errors while the test runs, about the remote domain or about
+                anything else it is doing at the time. These are reported as other: they are counted in the detail,
+                marked as possibly unrelated, and do not change the result of the check. The warnings and errors
+                themselves are in the log of the <a href="#details">raw details</a>.
+            </p>
+            <p>
+                This check is judged on every attempt, even after an earlier check failed. It shows "Not observed" when
+                no connection attempt of this test had finished, for example when another cluster node (another
+                Openfire server in the same cluster) holds the route to the domain (the connection over which the
+                cluster sends to that domain).
+            </p>
+
+            <table class="general">
+                <thead>
+                <tr><th>Result</th><th>Message</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.log.pass">No warnings or errors were logged for this
+                        attempt.</q></td>
+                    <td>Nothing to report.</td>
+                </tr>
+                <tr>
+                    <td>Pass</td>
+                    <td><q data-key="server2server.settings.testing.check.log.pass.other">No warnings or errors were logged
+                        for this attempt. Other warnings or errors logged during the test, possibly unrelated:
+                        <var data-p="0">number</var></q></td>
+                    <td>The attempt logged nothing; the server logged other warnings or errors while the test ran.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.log.warning">Warnings logged for this attempt:
+                        <var data-p="0">number</var>. To read them, open the details below and see Logs.</q></td>
+                    <td>The attempt logged warnings and no errors.</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.log.warning.other">Warnings logged for this attempt:
+                        <var data-p="0">number</var>. Other warnings or errors logged during the test, possibly unrelated:
+                        <var data-p="1">number</var>. To read them, open the details below and see Logs.</q></td>
+                    <td>As above, and the server logged other warnings or errors while the test ran.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.log.fail">Errors logged for this attempt:
+                        <var data-p="0">number</var>. Warnings: <var data-p="1">number</var>. To read them, open the details below and see Logs.</q></td>
+                    <td>The attempt logged errors.</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td><q data-key="server2server.settings.testing.check.log.fail.other">Errors logged for this attempt:
+                        <var data-p="0">number</var>. Warnings: <var data-p="1">number</var>. Other warnings or errors
+                        logged during the test, possibly unrelated: <var data-p="2">number</var>. To read them, open the details
+                        below and see Logs.</q></td>
+                    <td>As above, and the server logged other warnings or errors while the test ran.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <p>
+                This check does not depend on the log level: the attempt's warnings and errors are counted whether or
+                not the server's log level shows them. With trace logging on, the log in the raw details holds more
+                detail, and the result of this check is the same.
+            </p>
+
+        </section>
+
+    </section>
+
+    <section id="failure-effects">
+
+        <h2>How a failure affects later checks</h2>
+
+        <p>
+            Openfire carries on past some failures: after a failed TLS handshake, or after it rejects the remote
+            certificate, it can still go on to authentication under some settings (<a href="#check-5">check 5</a> and
+            <a href="#check-6">check 6</a> describe when). A step that still ran after a failure shows its own result, so a table can show a
+            failed check followed by checks that pass.
+        </p>
+
+        <p>
+            A connection that goes ahead without encryption, as this server's STARTTLS policy allows, works, so
+            <a href="#check-5">check 5</a> shows a warning, and <a href="#check-6">check 6</a> shows "Not reached", as no certificate is
+            exchanged.
+        </p>
+
+        <p>
+            Checks 8 to 10 (<a href="#check-8">the session</a>, <a href="#check-9">the ping</a> and
+            <a href="#check-10">the reply</a>) work differently. Each shows "Not reached" instead of failing when
+            the check just before it failed or was not reached, and the table then highlights only the earlier
+            failure. A step that passes or warns after a failure clears this. For example, when this server rejects
+            the remote certificate (check 6 fails), Server Dialback succeeds (check 7 shows a warning) and the ping
+            then times out, check 9 shows its own failure.
+        </p>
+
+        <p>
+            When the remote server closes the connection, or this server stops waiting, part way through the
+            attempt, the step that was under way fails: <a href="#check-4">check 4</a> (the stream), <a href="#check-5">check 5</a> (TLS) or
+            <a href="#check-7">check 7</a> (authentication), whichever had not completed. When the remote server sent a
+            stream error first, that error is shown instead.
+        </p>
+
+        <p>
+            <a href="#check-11">Check 11</a> (the log) is judged on every attempt, even after a failure. When <a href="#check-1">check 1</a> (the domain) fails, no connection attempt is
+            made and every other check shows "Not reached".
+        </p>
+
+        <p>
+            When the remote server uses direct TLS (shown in <a href="#check-2">check 2</a>, DNS), the TLS handshake comes before the
+            XMPP stream, so the checks for TLS and the remote certificate (<a href="#check-5">check 5</a> and <a href="#check-6">check 6</a>) take place
+            before the check for the stream (<a href="#check-4">check 4</a>). A failed handshake then leaves the stream check "Not reached".
+        </p>
+
+    </section>
+
+    <section id="details">
+
+        <h2>The raw details</h2>
+
+        <p>
+            Below the table, the collapsed section "Details: XMPP, Certs and Logs" holds what the test captured, for
+            reading alongside the checks or for sharing with the administrator of the remote server:
+        </p>
+
+        <dl>
+            <dt>XMPP</dt>
+            <dd>Every stanza sent to or received from the remote domain while the test ran, including the ping and
+                any reply to it.</dd>
+
+            <dt>Certs</dt>
+            <dd>The certificates that the remote server presented on the session set up during the test, in PEM form.
+                It is empty when no session was set up, or when the session is not encrypted.</dd>
+
+            <dt>Logs</dt>
+            <dd>Everything the server logged while the test ran, each line with its level, including lines about other
+                activity on the server. When the connection attempt made during the test has finished, its
+                step-by-step diagnostic log follows, under the heading
+                <code>--- Authentication attempt diagnostic log ---</code>. A diagnostic log longer than about 16,000
+                characters keeps its first and last lines, with one line saying how many were left out between them.
+                At the default log levels, the log holds few lines for a successful attempt; with trace logging on, it
+                holds every step.</dd>
+        </dl>
+
+    </section>
+
+    <section id="failed-sessions">
+
+        <h2>Failed connections outside the test</h2>
+
+        <p>
+            Openfire records a step-by-step diagnostic log for every outgoing server-to-server connection attempt,
+            whether or not it was made by the test. When the latest outgoing attempt to a domain failed,
+            <code>Sessions / Active Sessions / Server Sessions</code> shows a <code>Diagnostics</code> link for the
+            domain, even beside a working incoming session from it; the link goes once a later attempt succeeds. The link
+            opens the failed-session details page, which shows the reason for the failure and, under
+            "Authentication attempt log", the diagnostic log of the latest failed attempt. Its lines describe the same
+            steps as the checks of the test: what DNS returned, the connection to each address, the stream, TLS and
+            the certificate, and authentication.
+        </p>
+        <p>
+            The page's <code>Retry now</code> button opens the S2S Connection Test with the domain filled in. The test
+            runs when you press <code>Test</code>.
+        </p>
+
+    </section>
+
+    <section id="limitations">
+
+        <h2>Limitations</h2>
+
+        <ul>
+            <li>
+                The test sees only this server's side of the connection. It reports what this server sent, received
+                and decided. It cannot see the remote server's configuration or logs, or why the remote server refused
+                something, beyond what the remote server said.
+            </li>
+            <li>
+                In a cluster, the reply to the ping reaches the test whichever cluster node it arrives on. When another
+                cluster node holds the route to the remote domain, that node sends the ping, and this server cannot see
+                whether it did. The test then judges only a result, which the remote server alone sends: an
+                error reply or a missing reply leaves <a href="#check-9">check 9</a> (the ping) and <a href="#check-10">check 10</a> (the reply) "Not observed". Steps of a connection attempt
+                made on the other node are also not observed.
+            </li>
+            <li>
+                An expired certificate that this server trusts directly (for example a self-signed certificate imported
+                into the trust store) reads as untrusted on <a href="#check-6">check 6</a> (the remote certificate), without the expiry date. An expired certificate in
+                the trust store does not count as trusted, so the TLS implementation reports only that no trusted
+                chain was found.
+            </li>
+            <li>
+                Accepting self-signed certificates, or not verifying certificate validity dates, lets only the TLS
+                handshake through. <a href="#check-6">Check 6</a> (the remote certificate) still fails with the reason the certificate falls short.
+            </li>
+            <li>
+                After a failed TLS handshake, the warnings that Server Dialback logs during its fallback over a plain
+                connection are counted on <a href="#check-11">check 11</a> (the log) among the other warnings, as possibly unrelated. The warning
+                that the outbound connection code logs when that fallback fails does count for the attempt.
+            </li>
+            <li>
+                A test can take up to the socket timeout (<code>xmpp.server.read.timeout</code>, 120 seconds by
+                default) plus 20 seconds (see <a href="#running">Running the test</a>), and the page shows nothing until
+                the test has finished.
+            </li>
+        </ul>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

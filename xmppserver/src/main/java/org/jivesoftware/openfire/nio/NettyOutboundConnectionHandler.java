@@ -17,18 +17,24 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.ssl.NotSslRecordException;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.server.diagnostics.AttemptMilestones;
+import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
+import org.jivesoftware.openfire.server.diagnostics.CertificateVerdicts;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -45,11 +51,21 @@ import java.time.Duration;
  * Outbound (S2S) specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
  * and how to build and configure a {@link NettyConnection}.
  *
+ * This handler records the outcome of the TLS handshake and the verdict on the remote certificate on the attempt's
+ * {@link AttemptRecorder} where they are decided. A new outcome or failure path should record it too, or the S2S
+ * connection test and the failed-session page will not show it. Every recording call is wrapped in
+ * {@link AttemptRecorder#safely}, so that recording cannot change how the connection proceeds. See ADR-007.
+ *
  * @author Matthew Vivian
  * @author Alex Gidman
  */
 public class NettyOutboundConnectionHandler extends NettyConnectionHandler<RespondingServerStanzaHandler> {
     private static final Logger Log = LoggerFactory.getLogger(NettyOutboundConnectionHandler.class);
+
+    /**
+     * Shown for a protocol or cipher suite that the TLS engine did not report.
+     */
+    private static final String UNKNOWN = "unknown";
     private final DomainPair domainPair;
     private final int port;
 
@@ -107,12 +123,20 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
             SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
             RespondingServerStanzaHandler stanzaHandler = (RespondingServerStanzaHandler) ctx.channel().attr(NettyConnectionHandler.HANDLER).get();
 
+            final AttemptRecorder recorder = ctx.channel().attr(NettyConnection.ATTEMPT_RECORDER).get();
+
             if (event.isSuccess()) {
                 sslInitDone = true;
 
                 final NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
+                final boolean certificatesValid = SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true);
+                // A connection that is already closed had its handshake rejected by the remote (see NettyXMPPDecoder),
+                // which was recorded there.
+                if (recorder != null && !connection.isClosed()) {
+                    AttemptRecorder.safely(() -> recordNegotiated(recorder, connection, certificatesValid));
+                }
 
-                if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true)) {
+                if (certificatesValid) {
                     Log.debug("TLS negotiation with '{}' was successful. Connection encrypted. Proceeding with authentication.", domainPair.getRemote());
                     sendNewStreamHeader(connection);
                     connection.setEncrypted(true);
@@ -122,6 +146,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
 
                     if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
                         Log.warn("Strict certificate validation is enabled. Aborting session with '{}' as its certificates are not valid for its domain.", domainPair.getRemote());
+                        countWarning(recorder);
                         stanzaHandler.setSession(null);
                         stanzaHandler.setAttemptedAllAuthenticationMethods();
                         ctx.channel().close();
@@ -130,6 +155,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
 
                     if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
                         Log.warn("As peer's certificates are not valid for its domain ('{}'), the SASL EXTERNAL authentication mechanism cannot be used. The Server Dialback authentication mechanism is disabled by configuration. Aborting session, as this leaves no available authentication mechanisms.", domainPair.getRemote());
+                        countWarning(recorder);
                         stanzaHandler.setSession(null);
                         stanzaHandler.setAttemptedAllAuthenticationMethods();
                         ctx.channel().close();
@@ -144,6 +170,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
                     // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
 
                     Log.warn("As peer's certificates are not valid for its domain ('{}'), the SASL EXTERNAL authentication mechanism cannot be used. The Server Dialback authentication mechanism is available.", domainPair.getRemote());
+                    countWarning(recorder);
 
                     sendNewStreamHeader(connection);
                     connection.setEncrypted(true);
@@ -152,6 +179,9 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
             } else {
                 // SSL Handshake has failed
                 Log.debug("TLS negotiation with '{}' was unsuccessful", domainPair.getRemote(), event.cause());
+                if (recorder != null) {
+                    AttemptRecorder.safely(() -> recordHandshakeFailure(recorder, event.cause()));
+                }
 
                 if (isCertificateException(event) && configRequiresStrictCertificateValidation()) {
                     String condition = "caused by an issue with its TLS certificate";
@@ -163,6 +193,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
                         condition = "because its TLS certificate was revoked by the Certificate Authority that issued it";
                     }
                     Log.warn("TLS negotiation with '{}' was unsuccessful, {}. Aborting session, as by configuration Openfire is prohibited to set up a connection with a peer that provides an invalid certificate. A full stack trace will be logged on the ‘debug’ level.", domainPair.getRemote(), condition);
+                    countWarning(recorder);
 
                     stanzaHandler.setSession(null);
                     stanzaHandler.setAttemptedAllAuthenticationMethods();
@@ -176,6 +207,9 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
                     // The original connection is probably unusable, as the TLS handshake failed (which the peer will know about).
                     // Instead of attempting Server Dialback on this connection, create a new connection and try it on that.
                     final LocalOutgoingServerSession outgoingSession = new ServerDialback(domainPair).createOutgoingSession(port);
+                    if (recorder != null) {
+                        AttemptRecorder.safely(() -> recorder.authentication(outgoingSession != null ? AttemptMilestones.Authentication.dialback() : AttemptMilestones.Authentication.dialbackFallbackFailed()));
+                    }
                     if (outgoingSession != null) {
                         Log.info("TLS negotiation with '{}' was unsuccessful, but Server Dialback authentication over a plain connection (as a fallback) succeeded. Session successfully established on an unencrypted connection.", domainPair.getRemote());
                         stanzaHandler.setSession(outgoingSession);
@@ -184,6 +218,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
                         return;
                     } else {
                         Log.warn("TLS negotiation with '{}' was unsuccessful, and Server Dialback over a plain connection (as a fallback) failed. Aborting session.", domainPair.getRemote());
+                        countWarning(recorder);
                         stanzaHandler.setSession(null);
                         stanzaHandler.setAttemptedAllAuthenticationMethods();
                         ctx.channel().close();
@@ -192,11 +227,61 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
                 }
 
                 Log.warn("TLS negotiation with '{}' was unsuccessful. Unable to create a new session: exhausted all options", domainPair.getRemote());
+                countWarning(recorder);
                 stanzaHandler.setSession(null);
                 stanzaHandler.setAttemptedAllAuthenticationMethods();
                 ctx.channel().close();
             }
         }
+    }
+
+    /**
+     * Counts a warning just logged for the attempt, so that the connection test can tell it from warnings about
+     * anything else the server was doing at the time.
+     */
+    private static void countWarning(final AttemptRecorder recorder) {
+        if (recorder != null) {
+            AttemptRecorder.safely(recorder::loggedWarning);
+        }
+    }
+
+
+    /**
+     * Records a completed handshake, and the verdict on the remote certificate that the identity check gave.
+     */
+    private void recordNegotiated(final AttemptRecorder recorder, final NettyConnection connection, final boolean certificatesValid) {
+        recorder.tls(AttemptMilestones.Tls.negotiated(connection.getTLSProtocolName().orElse(UNKNOWN), connection.getCipherSuiteName().orElse(UNKNOWN)));
+        if (certificatesValid) {
+            recorder.certificate(AttemptMilestones.Certificate.valid());
+        } else {
+            final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
+            recorder.certificate(CertificateVerdicts.ofRejectedChain(connection.getPeerCertificates(), domainPair.getRemote(), trustStore));
+        }
+    }
+
+    /**
+     * Records a failed handshake. When this server's trust manager stopped it, the certificate is recorded too, as that
+     * is where untrusted, expired and not yet valid certificates are caught. When the remote answered with something
+     * other than TLS, that is recorded without Netty's message, which holds a hex dump of what the remote sent.
+     */
+    static void recordHandshakeFailure(final AttemptRecorder recorder, final Throwable cause) {
+        if (CertificateVerdicts.isCertificateRejection(cause)) {
+            recorder.tls(AttemptMilestones.Tls.certificateRejected());
+            recorder.certificate(CertificateVerdicts.ofHandshakeRejection(cause));
+        } else if (isNotTls(cause)) {
+            recorder.tls(AttemptMilestones.Tls.notTls());
+        } else {
+            recorder.tls(AttemptMilestones.Tls.handshakeFailed(cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage()));
+        }
+    }
+
+    private static boolean isNotTls(final Throwable cause) {
+        for (Throwable t = cause; t != null; t = t.getCause()) {
+            if (t instanceof NotSslRecordException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isCertificateException(SslHandshakeCompletionEvent event) {

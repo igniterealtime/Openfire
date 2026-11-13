@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.nio.NetworkEntityUnreachableException;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -125,11 +126,41 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      */
     public static DomainAuthResult authenticateDomain(final DomainPair domainPair)
     {
+        return authenticateDomain(domainPair, new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote()));
+    }
+
+    /**
+     * Authenticates the local domain to the remote domain, as {@link #authenticateDomain(DomainPair)}, recording the
+     * attempt's milestones and outcome in the given recorder. The recorded milestones are also appended to the
+     * returned diagnostic log.
+     *
+     * @param domainPair the local and remote domain for which authentication is to be established.
+     * @param recorder records the milestones and outcome of this attempt; may be read by other threads meanwhile.
+     * @return a {@link DomainAuthResult} indicating whether authentication succeeded, with the diagnostic log.
+     */
+    public static DomainAuthResult authenticateDomain(@Nonnull final DomainPair domainPair, @Nonnull final AttemptRecorder recorder)
+    {
+        final DomainAuthResult result = authenticateDomain(domainPair, recorder, new ArrayList<>());
+        AttemptRecorder.safely(() -> {
+            if (!result.isSuccess()) {
+                recorder.finish(AttemptRecorder.Outcome.FAILED);
+            } else if (recorder.getOutcome() == AttemptRecorder.Outcome.IN_PROGRESS) {
+                // Success without a new connection: an existing session was used.
+                recorder.finish(AttemptRecorder.Outcome.REUSED_SESSION);
+            }
+        });
+        final List<String> diagnosticLog = new ArrayList<>(result.getDiagnosticLog());
+        diagnosticLog.addAll(AttemptRecorder.safely(recorder::describe, List.of()));
+        // Recorded last: it marks the attempt as finished for anyone waiting on it.
+        AttemptRecorder.safely(() -> recorder.diagnosticLog(diagnosticLog));
+        return result.isSuccess() ? DomainAuthResult.success(diagnosticLog) : DomainAuthResult.failure(diagnosticLog);
+    }
+
+    private static DomainAuthResult authenticateDomain(final DomainPair domainPair, final AttemptRecorder recorder, final List<String> diagnosticLog)
+    {
         final String localDomain = domainPair.getLocal();
         final String remoteDomain = domainPair.getRemote();
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Authenticate local domain: '" + localDomain + "' to remote domain: '" + remoteDomain + "']" );
-
-        final List<String> diagnosticLog = new ArrayList<>();
 
         log.debug( "Start domain authentication ..." );
         diagnosticLog.add("DEBUG: Start domain authentication ...");
@@ -246,7 +277,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                     log.debug("Unable to re-use an existing session. Creating a new session ...");
                     diagnosticLog.add("DEBUG: Unable to re-use an existing session. Creating a new session ...");
                     int port = RemoteServerManager.getPortForServer(remoteDomain);
-                    session = createOutgoingSession(domainPair, port, diagnosticLog);
+                    session = createOutgoingSession(domainPair, port, diagnosticLog, recorder);
                     if (session != null) {
                         log.debug("Created a new session.");
                         diagnosticLog.add("DEBUG: Created a new session.");
@@ -306,11 +337,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      *
      * @param domainPair the local and remote domain for which a session is to be established.
      * @param port default port to use to establish the connection.
+     * @param recorder records the milestones of the attempt, and whether it produced a session.
      * @return new outgoing session to a remote domain, or null.
      */
     @VisibleForTesting
-    static LocalOutgoingServerSession createOutgoingSession(@Nonnull final DomainPair domainPair, int port) {
-        return createOutgoingSession(domainPair, port, new ArrayList<>());
+    static LocalOutgoingServerSession createOutgoingSession(@Nonnull final DomainPair domainPair, int port, @Nonnull final AttemptRecorder recorder) {
+        return createOutgoingSession(domainPair, port, new ArrayList<>(), recorder);
     }
 
     /**
@@ -320,9 +352,16 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * @param domainPair    the local and remote domain for which a session is to be established.
      * @param port          default port to use to establish the connection.
      * @param diagnosticLog mutable list to which human-readable, level-prefixed diagnostic entries are appended.
+     * @param recorder      records the milestones of the attempt, and whether it produced a session.
      * @return new outgoing session to a remote domain, or null.
      */
-    private static LocalOutgoingServerSession createOutgoingSession(@Nonnull final DomainPair domainPair, int port, @Nonnull final List<String> diagnosticLog) {
+    private static LocalOutgoingServerSession createOutgoingSession(@Nonnull final DomainPair domainPair, int port, @Nonnull final List<String> diagnosticLog, @Nonnull final AttemptRecorder recorder) {
+        final LocalOutgoingServerSession session = connect(domainPair, port, diagnosticLog, recorder);
+        AttemptRecorder.safely(() -> recorder.finish(session == null ? AttemptRecorder.Outcome.FAILED : AttemptRecorder.Outcome.NEW_SESSION));
+        return session;
+    }
+
+    private static LocalOutgoingServerSession connect(@Nonnull final DomainPair domainPair, int port, @Nonnull final List<String> diagnosticLog, @Nonnull final AttemptRecorder recorder) {
         final Logger log = LoggerFactory.getLogger(Log.getName() + "[Create outgoing session for: " + domainPair + "]");
 
         log.debug("Creating new session...");
@@ -332,7 +371,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             .getInstance()
             .getConnectionManager()
             .getListener(ConnectionType.SOCKET_S2S, false);
-        NettySessionInitializer sessionInitialiser = new NettySessionInitializer(domainPair, port);
+        NettySessionInitializer sessionInitialiser = new NettySessionInitializer(domainPair, port, recorder);
         try {
             // Wait for the future to give us a session...
             // Set a read timeout so that we don't keep waiting forever
@@ -348,6 +387,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 "network configuration issue (eg: missing or invalid DNS records, restrictive firewalls, etc.).",
                 domainPair.getRemote(), domainPair.getLocal(), INITIALISE_TIMEOUT_SECONDS.getValue());
             diagnosticLog.add("WARN: " + fmt("Cannot connect to XMPP domain '{}' (from '{}'): The connection attempt timed out after {}. This is typically caused by a network configuration issue (eg: missing or invalid DNS records, restrictive firewalls, etc.).", domainPair.getRemote(), domainPair.getLocal(), INITIALISE_TIMEOUT_SECONDS.getValue()));
+            // Recorded before stopping, so that the close that follows is not taken for the remote closing the connection.
+            AttemptRecorder.safely(() -> recorder.gaveUpWaiting(INITIALISE_TIMEOUT_SECONDS.getValue()));
             sessionInitialiser.stop();
         } catch (Exception e) {
             // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.

@@ -20,7 +20,11 @@ import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.nio.NettyConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.server.diagnostics.AttemptMilestones;
+import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -39,10 +43,18 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 /**
  * Stanza handler for responding to incoming stanzas when the server is acting as the client in an S2S scenario.
+ *
+ * This handler records each negotiation step (the stream, STARTTLS and authentication) on the attempt's
+ * {@link org.jivesoftware.openfire.server.diagnostics.AttemptRecorder} where the step is decided, through
+ * {@code record(...)}. A new step or failure path should record its outcome there too (a failure that ends initiation
+ * through {@code failInitiation}), or the S2S connection test and the failed-session page show only the close that
+ * follows. See ADR-007.
  *
  * @author Alex Gidman
  * @author Matthew Vivian
@@ -50,9 +62,24 @@ import java.util.concurrent.CompletableFuture;
 public class RespondingServerStanzaHandler extends StanzaHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RespondingServerStanzaHandler.class);
+    private static final String TLS_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-tls";
+    private static final String STREAMS_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-streams";
+
     private final DomainPair domainPair;
     private final CompletableFuture<Void> isSessionAuthenticated = new CompletableFuture<>();
     private final CompletableFuture<Void> attemptedAllAuthenticationMethods = new CompletableFuture<>();
+
+    /**
+     * Set when the remote server reports that SASL EXTERNAL succeeded. Authentication is reported as completed only
+     * when the remote server has restarted the stream, so that it is reported for the session of that stream (OF-3447).
+     */
+    private volatile boolean saslExternalSucceeded = false;
+
+    /**
+     * How a Server Dialback attempt is recorded for the connection test if it succeeds, which says why dialback was
+     * used; null when the reason is not known.
+     */
+    private AttemptMilestones.Authentication dialbackOnSuccess;
 
     /**
      * Creates a dedicated reader for a socket.
@@ -95,8 +122,11 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
 
     /**
-     * Transfer an existing connection to a new session when a new streamID is detected. Also transfers existing
-     * authentication method if previously set.
+     * Transfer an existing connection to a new session when a new streamID is detected. When SASL EXTERNAL succeeded
+     * on the previous stream, the new session is authenticated with the authentication method that was used previously.
+     *
+     * This does not add the new session as a server route.
+     *
      * @param newStreamId new stream ID for the new session
      * @param existingAuthMethod authentication method used previously (possibly null)
      */
@@ -105,8 +135,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Transfer new session to existing connection
         connection.reinit(session);
-        if (isSessionAuthenticated.isDone()) {
-            ((LocalOutgoingServerSession) session).addOutgoingDomainPair(domainPair);
+        if (saslExternalSucceeded && existingAuthMethod != null) {
+            session.setAddress(new JID(null, domainPair.getRemote(), null));
             ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);
         } else {
             LOG.debug("Session not authenticated yet, unable to setAuthenticationMethod().");
@@ -116,6 +146,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     @Override
     protected void initiateSession(String stanza, XMPPPacketReader reader) throws Exception {
         boolean startOfStream = isStartOfStream(stanza);
+
+        // OF-3447: once session initiation is abandoned (e.g. the connection closed after SASL success), a stream header that still arrives is ignored.
+        if (startOfStream && sessionCreated && session == null) {
+            LOG.debug("Ignoring stream header from remote domain '{}', as session initiation was abandoned. Connection: {}", domainPair.getRemote(), connection);
+            return;
+        }
 
         if (startOfStream) {
             // Capture the prefixed namespaces declared on the peer's stream header so that prefixed content in
@@ -131,8 +167,32 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 final String streamHeaderId = parser.getAttributeValue("", "id");
                 if (streamHeaderId == null || streamHeaderId.isBlank()) { // OF-2692: the peer is required to send a Stream ID. Some servers do not, when they are sending a stream error.
                     LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party to supply a stream ID value. The peer that sent this stream element did not: {}", connection, stanza);
+                    if (!sessionCreated) {
+                        record(recorder -> recorder.stream(AttemptMilestones.Stream.missingId()));
+                    } else {
+                        record(recorder -> recorder.authentication(AttemptMilestones.Authentication.restartedStreamMissingId()));
+                    }
                     connection.close(new StreamError(StreamError.Condition.invalid_xml, "Expected a stream ID value, but none was received."));
                     return;
+                }
+
+                // OF-3447: RFC 6120 requires a new stream ID when the stream is restarted after TLS or SASL negotiation.
+                if (sessionCreated && !isNewStreamId(streamHeaderId)) {
+                    if (!ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.getValue()) {
+                        LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party (remote domain '{}') to supply a new stream ID when it restarts the stream. The peer reused stream ID '{}' of the previous stream: {}", connection, domainPair.getRemote(), streamHeaderId, stanza);
+                        // OF-3447: after TLS, the session is not yet bound to the connection, which then would not send the stream error.
+                        connection.init(session);
+                        failInitiation(recorder -> recorder.authentication(AttemptMilestones.Authentication.reusedStreamId()),
+                            new StreamError(StreamError.Condition.invalid_xml, "Expected a new stream ID for the restarted stream, but the stream ID of the previous stream was reused."));
+                        return;
+                    }
+                    LOG.debug("Remote domain '{}' restarted the stream reusing stream ID '{}' of the previous stream. Accepted, as '{}' is enabled.", domainPair.getRemote(), streamHeaderId, ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.getKey());
+                }
+
+                if (!sessionCreated) {
+                    // The first stream header from the remote: later ones restart the stream after TLS or SASL.
+                    final String remoteName = parser.getAttributeValue("", "from");
+                    record(recorder -> recorder.stream(AttemptMilestones.Stream.opened(remoteName == null ? null : AttemptMilestones.remoteText(remoteName))));
                 }
 
                 // Create a new session with a new ID if a new stream has started on an existing connection
@@ -145,8 +205,22 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                         : null;
                     transferConnectionToNewSession(streamHeaderId, existingAuthMethod);
                 }
+
+                // OF-3447: after SASL success, the restarted stream (and its session) is the one to report.
+                if (saslExternalSucceeded && !isSessionAuthenticated.isDone()) {
+                    if (session.isAuthenticated()) {
+                        record(recorder -> recorder.authentication(AttemptMilestones.Authentication.saslExternal()));
+                        reportSessionAuthenticated();
+                    } else {
+                        // OF-3447: authentication was lost, e.g. as the connection was closed by another thread before the stream was restarted.
+                        LOG.debug("Session with stream ID '{}' of remote domain '{}' is not authenticated after the stream was restarted. Session initiation failed. Session: {}", session.getStreamID(), domainPair.getRemote(), session);
+                        record(recorder -> recorder.authentication(AttemptMilestones.Authentication.closedAfterExternalAccepted()));
+                        abandonSessionInitiation();
+                    }
+                }
             } catch (XmlPullParserException | IOException e) {
                 LOG.error("Failed to extract namespaces and stream ID from the peer's stream header", e);
+                record(AttemptRecorder::loggedError);
             }
         }
 
@@ -171,11 +245,19 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     boolean processUnknowPacket(Element doc) {
         String rootTagName = doc.getName();
 
+        // OF-3447: once session initiation is abandoned (e.g. the connection closed after SASL success), a negotiation element that still arrives is ignored.
+        if (session == null) {
+            LOG.debug("Ignoring <{}/> from remote domain '{}', as session initiation was abandoned. Connection: {}", rootTagName, domainPair.getRemote(), connection);
+            return true;
+        }
+
         // Handle features
         if ("features".equals(rootTagName)) {
 
-            // Prevent falling back to dialback if we are already authenticated
-            if (session.isAuthenticated()) {
+            // Prevent falling back to dialback if we are already authenticated. Once authentication was reported, the
+            // caller may close the session before the features of the restarted stream arrive; that must not start
+            // authentication again.
+            if (session.isAuthenticated() || isSessionAuthenticated.isDone()) {
                 return true;
             }
 
@@ -188,14 +270,19 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 return true;
             } else if (mustUseTls() && !connection.isEncrypted()) {
                 LOG.debug("I MUST use TLS but I have no StartTLS in features from remote domain '{}'", domainPair.getRemote());
-                abandonSessionInitiation();
-                connection.close(new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) required by our server configuration, but not offered by you."));
+                failInitiation(recorder -> recorder.tls(AttemptMilestones.Tls.notOffered()),
+                    new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) required by our server configuration, but not offered by you."));
                 return true;
             } else if (cannotUseTls() && remoteFeaturesRequiresStartTLS(doc)) {
                 LOG.debug("I CANNOT use TLS but remote domain '{}' requires the STARTTLS feature.", domainPair.getRemote());
-                abandonSessionInitiation();
-                connection.close(new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) disabled by our server configuration, but required by you."));
+                failInitiation(recorder -> recorder.tls(AttemptMilestones.Tls.requiredButDisabled()),
+                    new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) disabled by our server configuration, but required by you."));
                 return true;
+            }
+
+            if (!connection.isEncrypted()) {
+                // Authentication goes ahead on a connection that TLS was not set up on.
+                record(recorder -> recorder.tls(AttemptMilestones.Tls.unencrypted()));
             }
 
             // Authentication ------
@@ -203,6 +290,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             final boolean saslExternalOffered = isSaslExternalOfferred(doc);
             final boolean dialbackOffered = isDialbackOffered(doc);
             LOG.debug("Remote server is offering dialback: {}, EXTERNAL SASL: {}", dialbackOffered, saslExternalOffered);
+            record(AttemptRecorder::authenticationStarted);
 
             // First, try SASL
             if (saslExternalOffered) {
@@ -219,14 +307,15 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 startedSASL = true;
             } else if (dialbackOffered && (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned())) {
                 // Next, try dialback
+                dialbackOnSuccess = AttemptMilestones.Authentication.dialbackAfterExternalNotOffered();
                 LOG.debug("Trying to authenticate using dialback.");
                 LOG.debug("[Acting as Originating Server: Authenticate domain: " + domainPair.getLocal() + " with a RS in the domain of: " + domainPair.getRemote() + " (id: " + session.getStreamID() + ")]");
                 ServerDialback dialback = new ServerDialback(connection, domainPair);
                 dialback.createAndSendDialbackKey(session.getStreamID().getID());
             } else {
                 LOG.debug("No authentication mechanism available.");
-                abandonSessionInitiation();
-                connection.close(new StreamError(StreamError.Condition.policy_violation, "No applicable authentication mechanism available."));
+                failInitiation(recorder -> recorder.authentication(AttemptMilestones.Authentication.noCommonMechanism()),
+                    new StreamError(StreamError.Condition.policy_violation, "No applicable authentication mechanism available."));
             }
             return true;
         }
@@ -237,6 +326,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             if ("valid".equals(doc.attributeValue("type"))) {
                 LOG.debug("Authentication succeeded!");
                 LOG.debug("Dialback was successful.");
+                final AttemptMilestones.Authentication succeeded = dialbackOnSuccess == null ? AttemptMilestones.Authentication.dialback() : dialbackOnSuccess;
+                record(recorder -> recorder.authentication(succeeded));
 
                 connection.init(session);
                 // Set the remote domain name as the address of the session.
@@ -246,12 +337,13 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 }
 
                 // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
-                isSessionAuthenticated.complete(null);
+                reportSessionAuthenticated();
 
                 return true;
             } else {
                 LOG.debug("Dialback failed");
                 LOG.debug("Failed to authenticate domain: the validation response was received, but did not grant authentication.");
+                record(recorder -> recorder.authentication(AttemptMilestones.Authentication.dialbackRefused()));
 
                 session.markNonResumable();
                 session.close();
@@ -261,10 +353,23 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Handles SASL failure
         if ("failure".equals(rootTagName)) {
+            final boolean startTlsRefused = TLS_NAMESPACE.equals(doc.getNamespaceURI());
+            if (startTlsRefused) {
+                // The remote refused the STARTTLS request. Handled as before, below; only recorded here.
+                record(recorder -> recorder.tls(AttemptMilestones.Tls.refused()));
+            }
             LOG.debug("Remote domain '{}' reports that EXTERNAL SASL failed.", domainPair.getRemote());
 
             // Try dialback
-            if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+            final boolean dialbackEnabled = ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned();
+            if (!startTlsRefused) {
+                if (dialbackEnabled) {
+                    dialbackOnSuccess = AttemptMilestones.Authentication.dialbackAfterExternalRefused();
+                } else {
+                    record(recorder -> recorder.authentication(AttemptMilestones.Authentication.externalRefusedDialbackDisabled()));
+                }
+            }
+            if (dialbackEnabled) {
 
                 LOG.debug("Trying to authenticate using dialback.");
                 LOG.debug("[Acting as Originating Server: Authenticate domain: " + domainPair.getLocal() + " with a RS in the domain of: " + domainPair.getRemote() + " (id: " + session.getStreamID() + ")]");
@@ -280,6 +385,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Handles SASL success
         if ("success".equals(rootTagName)) {
+            // OF-3447: a repeated <success/> must not restart the stream again, nor add another close callback.
+            if (saslExternalSucceeded) {
+                LOG.debug("Ignoring a repeated <success/> from remote domain '{}', as SASL EXTERNAL already succeeded. Session: {}", domainPair.getRemote(), session);
+                return true;
+            }
+
             LOG.debug("Remote domain '{}' reports that EXTERNAL SASL was successful.", domainPair.getRemote());
 
             // SASL was successful so initiate a new stream
@@ -298,14 +409,26 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             session.setAddress(new JID(null, domainPair.getRemote(), null));
             if (session instanceof LocalOutgoingServerSession) {
                 ((LocalOutgoingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
+                // Certificate login is recorded once the remote has restarted the stream, when authentication completes.
+                record(AttemptRecorder::externalAccepted);
             } else {
                 LOG.warn("Expected session with remote domain '{}' to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod(). Session: {}", domainPair.getRemote(), session);
+                record(AttemptRecorder::loggedWarning);
                 connection.close(new StreamError(StreamError.Condition.internal_server_error, "Unexpected session type."));
                 return true;
             }
 
-            // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
-            isSessionAuthenticated.complete(null);
+            // OF-3447: authentication is reported when the remote server restarts the stream. Should the connection close
+            // before that, tell the caller now, rather than leaving it to wait for the session initialisation to time out.
+            saslExternalSucceeded = true;
+            connection.getCloseFuture().thenRun(() -> {
+                if (!isSessionAuthenticated.isDone()) {
+                    LOG.debug("Connection to remote domain '{}' closed after SASL EXTERNAL succeeded, before the stream was restarted. Session initiation failed. Connection: {}", domainPair.getRemote(), connection);
+                    // Recorded before the caller learns of the failure, which can stop the attempt before the channel reports the close.
+                    record(AttemptRecorder::connectionClosed);
+                    abandonSessionInitiation();
+                }
+            });
             return true;
         }
 
@@ -318,6 +441,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 connection.startTLS(true, false);
             } catch (Exception e) {
                 LOG.debug("An error occurred while encrypting the connection.", e);
+                record(recorder -> recorder.tls(AttemptMilestones.Tls.handshakeFailed(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage())));
                 session.markNonResumable();
                 session.close();
                 return true;
@@ -326,6 +450,73 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         }
 
         return false;
+    }
+
+    /**
+     * Reports that the session of the current stream is authenticated.
+     */
+    private void reportSessionAuthenticated() {
+        LOG.debug("Authentication with remote domain '{}' completed for session with stream ID '{}': {}", domainPair.getRemote(), session.getStreamID(), session);
+        isSessionAuthenticated.complete(null);
+    }
+
+    @Override
+    protected void streamErrorReceived(Element error) {
+        record(recorder -> recorder.remoteStreamError(describeStreamError(error)));
+    }
+
+    /**
+     * Describes a stream error as its condition, followed by its text when the remote sent one. The text is chosen by the
+     * remote server, so it is cut to a length that a results page can show.
+     *
+     * @param error a stream error element.
+     * @return the description.
+     */
+    static String describeStreamError(Element error) {
+        String condition = null;
+        String text = null;
+        for (final Element child : error.elements()) {
+            if ("text".equals(child.getName())) {
+                text = child.getTextTrim();
+            } else if (condition == null && STREAMS_NAMESPACE.equals(child.getNamespaceURI())) {
+                condition = child.getName();
+            }
+        }
+        final StringBuilder description = new StringBuilder(condition == null ? "undefined-condition" : condition);
+        if (text != null && !text.isEmpty()) {
+            description.append(": ").append(text);
+        }
+        return AttemptMilestones.remoteText(description.toString());
+    }
+
+    /**
+     * @return the recorder of the outbound connection attempt that this stream belongs to, if any.
+     */
+    private Optional<AttemptRecorder> attemptRecorder() {
+        return connection instanceof NettyConnection nettyConnection ? nettyConnection.getAttemptRecorder() : Optional.empty();
+    }
+
+    /**
+     * Records a milestone of the outbound connection attempt that this stream belongs to, if any. A recording that
+     * fails never changes how the connection proceeds.
+     */
+    private void record(final Consumer<AttemptRecorder> recording) {
+        attemptRecorder().ifPresent(recorder -> AttemptRecorder.safely(() -> recording.accept(recorder)));
+    }
+
+    /**
+     * Ends session initiation because of a failure that this server decided on: records the failure for the S2S
+     * connection test, abandons initiation (so that the caller stops waiting), and closes the connection with the stream
+     * error. A new failure exit should use this method, or at least record its failure as this method does, or the test
+     * reports only the close that follows. See ADR-007.
+     *
+     * @param failure records the failure on the attempt's recorder.
+     * @param error the stream error to close the connection with.
+     */
+    private void failInitiation(final Consumer<AttemptRecorder> failure, final StreamError error) {
+        record(failure);
+        abandonSessionInitiation();
+        connection.close(error);
     }
 
     private void abandonSessionInitiation() {
@@ -369,6 +560,13 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         return session;
     }
 
+    /**
+     * Returns a future that completes when the session is authenticated. For SASL EXTERNAL, that is when the remote
+     * server has restarted the stream after reporting success; {@link #getSession()} then returns the session of the
+     * restarted stream.
+     *
+     * @return a future that completes when the session is authenticated.
+     */
     public CompletableFuture<Void> isSessionAuthenticated() {
         return isSessionAuthenticated;
     }
@@ -380,6 +578,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             session = createLocalOutgoingServerSession(currentStreamId,  connection);
         } catch (final RuntimeException e) {
             LOG.warn("createLocalOutgoingServerSession() threw for connection {}. session remains: {}.", connection, session, e);
+            record(AttemptRecorder::loggedWarning);
             throw e;
         }
     }

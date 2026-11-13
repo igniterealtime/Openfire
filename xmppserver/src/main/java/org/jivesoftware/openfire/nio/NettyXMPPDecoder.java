@@ -23,6 +23,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.ssl.NotSslRecordException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,6 +139,9 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         if (isSslHandshakeError(cause)) {
             Log.debug("SSL Handshake error caught, closing connection: {}", connection);
             if (connection != null) {
+                // Over TLS 1.3, an outbound connection can finish its handshake before the remote has checked this
+                // server's certificate, so the remote's rejection arrives here rather than as a failed handshake.
+                connection.getAttemptRecorder().ifPresent(recorder -> AttemptRecorder.safely(() -> NettyOutboundConnectionHandler.recordHandshakeFailure(recorder, cause)));
                 connection.close();
             } else {
                 ctx.channel().close();

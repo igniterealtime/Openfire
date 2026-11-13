@@ -21,6 +21,8 @@ import com.google.common.collect.Interners;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
+import org.jivesoftware.openfire.server.diagnostics.LatestAttempts;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainAuthResult;
 import org.jivesoftware.openfire.session.DomainPair;
@@ -43,6 +45,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
+import java.util.function.BiFunction;
 
 /**
  * An OutgoingSessionPromise provides an asynchronous way for sending packets to remote servers.
@@ -126,6 +129,17 @@ public class OutgoingSessionPromise {
      * Key: remote server domain, Value: diagnostics payload for the latest failed attempt.
      */
     private Cache<String, FailedOutgoingServerSessionAttempt> failedServerAttemptsCache;
+
+    /**
+     * The number of domain pairs for which the latest connection attempt is kept.
+     */
+    private static final int LATEST_ATTEMPTS_CAPACITY = 1000;
+
+    /**
+     * The latest connection attempt per domain pair made by this cluster node, successful or not, including one that
+     * is still in progress. Read by the admin console's server-to-server connection test.
+     */
+    private final LatestAttempts latestAttempts = new LatestAttempts(LATEST_ATTEMPTS_CAPACITY);
 
     private RoutingTable routingTable;
 
@@ -264,6 +278,35 @@ public class OutgoingSessionPromise {
     }
 
     /**
+     * Returns the latest outgoing connection attempt for a domain pair made by this cluster node, whether it
+     * succeeded, failed or is still in progress.
+     *
+     * @param domainPair the local and remote domain.
+     * @return the attempt's recorder, if an attempt was made since this node started (and not evicted since).
+     */
+    public Optional<AttemptRecorder> getLatestAttempt(@Nonnull final DomainPair domainPair) {
+        return latestAttempts.get(domainPair.getLocal(), domainPair.getRemote());
+    }
+
+    /**
+     * Authenticates the local domain to the remote domain, keeping the attempt as the latest for the domain pair before
+     * it starts, so that the server-to-server connection test can read it while it is still in progress.
+     *
+     * Keeping the attempt only describes it: a failure to store it is logged and authentication proceeds as before.
+     *
+     * @param domainPair the local and remote domain.
+     * @param latestAttempts where the latest attempt per domain pair is kept.
+     * @param authenticate the authentication, given the domain pair and the recorder of the attempt.
+     * @return the result of the authentication.
+     */
+    static DomainAuthResult authenticateRecordingAttempt(@Nonnull final DomainPair domainPair, @Nonnull final LatestAttempts latestAttempts, @Nonnull final BiFunction<DomainPair, AttemptRecorder, DomainAuthResult> authenticate)
+    {
+        final AttemptRecorder recorder = new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote());
+        AttemptRecorder.safely(() -> latestAttempts.put(recorder));
+        return authenticate.apply(domainPair, recorder);
+    }
+
+    /**
      * Stores diagnostics for a failed connection establishment attempt.
      *
      * This overwrites any previous entry for the same remote domain, intentionally preserving only
@@ -385,7 +428,7 @@ public class OutgoingSessionPromise {
                     return existingRouteWhileLocked;
                 }
 
-                final DomainAuthResult authResult = LocalOutgoingServerSession.authenticateDomain(domainPair);
+                final DomainAuthResult authResult = authenticateRecordingAttempt(domainPair, latestAttempts, LocalOutgoingServerSession::authenticateDomain);
                 lastAuthDiagnosticLog = authResult.getDiagnosticLog();
                 if (authResult.isSuccess()) {
                     final OutgoingServerSession serverRoute = routingTable.getServerRoute(domainPair);

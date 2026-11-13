@@ -419,6 +419,8 @@ public class IQOwnerHandler {
             room.setRegistrationEnabled( parseFirstValueAsBoolean( field, true ) );
         }
 
+        MUCRoomConfigExtensionManager.getInstance().processConfigSubmit(completedForm, room);
+
         // Update the modification date to reflect the last time when the room's configuration
         // was modified
         room.setModificationDate(new Date());
@@ -622,6 +624,8 @@ public class IQOwnerHandler {
                 LocaleUtils.getLocalizedString("muc.form.conf.owner_roomowners", preferredLocale),
                 Type.jid_multi);
 
+        MUCRoomConfigExtensionManager.getInstance().contributeConfigForm(configurationForm, room);
+
         // Add room-specific data values to the form.
         synchronized (room) {
             FormField field = configurationForm.getField("muc#roomconfig_roomname");
@@ -741,6 +745,8 @@ public class IQOwnerHandler {
                     field.addValue(jid.toString());
                 }
             }
+
+            MUCRoomConfigExtensionManager.getInstance().populateConfigForm(configurationForm, room);
         }
 
         final Element element = DocumentHelper.createElement(QName.get("query",

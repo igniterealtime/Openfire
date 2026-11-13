@@ -92,6 +92,13 @@ public class IQMUCvCardHandler extends IQHandler
     public IQ handleIQ( IQ packet ) throws PacketException
     {
         IQ result = IQ.createResultIQ(packet);
+        if ( !PROPERTY_ENABLED.getValue() )
+        {
+            Log.debug("Unable to process vCard request from: '{}', for: '{}': service has been disabled by configuration.", packet.getFrom(), packet.getTo());
+            result.setError(PacketError.Condition.service_unavailable);
+            return result;
+        }
+
         IQ.Type type = packet.getType();
         if ( type.equals(IQ.Type.set) )
         {

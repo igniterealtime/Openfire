@@ -115,6 +115,11 @@
                   url="reg-settings.jsp"
                   description="${sidebar.server-reg-and-login.descr}"/>
 
+            <!-- Login Limits -->
+            <item id="user-login-limits" name="${sidebar.user-login-limits}"
+                  url="user-login-limits.jsp"
+                  description="${sidebar.user-login-limits.descr}"/>
+
             <!-- Resource Policy -->
             <item id="server-session-conflict" name="${sidebar.server-session-conflict}"
                   url="session-conflict.jsp"

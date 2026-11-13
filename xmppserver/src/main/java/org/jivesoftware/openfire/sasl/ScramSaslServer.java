@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.crypto.Mac;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
@@ -198,6 +199,15 @@ public abstract class ScramSaslServer implements SaslServer
 
     private String username;
     private State state = State.INITIAL;
+
+    /**
+     * The failure to answer at client-final, set when the attempt is refused at client-first (OF-2279), or null when it
+     * is not. The exchange then continues without looking up any key, and fails at client-final with this failure,
+     * whatever the password: account-disabled for a username that is locked out, and otherwise not-authorized, the same
+     * answer as for a wrong password.
+     */
+    @Nullable
+    private Failure refusal;
     private String nonce;
     private String serverFirstMessage;
     private String clientFirstMessageBare;
@@ -462,6 +472,25 @@ public abstract class ScramSaslServer implements SaslServer
             expectedChannelBindingPayloadInFinalClientMessage = gs2_header;
         }
 
+        // Apply the user login limits before any key is looked up (OF-2279). A refused attempt is sent the server-first
+        // message an attempt that is not refused would get (the account's own salt and iteration count, or a fake salt
+        // for a user that does not exist), looks up no key and fails at client-final, so the answer does not depend on
+        // the password.
+        if (username.indexOf('@') >= 0) {
+            // Openfire looks SCRAM credentials up under the username as sent, and no account has an '@' in its name,
+            // so this attempt cannot succeed. It is refused without being counted: the limits normalise 'alice@domain' to
+            // 'alice', so counting it would build up failures against alice from a client that has her right password.
+            // A locked-out user is answered as for any other form of the name.
+            refusal = SASLAuthentication.refusalFailure(username);
+        } else {
+            try {
+                SASLAuthentication.admitPasswordAttempt(props == null ? null : (LocalSession) props.get(LocalSession.class.getCanonicalName()), username);
+                refusal = null;
+            } catch (final SaslFailureException e) {
+                refusal = e.getFailure() != null ? e.getFailure() : Failure.NOT_AUTHORIZED;
+            }
+        }
+
         nonce = clientNonce + UUID.randomUUID().toString();
 
         serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(getOrCreateSalt(username)), getIterations(username));
@@ -539,6 +568,11 @@ public abstract class ScramSaslServer implements SaslServer
         final byte[] decodedChannelBinding = DatatypeConverter.parseBase64Binary(channelBinding);
         if (!Arrays.equals(expectedChannelBindingPayloadInFinalClientMessage, decodedChannelBinding)) {
             throw new SaslException("Invalid client final message: channel binding payload does not match expected payload");
+        }
+
+        if (refusal != null) {
+            // Refused without looking up any credential, whatever the proof.
+            throw new SaslFailureException(refusal, "Authentication failed for: '"+username+"'");
         }
 
         try {
@@ -670,6 +704,7 @@ public abstract class ScramSaslServer implements SaslServer
         clientFirstMessageBare = null;
         expectedChannelBindingPayloadInFinalClientMessage = null;
         gs2CbindName = null;
+        refusal = null;
         state = State.INITIAL;
     }
 

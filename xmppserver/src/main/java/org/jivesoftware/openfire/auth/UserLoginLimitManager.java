@@ -572,15 +572,49 @@ public class UserLoginLimitManager implements LockOutEventListener
      */
     public boolean hasUsernameBlock(@Nonnull final String username)
     {
-        if (!ENABLED.getValue() || MAX_ATTEMPTS_PER_USERNAME.getValue() <= 0) {
-            return false;
+        return getUsernameBlock(username).isPresent();
+    }
+
+    /**
+     * Returns the tier 3 block in force for a username, if any (see {@link #hasUsernameBlock(String)}).
+     *
+     * @param username the username, as given by the client or as the account's name.
+     * @return the block, or empty if tier 3 holds none in force for the username.
+     */
+    @Nonnull
+    public Optional<ActiveBlock> getUsernameBlock(@Nonnull final String username)
+    {
+        if (!ENABLED.getValue()) {
+            return Optional.empty();
         }
         final String user = normalise(username);
         if (!isAccountName(user)) {
+            return Optional.empty();
+        }
+        final String userKey = usernameKey(user);
+        return Optional.ofNullable(usernameBlock(userKey, usernameBlocks.get(userKey), clock.millis()));
+    }
+
+    /**
+     * Returns whether a lock was set by the per-username limit (tier 3): its username has a tier 3 block in force, and
+     * the lock ends when the block does, as a lock set by the limit is given the block's end. A lock set by hand while
+     * the username is blocked (which tier 3 leaves in place), a lock without an end, and every lock once the block has
+     * ended or while the limits are disabled, are not.
+     *
+     * Ends within a second of each other count as the same, for lockout providers that store times to the second.
+     *
+     * @param flag the account's lock, as {@link LockOutManager#getDisabledStatus(String)} returns it.
+     * @return true if the login limits set the lock.
+     */
+    public boolean isLockSetByLoginLimits(@Nonnull final LockOutFlag flag)
+    {
+        if (flag.getUsername() == null || flag.getEndTime() == null) {
             return false;
         }
-        final UsernameBlock block = usernameBlocks.get(usernameKey(user));
-        return block != null && !block.hasEnded(clock.millis());
+        final long lockEnd = flag.getEndTime().getTime();
+        return getUsernameBlock(flag.getUsername())
+            .filter(block -> Math.abs(block.endsAt().toEpochMilli() - lockEnd) < 1000)
+            .isPresent();
     }
 
     /**

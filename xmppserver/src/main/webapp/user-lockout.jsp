@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
+<%@ page import="org.jivesoftware.openfire.auth.UserLoginLimitManager" %>
+<%@ page import="java.util.Optional" %>
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 <%@ page import="org.jivesoftware.openfire.session.ClientSession" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -143,6 +145,9 @@
 
 <%
     LockOutFlag flag = LockOutManager.getInstance().getDisabledStatus(username);
+    // A block by the login limit per username from any IP address (OF-2279): it goes with a lock the limit set, or
+    // stands in for one where none could be set (for example for an administrator's account).
+    final Optional<UserLoginLimitManager.ActiveBlock> loginLimitBlock = UserLoginLimitManager.getInstance().getUsernameBlock(username);
     if (flag != null) {
         // User is locked out
 %>
@@ -155,6 +160,15 @@
 <% if (flag.getStartTime() != null && flag.getEndTime() != null) { %> <fmt:message key="user.lockout.lockedand" /> <% } %> 
 <% if (flag.getEndTime() != null) { %><fmt:message key="user.lockout.locked3"><fmt:param value="<%= flag.getEndTime().toString() %>"/></fmt:message> <% } %>
 </p>
+<% if (loginLimitBlock.isPresent() && UserLoginLimitManager.getInstance().isLockSetByLoginLimits(flag)) { %>
+<p>
+<fmt:message key="user.lockout.set_by_login_limits">
+    <fmt:param value="<%= loginLimitBlock.get().failureCount() %>"/>
+    <fmt:param value="<a href=\"user-login-limits.jsp\">"/>
+    <fmt:param value="</a>"/>
+</fmt:message>
+</p>
+<% } %>
 
 <form action="user-lockout.jsp">
     <input type="hidden" name="username" value="${usernameHtmlEscaped}">
@@ -168,6 +182,17 @@
     else {
         // User is not locked out
 %>
+
+<% if (loginLimitBlock.isPresent()) { %>
+<p>
+<fmt:message key="user.lockout.blocked_by_login_limits">
+    <fmt:param value="<%= Date.from(loginLimitBlock.get().endsAt()).toString() %>"/>
+    <fmt:param value="<%= loginLimitBlock.get().failureCount() %>"/>
+    <fmt:param value="<a href=\"user-login-limits.jsp\">"/>
+    <fmt:param value="</a>"/>
+</fmt:message>
+</p>
+<% } %>
 
 <p>
 <fmt:message key="user.lockout.info" />

@@ -2492,6 +2492,58 @@ public class UserLoginLimitManagerTest
     }
 
     /**
+     * Verifies that a lock set by the per-username limit is recognised as such, so that the user's Lock Out page can
+     * say where it came from, and that the username's block in force is returned with its end and failure count.
+     */
+    @Test
+    public void testLockSetByLoginLimitsIsRecognised()
+    {
+        // Setup test fixture.
+        UserLoginLimitManager.MAX_ATTEMPTS_PER_USERNAME.setValue(3L);
+        fail(USER, ADDRESS, 4);
+        final ArgumentCaptor<Date> start = ArgumentCaptor.forClass(Date.class);
+        final ArgumentCaptor<Date> end = ArgumentCaptor.forClass(Date.class);
+        verify(lockOutManager, times(1).description("the attempt after the limit must lock the account")).disableAccount(eq(USER), start.capture(), end.capture());
+        final LockOutFlag flag = new LockOutFlag(USER, start.getValue(), end.getValue());
+
+        // Execute system under test.
+        final Optional<UserLoginLimitManager.ActiveBlock> block = manager.getUsernameBlock("Alice");
+        final boolean setByLimits = manager.isLockSetByLoginLimits(flag);
+
+        // Verify result.
+        assertTrue(block.isPresent(), "the per-username limit must hold a block for the username");
+        assertEquals(end.getValue().toInstant(), block.get().endsAt(), "the block must end when the lock does");
+        assertEquals(3L, block.get().failureCount(), "the block must give the number of attempts that led to it");
+        assertTrue(setByLimits, "a lock set by the per-username limit must be recognised as set by the login limits");
+    }
+
+    /**
+     * Verifies that a lock not set by the login limits is not taken for one: a lock set by hand while the username is
+     * blocked (which the limits leave in place), a lock without an end, and any lock once the block has ended or while
+     * the limits are disabled.
+     */
+    @Test
+    public void testOtherLocksAreNotTakenForLoginLimitLocks()
+    {
+        // Setup test fixture.
+        UserLoginLimitManager.MAX_ATTEMPTS_PER_USERNAME.setValue(3L);
+        administrators.add(USER);
+        fail(USER, ADDRESS, 4);
+        final Date blockEnd = Date.from(manager.getUsernameBlock(USER).orElseThrow().endsAt());
+
+        // Execute system under test & verify result.
+        assertFalse(manager.isLockSetByLoginLimits(new LockOutFlag(USER, null, null)), "a lock without an end must not be taken for one set by the login limits");
+        assertFalse(manager.isLockSetByLoginLimits(new LockOutFlag(USER, null, Date.from(blockEnd.toInstant().plus(Duration.ofHours(1))))), "a lock ending at another time must not be taken for one set by the login limits");
+        assertFalse(manager.isLockSetByLoginLimits(new LockOutFlag(OTHER_USER, null, blockEnd)), "a lock of a username without a block must not be taken for one set by the login limits");
+        UserLoginLimitManager.ENABLED.setValue(false);
+        assertFalse(manager.isLockSetByLoginLimits(new LockOutFlag(USER, null, blockEnd)), "no lock must be taken for one set by the login limits while they are disabled");
+        UserLoginLimitManager.ENABLED.setValue(true);
+        clock.advance(LOCKOUT_DURATION);
+        assertTrue(manager.getUsernameBlock(USER).isEmpty(), "no block must be returned once it has ended");
+        assertFalse(manager.isLockSetByLoginLimits(new LockOutFlag(USER, null, blockEnd)), "no lock must be taken for one set by the login limits once the block has ended");
+    }
+
+    /**
      * Returns every block in force, ordered by tier and then by when it ends.
      */
     private List<UserLoginLimitManager.ActiveBlock> activeBlocks()

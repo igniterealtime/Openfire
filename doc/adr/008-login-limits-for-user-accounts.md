@@ -102,7 +102,7 @@ Off by default because the change can refuse logins that succeed today, which ad
 ## Consequences
 
 - Administrators get brute-force protection for XMPP logins by turning on one setting, and can tune or turn off each tier.
-- Tier 3 locks appear on the user's lockout page and can be lifted there; tier 1, tier 2 and cache blocks appear on the Login Limits page.
+- Tier 3 locks appear on the user's lockout page, which says that the login limits set them, and can be lifted there; tier 1, tier 2 and cache blocks appear on the Login Limits page. A username that tier 3 blocks without a lock (an administrator's) is shown on its lockout page as not locked but refused by the login limits, with when that ends.
 - An administrator's account that reaches tier 3 is blocked in the cache rather than locked, so a deliberate lock-out cannot keep an administrator out of the admin console; their XMPP and JMX logins are still refused while the block lasts.
 - A locked account now answers `account-disabled` whatever the password, for every mechanism, whether or not the limits are enabled. Before, SCRAM and DIGEST-MD5 answered `account-disabled` to the correct password only, and `not-authorized` to a wrong one; PLAIN and FAST tokens answered `not-authorized`. Anyone who knows a username can learn, without its password, whether its account is locked.
 - A username blocked by tier 3 is answered `account-disabled` whether or not its account could be locked, so the answer does not show whether the account exists. An administrator whose username tier 3 has blocked is answered `account-disabled` over XMPP, while their Lock Out page shows no lock and the admin console stays open to them.

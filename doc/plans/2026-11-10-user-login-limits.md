@@ -86,6 +86,7 @@ Each has a `system_property.*` description in `openfire_i18n.properties`. With `
 - If the user lookup, the lockout check or the lock itself throws, the cache block still applies and a warning is logged: it fails closed.
 - A successful login never lifts a `LockOutManager` lock.
 - When an administrator unlocks an account (`LockOutEventListener.accountUnlocked`), the tier 3 counter and cache block for that username are cleared, so the next failure does not lock it again at once.
+- The user's lockout page says when the login limits set a lock: the username has a tier 3 block in force and the lock ends when the block does (`UserLoginLimitManager.isLockSetByLoginLimits`), which a lock set by hand does not. For a username that tier 3 blocks without a lock (an administrator's), the page says the account is not locked but the login limits refuse it, and until when.
 - Usernames and addresses are escaped before they reach logs or audit entries (`UserLoginLimitManager.forLog`), so control characters cannot forge log lines.
 
 ### 6. Refuse before the password is evaluated, with an answer that does not depend on it
@@ -113,6 +114,7 @@ Each has a `system_property.*` description in `openfire_i18n.properties`. With `
 | `sasl/ScramSaslServer` | After parsing client-first: reserves the attempt; a refused attempt gets the same salt and iteration count as an admitted one and fails at client-final |
 | `sasl/AbstractHtSaslServer` | Refuses an attempt the limits block alongside the existing lock check; a locked account is answered `account-disabled` |
 | `JMXManager` | Reserves JMX attempts (tier 3) and refuses blocked or locked usernames |
+| `user-lockout.jsp` | Says when the login limits set a lock, or refuse a username that is not locked |
 | `XMPPServer` | Creates `UserLoginLimitManager` at start-up and after setup, so its unlock listener is registered on every node |
 | `util/cache/CacheFactory` | Registers the new caches |
 | `admin/servlet/UserLoginLimitsServlet` (new), `user-login-limits-page.jsp` (new), `admin-sidebar.xml` | The Login Limits page under Server Manager |

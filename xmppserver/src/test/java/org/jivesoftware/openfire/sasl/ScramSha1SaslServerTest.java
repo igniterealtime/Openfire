@@ -394,6 +394,29 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that a SCRAM attempt as 'user@domain' for a locked-out user is answered account-disabled, as PLAIN and
+     * DIGEST-MD5 answer it, and is not counted (OF-2279).
+     */
+    @Test
+    public void testUserAtDomainForLockedOutUserFailsWithAccountDisabled() throws Exception
+    {
+        // Setup test fixture.
+        final String username = "lockeduser@example.org";
+        authFactory.when(() -> AuthFactory.getSalt(eq(username), anyString())).thenThrow(new UserNotFoundException());
+        authFactory.when(() -> AuthFactory.getIterations(eq(username), anyString())).thenThrow(new UserNotFoundException());
+        when(loginLimits.isLockedOut(username)).thenReturn(true);
+        final ScramSha1SaslServer server = newServer(false);
+
+        // Execute system under test.
+        final FirstExchangeResult first = FirstExchangeResult.fromFirstServerResponse(new String(server.evaluateResponse(createClientInitialMessage("n,,", username, ScramSha1TestFixtures.CLIENT_NONCE)), StandardCharsets.UTF_8));
+        final SaslException failure = assertThrows(SaslException.class, () -> server.evaluateResponse(finalMessageWithProof(first.serverNonce, new byte[expectedProofLengthBytes()])), "a SCRAM attempt as user@domain must fail");
+
+        // Verify result.
+        assertEquals(Failure.ACCOUNT_DISABLED, SASLAuthentication.failureOf(failure), "a locked-out user must be answered account-disabled whatever form of the name is used");
+        verify(loginLimits, never().description("a SCRAM attempt as user@domain must not be counted")).tryAcquireAttempt(anyString(), any());
+    }
+
+    /**
      * Verifies that a SCRAM attempt for a username that is locked out (its account is locked, or the per-username limit
      * has blocked it) is sent a server-first message, looks up no key, and fails at client-final with account-disabled,
      * whatever the proof (OF-2279).

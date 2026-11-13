@@ -480,7 +480,8 @@ public abstract class ScramSaslServer implements SaslServer
             // Openfire looks SCRAM credentials up under the username as sent, and no account has an '@' in its name,
             // so this attempt cannot succeed. It is refused without being counted: the limits normalise 'alice@domain' to
             // 'alice', so counting it would build up failures against alice from a client that has her right password.
-            refusal = Failure.NOT_AUTHORIZED;
+            // A locked-out user is answered as for any other form of the name.
+            refusal = SASLAuthentication.refusalFailure(username);
         } else {
             try {
                 SASLAuthentication.admitPasswordAttempt(props == null ? null : (LocalSession) props.get(LocalSession.class.getCanonicalName()), username);

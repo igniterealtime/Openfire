@@ -30,6 +30,8 @@ import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
+import org.jivesoftware.openfire.sasl.Failure;
+import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -43,9 +45,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
 import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -57,6 +61,7 @@ import static org.jivesoftware.openfire.net.SASLAuthentication.SASL_NAMESPACE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -263,8 +268,10 @@ public class SASLAuthenticationLoginLimitTest
 
     /**
      * Verifies that the lock check after a successful exchange stays as a backstop: if the account turns out to be
-     * locked then (for example, locked while the exchange was in progress), the login still fails, with
-     * account-disabled, and the attempt is not given back.
+     * locked then (for example, locked while the exchange was in progress, or the check when the username became known
+     * could not be completed), the login still fails, and the attempt is not given back. The password has been checked
+     * by then, so the answer is not-authorized, the same as for a wrong password: account-disabled here would tell a
+     * guesser that the password is right.
      */
     @Test
     public void testLockCheckAfterSuccessRemainsAsBackstop()
@@ -279,14 +286,15 @@ public class SASLAuthenticationLoginLimitTest
         assertEquals(SASLAuthentication.Status.failed, status, "a locked account must not authenticate");
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection, times(1).description("the refused login must be answered once")).deliverRawText(response.capture());
-        assertTrue(response.getValue().contains("<account-disabled"), "a lock found after a correct password must be answered with account-disabled");
+        assertTrue(response.getValue().contains("<not-authorized"), "a lock found after a correct password must be answered as a wrong password is");
+        assertFalse(response.getValue().contains("account-disabled"), "a lock found after a correct password must not be answered with account-disabled, which would confirm the password");
         verify(loginLimits, never().description("an attempt refused after the exchange must not be given back")).recordSuccessfulLogin(any());
     }
 
     /**
      * Verifies that when the authorization identity differs from the username whose lock was checked when the attempt
      * was admitted (here only in case), the lock of the authorization identity is still looked up after the exchange,
-     * and a lock found then refuses the login with account-disabled.
+     * and a lock found then refuses the login with not-authorized, as the password has been checked by then.
      */
     @Test
     public void testLockCheckAfterExchangeCatchesLockedAuthorizationIdentity()
@@ -303,7 +311,7 @@ public class SASLAuthenticationLoginLimitTest
         verify(lockOutManager, times(1).description("the lock of the authorization identity must be looked up after the exchange")).isAccountDisabled("Alice");
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection, times(1).description("the refused login must be answered once")).deliverRawText(response.capture());
-        assertTrue(response.getValue().contains("<account-disabled"), "a lock found after the exchange must be answered with account-disabled");
+        assertTrue(response.getValue().contains("<not-authorized"), "a lock found after a password exchange must be answered as a wrong password is");
         verify(loginLimits, never().description("an attempt refused after the exchange must not be given back")).recordSuccessfulLogin(any());
     }
 
@@ -332,7 +340,8 @@ public class SASLAuthenticationLoginLimitTest
 
     /**
      * Verifies that a completed EXTERNAL (certificate) login is refused, with account-disabled, when the account is
-     * locked: the lock check after the exchange applies to every mechanism.
+     * locked: the lock check after the exchange applies to every mechanism, and with no password involved the answer
+     * reveals none.
      */
     @Test
     public void testExternalLoginIsRefusedForLockedAccount() throws Exception
@@ -355,6 +364,25 @@ public class SASLAuthenticationLoginLimitTest
      * Returns a SASL server for EXTERNAL whose exchange completes with the given authorization identity, as it does
      * for a trusted client certificate.
      */
+    /**
+     * Verifies that the failure of a SASL exception is found in its causes, where a mechanism wraps the refusal of its
+     * callback handler, and that a cycle in the causes does not loop forever.
+     */
+    @Test
+    public void testFailureIsFoundInCausesAndCyclesEnd()
+    {
+        // Setup test fixture.
+        final SaslException wrapped = new SaslException("PLAIN authentication failed", new SaslFailureException(Failure.ACCOUNT_DISABLED, "locked"));
+        final SaslException first = new SaslException("first");
+        final SaslException second = new SaslException("second");
+        first.initCause(second);
+        second.initCause(first);
+
+        // Execute system under test & verify result.
+        assertEquals(Failure.ACCOUNT_DISABLED, SASLAuthentication.failureOf(wrapped), "the failure of a wrapped refusal must be found");
+        assertEquals(Failure.NOT_AUTHORIZED, assertTimeoutPreemptively(Duration.ofSeconds(5), () -> SASLAuthentication.failureOf(first)), "a cycle of causes without a failure must end, answered not-authorized");
+    }
+
     private static SaslServer completedExternal(final String authorizationId) throws Exception
     {
         final SaslServer saslServer = mock(SaslServer.class);

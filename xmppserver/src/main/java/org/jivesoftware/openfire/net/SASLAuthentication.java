@@ -744,9 +744,13 @@ public class SASLAuthentication {
                         // Interception!  This person is locked out, fail instead!
                         Log.info("SASL authentication for account '{}' succeeded, but the account is locked out. Failing the authentication attempt for session '{}'.", saslServer.getAuthorizationID(), session);
                         LockOutManager.getInstance().recordFailedLogin(saslServer.getAuthorizationID());
-                        // Password mechanisms answer a locked account account-disabled before the password is checked,
-                        // so this answer reveals nothing about the password either.
-                        throw new SaslFailureException(Failure.ACCOUNT_DISABLED);
+                        // A password mechanism that found the lock when the username became known has refused already,
+                        // with account-disabled, before checking the password. Reaching this point after a password
+                        // exchange (the early check could not be completed, the lock was set during the exchange, or the
+                        // authorization identity is another account) means the password was right, so the answer must
+                        // be the same as for a wrong one. With no password exchange (EXTERNAL), it reveals nothing.
+                        throw new SaslFailureException(session.getSessionData(SASL_LOGIN_ATTEMPT) instanceof UserLoginLimitManager.Reservation
+                            ? Failure.NOT_AUTHORIZED : Failure.ACCOUNT_DISABLED);
                     }
                     recordSuccessfulPasswordAttempt(session);
 
@@ -833,7 +837,9 @@ public class SASLAuthentication {
     @Nonnull
     public static Failure failureOf(@Nonnull final SaslException ex)
     {
-        for (Throwable cause = ex; cause != null; cause = cause.getCause() == cause ? null : cause.getCause()) {
+        // Bounded, so that a cycle in the causes cannot loop forever.
+        Throwable cause = ex;
+        for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
             if (cause instanceof SaslFailureException failureException && failureException.getFailure() != null) {
                 return failureException.getFailure();
             }

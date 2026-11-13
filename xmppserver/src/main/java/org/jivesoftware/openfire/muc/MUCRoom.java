@@ -1705,8 +1705,10 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
                 // Determine what stanza flavor to send to this occupant.
                 final Presence toSend;
-                if (occupant.getPresence().getFrom().equals(presence.getTo())) {
-                    // This occupant is the subject of the stanza. Send the 'self-presence' stanza.
+                if (occupant.getOccupantJID().equals(presence.getFrom())) {
+                    // This occupant is the subject of the stanza. Send the 'self-presence' stanza. Note that the subject
+                    // is identified by the 'from' address (which is set by the room) and not by the 'to' address (which
+                    // is whatever the client that sent the original stanza chose to address).
                     Log.trace( "Sending self-presence of '{}' to {}", presence.getFrom(), occupant.getUserAddress() );
                     toSend = selfPresence;
                 } else if ( !canAnyoneDiscoverJID && Role.moderator != occupant.getRole() ) {

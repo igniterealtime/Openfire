@@ -220,6 +220,9 @@
                         <c:when test="${!property.systemProperty}">
                             <span class="hidden">unknown</span>
                         </c:when>
+                        <c:when test="${property.hidden}">
+                            <span class="hidden">hidden</span>
+                        </c:when>
                         <c:when test="${property.defaultDisplayValue == null}">
                             <span class="hidden">none</span>
                         </c:when>

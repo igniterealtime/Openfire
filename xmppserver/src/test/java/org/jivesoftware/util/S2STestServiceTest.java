@@ -33,7 +33,6 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -44,9 +43,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class S2STestServiceTest
 {
-    /** Two line breaks in a row, which is an empty line. */
-    private static final Pattern EMPTY_LINE = Pattern.compile("\\R\\R");
-
     @Test
     public void testCertificateOutputIsTheCertificateInPem() throws Exception
     {
@@ -93,8 +89,9 @@ public class S2STestServiceTest
             final int begin = output.indexOf("-----BEGIN CERTIFICATE-----");
             final int end = output.indexOf("-----END CERTIFICATE-----");
             assertTrue(begin >= 0 && end > begin, "the output must contain a PEM block");
-            final String block = output.substring(begin, end);
-            assertFalse(EMPTY_LINE.matcher(block).find(), "no line in the PEM block may be empty (encoded length " + certificate.getEncoded().length + ")");
+            // PemWriter ends its lines with the platform's line separator, so treat CRLF as one line break.
+            final String block = output.substring(begin, end).replace("\r\n", "\n");
+            assertFalse(block.contains("\n\n"), "no line in the PEM block may be empty (encoded length " + certificate.getEncoded().length + ")");
         }
         assertEquals(48, remaindersCovered.size(), "the certificates must cover every encoded length modulo 48");
     }

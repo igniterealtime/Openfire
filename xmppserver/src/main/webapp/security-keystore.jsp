@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreReadOnlyException" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -60,6 +62,11 @@
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
+
+    // When the certificate stores are read-only, the actions that change the store are not offered. A request for one
+    // is still passed to the store, which refuses it.
+    final boolean readOnly = CertificateStoreManager.READ_ONLY.getValue();
+    pageContext.setAttribute( "readOnly", readOnly );
 
     ConnectionType connectionType = null;
     IdentityStore identityStore = null;
@@ -114,6 +121,10 @@
                     response.sendRedirect( "security-keystore.jsp?connectionType=" + connectionType+ "&deletesuccess=true" );
                     return;
                 }
+                catch ( CertificateStoreReadOnlyException e )
+                {
+                    errors.put( "readOnly", e.getMessage() );
+                }
                 catch ( Exception e )
                 {
                     errors.put( "delete", e.getMessage() );
@@ -145,6 +156,8 @@
 
             response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
             return;
+        } catch (CertificateStoreReadOnlyException e) {
+            errors.put("readOnly", e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             errors.put("generate", e.getMessage());
@@ -167,6 +180,8 @@
                 webManager.logEvent( "imported SSL certificate with alias " + alias, null );
                 response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
                 return;
+            } catch (CertificateStoreReadOnlyException e) {
+                errors.put("readOnly", e.getMessage());
             } catch (Exception e) {
                 e.printStackTrace();
                 errors.put("importReply", e.getMessage());
@@ -201,6 +216,9 @@
         <c:forEach var="err" items="${errors}">
             <admin:infobox type="error">
                 <c:choose>
+                    <c:when test="${err.key eq 'readOnly'}">
+                        <fmt:message key="ssl.certificates.read-only.refused"/> <c:out value="${err.value}"/>
+                    </c:when>
                     <c:when test="${err.key eq 'importReply'}">
                         <fmt:message key="ssl.certificates.keystore.error_importing-reply"/>
                     </c:when>
@@ -214,7 +232,21 @@
             </admin:infobox>
         </c:forEach>
 
+        <c:if test="${readOnly}">
+            <admin:infobox type="info">
+                <fmt:message key="ssl.certificates.read-only.notice">
+                    <fmt:param value="<a href='security-certificate-stores-read-only.jsp'>"/>
+                    <fmt:param value="</a>"/>
+                </fmt:message>
+            </admin:infobox>
+        </c:if>
+
         <c:choose>
+            <c:when test="${readOnly and not validCert}">
+                <admin:infobox type="warning">
+                    <fmt:message key="ssl.certificates.keystore.no_installed_read-only"/>
+                </admin:infobox>
+            </c:when>
             <c:when test="${not validCert}">
                 <admin:infobox type="warning">
                     <fmt:message key="ssl.certificates.keystore.no_installed">
@@ -225,7 +257,7 @@
                     </fmt:message>
                 </admin:infobox>
             </c:when>
-            <c:when test="${not allIDCert}">
+            <c:when test="${not allIDCert and not readOnly}">
                 <admin:infobox type="info">
                     <fmt:message key="ssl.certificates.keystore.no_complete_installed">
                         <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generate=true&connectionType=${connectionType}'>"/>
@@ -253,12 +285,14 @@
             <fmt:message key="ssl.certificates.general-usage"/>
         </p>
 
-        <p>
-            <fmt:message key="ssl.certificates.keystore.info">
-                <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
-                <fmt:param value="</a>"/>
-            </fmt:message>
-        </p>
+        <c:if test="${not readOnly}">
+            <p>
+                <fmt:message key="ssl.certificates.keystore.info">
+                    <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
+                    <fmt:param value="</a>"/>
+                </fmt:message>
+            </p>
+        </c:if>
 
         <table class="jive-table" style="width: 100%">
             <thead>
@@ -276,9 +310,11 @@
                     <th>
                         <fmt:message key="ssl.certificates.algorithm"/>
                     </th>
-                    <th style="width: 1%">
-                        <fmt:message key="global.delete"/>
-                    </th>
+                    <c:if test="${not readOnly}">
+                        <th style="width: 1%">
+                            <fmt:message key="global.delete"/>
+                        </th>
+                    </c:if>
                 </tr>
             </thead>
             <tbody>
@@ -360,15 +396,17 @@
                                 <td style="width: 2%">
                                     <c:out value="${certificate.publicKey.algorithm}"/>
                                 </td>
-                                <td style="width: 1%; text-align: center">
-                                    <a href="security-keystore.jsp?csrf=${csrf}&alias=${alias}&connectionType=${connectionType}&delete=true"
-                                       title="<fmt:message key="global.click_delete"/>"
-                                       onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
-                                            ><img src="images/delete-16x16.gif" alt=""></a>
-                                </td>
+                                <c:if test="${not readOnly}">
+                                    <td style="width: 1%; text-align: center">
+                                        <a href="security-keystore.jsp?csrf=${csrf}&alias=${alias}&connectionType=${connectionType}&delete=true"
+                                           title="<fmt:message key="global.click_delete"/>"
+                                           onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
+                                                ><img src="images/delete-16x16.gif" alt=""></a>
+                                    </td>
+                                </c:if>
                             </tr>
 
-                            <% if (isSigningPending) { %>
+                            <% if (isSigningPending && !readOnly) { %>
                             <form action="security-keystore.jsp?connectionType=${connectionType}" method="post">
                                 <input type="hidden" name="csrf" value="${csrf}">
                                 <input type="hidden" name="importReply" value="true">
@@ -395,7 +433,9 @@
 
         <!-- BEGIN 'Signing request' -->
 
-<% if (offerUpdateIssuer || !signingRequests.isEmpty()) { %>
+<% // The issuer update changes the store, so it is not offered when the stores are read-only.
+   offerUpdateIssuer = offerUpdateIssuer && !readOnly;
+   if (offerUpdateIssuer || !signingRequests.isEmpty()) { %>
 <br>
 
 <div class="jive-contentBoxHeader">

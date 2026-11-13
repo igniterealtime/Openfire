@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CollectionUtils;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,20 @@ import java.util.stream.Collectors;
 public class CertificateStoreManager extends BasicModule
 {
     private final static Logger Log = LoggerFactory.getLogger( CertificateStoreManager.class );
+
+    /**
+     * When true, Openfire does not modify any of the certificate stores (identity stores and trust stores) it uses, for
+     * example because they are also used by other software on the system. Every change to a store is refused with a
+     * {@link CertificateStoreReadOnlyException}. Changes made to the store files by other software are still loaded
+     * while the certificate store watcher ({@link CertificateStoreWatcher#ENABLED}) is enabled.
+     *
+     * Each store reads this setting when it is about to be changed, so a change of the setting takes effect at once.
+     */
+    public static final SystemProperty<Boolean> READ_ONLY = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey( "cert.stores.readonly" )
+        .setDefaultValue( false )
+        .setDynamic( true )
+        .build();
 
     private final ConcurrentMap<ConnectionType, CertificateStoreConfiguration> typeToTrustStore    = new ConcurrentHashMap<>();
     private final ConcurrentMap<ConnectionType, CertificateStoreConfiguration> typeToIdentityStore = new ConcurrentHashMap<>();

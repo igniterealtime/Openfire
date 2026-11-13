@@ -289,6 +289,10 @@
                   url="security-certificate-expiry-check.jsp"
                   description="${sidebar.ssl.certificate.expirycheck.descr}"/>
 
+            <item id="security-certificate-stores-read-only" name="${sidebar.certificate-stores-read-only}"
+                  url="security-certificate-stores-read-only.jsp"
+                  description="${sidebar.certificate-stores-read-only.descr}"/>
+
         </sidebar>
 
         <!-- Server Settings -->

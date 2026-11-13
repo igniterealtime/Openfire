@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2006-2008 Jive Software, 2018-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2006-2008 Jive Software, 2018-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -15,24 +15,16 @@
   - limitations under the License.
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@page import="java.util.Enumeration"%>
 <%@page import="org.jivesoftware.openfire.XMPPServer"%>
-<%@page import="java.security.PublicKey"%>
-<%@page import="java.security.KeyPair"%>
-<%@page import="java.security.cert.X509Certificate"%>
-<%@page import="java.security.PrivateKey"%>
+<%@page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
+<%@page import="org.jivesoftware.openfire.keystore.CertificateStoreReadOnlyException"%>
 <%@page import="org.jivesoftware.openfire.keystore.IdentityStore"%>
-<%@page import="java.security.KeyStore"%>
-<%@page import="org.bouncycastle.asn1.x500.style.BCStyle"%>
-<%@page import="org.bouncycastle.asn1.x500.X500NameBuilder"%>
-<%@page import="org.jivesoftware.util.CertificateManager"%>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
-<%@ page import="java.util.Set" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="java.time.Duration" %>
 <%@ taglib uri="admin" prefix="admin" %>
@@ -87,6 +79,11 @@
 
     pageContext.setAttribute( "connectionType", connectionType );
 
+    // When the certificate stores are read-only, the issuer form is not offered. A submitted form is still passed to
+    // the store, which refuses it.
+    final boolean readOnly = CertificateStoreManager.READ_ONLY.getValue();
+    pageContext.setAttribute( "readOnly", readOnly );
+
    if (save) {
 
        // Verify that fields were completed
@@ -113,42 +110,15 @@
                XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin")
                    .ifPresent(plugin -> ((AdminConsolePlugin) plugin).pauseAutoRestartEnabled(Duration.ofMinutes(5)));
 
-               X500NameBuilder builder = new X500NameBuilder();
-               builder.addRDN(BCStyle.CN, name);
-               builder.addRDN(BCStyle.OU, organizationalUnit);
-               builder.addRDN(BCStyle.O, organization);
-               builder.addRDN(BCStyle.L, city);
-               builder.addRDN(BCStyle.ST, state);
-               builder.addRDN(BCStyle.C, countryCode);
-
-               // Update certs with new issuerDN information
-               KeyStore keyStore = identityStore.getStore();
-               for (Enumeration<String> certAliases = keyStore.aliases(); certAliases.hasMoreElements();) {
-
-                   String alias = certAliases.nextElement();
-                   X509Certificate certificate = (X509Certificate) keyStore.getCertificate(alias);
-
-                   // Update only Self-signed certs
-                   if (CertificateManager.isSelfSignedCertificate(certificate)) {
-                       
-                       PrivateKey privKey = (PrivateKey) keyStore.getKey(alias, identityStore.getConfiguration().getPassword());
-                       PublicKey pubKey = certificate.getPublicKey();
-
-                       String signAlgoritm = "SHA256WITH" + pubKey.getAlgorithm();
-                       int days = 60;
-
-                       // Regenerate self-sign certs whose subjectDN matches the issuerDN and set the new issuerDN
-                       final Set<String> sanDnsNames = CertificateManager.determineSubjectAlternateNameDnsNameValues();
-                       X509Certificate newCertificate = CertificateManager.createX509V3Certificate(new KeyPair(pubKey, privKey), days, builder, builder, domain, signAlgoritm, sanDnsNames);
-                       keyStore.setKeyEntry(alias, privKey, identityStore.getConfiguration().getPassword(), new X509Certificate[] { newCertificate });
-                   }
-               }
-               // Save keystore
-               identityStore.persist();
+               // Update the self-signed certificates with the new issuer details, and save the store.
+               identityStore.updateIssuerOfSelfSignedCertificates(organizationalUnit, organization, city, state, countryCode);
                // Log the event
                webManager.logEvent("generated SSL signing request", null);
                response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
                return;
+           }
+           catch (CertificateStoreReadOnlyException e) {
+               errors.put("readOnly", e.getMessage());
            }
            catch (Exception e) {
                e.printStackTrace();
@@ -171,6 +141,9 @@
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
         <c:choose>
+            <c:when test="${err.key eq 'readOnly'}">
+                <fmt:message key="ssl.certificates.read-only.refused"/> <c:out value="${err.value}"/>
+            </c:when>
             <c:when test="${err.key eq 'organizationalUnit'}">
                 <fmt:message key="ssl.signing-request.enter_ou" />
             </c:when>
@@ -196,6 +169,16 @@
     </admin:infobox>
 </c:forEach>
 
+<c:choose>
+<c:when test="${readOnly}">
+    <admin:infobox type="info">
+        <fmt:message key="ssl.certificates.read-only.notice">
+            <fmt:param value="<a href='security-certificate-stores-read-only.jsp'>"/>
+            <fmt:param value="</a>"/>
+        </fmt:message>
+    </admin:infobox>
+</c:when>
+<c:otherwise>
 <!-- BEGIN 'Issuer information form' -->
 <form action="security-keystore-signing-request.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
@@ -267,5 +250,7 @@
       </div>
   </form>
   <!-- END 'Issuer information form' -->
+</c:otherwise>
+</c:choose>
   </body>
 </html>

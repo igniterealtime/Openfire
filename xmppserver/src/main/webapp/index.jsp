@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 <%@ page import="org.jivesoftware.openfire.JMXManager" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
@@ -127,6 +128,18 @@
 
     // Cheap, cached check (never blocks; refreshes in the background) for redundant pubsub subscription rows (OF-3306).
     pageContext.setAttribute( "pubsubCleanupAdvisable", PubSubSubscriptionMaintenance.isCleanupAdvisable() );
+
+    // A missing domain certificate is shown in a box, as the icon next to the server name is easy to miss. With the
+    // certificate stores read-only, Openfire does not generate one, so the box says that it must be added outside
+    // Openfire. When the store cannot be read, the error icon next to the server name says so instead.
+    boolean missingDomainCertificate = false;
+    try {
+        missingDomainCertificate = !XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_C2S ).containsDomainCertificate();
+    } catch ( Exception e ) {
+        // Reported by the error icon next to the server name.
+    }
+    pageContext.setAttribute( "missingDomainCertificate", missingDomainCertificate );
+    pageContext.setAttribute( "certificateStoresReadOnly", CertificateStoreManager.READ_ONLY.getValue() );
 %>
 
     <c:if test="${not empty serverUpdate}">
@@ -153,6 +166,15 @@
             </table>
         </div>
         <br>
+    </c:if>
+
+    <c:if test="${missingDomainCertificate}">
+        <admin:infoBox type="warning">
+            <fmt:message key="${certificateStoresReadOnly ? 'index.certificate-missing.read-only' : 'index.certificate-missing'}">
+                <fmt:param value="<a href=\"./security-keystore.jsp?connectionType=SOCKET_C2S\">" />
+                <fmt:param value="</a>"/>
+            </fmt:message>
+        </admin:infoBox>
     </c:if>
 
     <c:if test="${hasPluginWarnings}">

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public class TrustStore extends CertificateStore
      * @param alias the name (key) under which the certificate is to be stored in the store (cannot be null or empty).
      * @param pemRepresentation The PEM representation of the certificate to add (cannot be null or empty).
      * @throws CertificateStoreConfigException if a single certificate could not be found
+     * @throws CertificateStoreReadOnlyException if the stores are read-only
      */
     public void installCertificate( String alias, String pemRepresentation ) throws CertificateStoreConfigException
     {
@@ -66,6 +67,7 @@ public class TrustStore extends CertificateStore
             throw new IllegalArgumentException( "Argument 'pemRepresentation' cannot be null." );
         }
         alias = alias.trim();
+        checkWritable();
 
         // Check that there is a certificate for the specified alias
         try

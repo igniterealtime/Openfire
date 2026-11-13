@@ -82,6 +82,11 @@ public class CsiModule extends BasicModule
         }
 
         @Override
+        public boolean isEnabled() {
+            return CsiManager.ENABLED.getValue();
+        }
+
+        @Override
         public boolean handleElement(LocalClientSession session, Element bound, Element element)
         {
             if (element.getName().equals("active")) {

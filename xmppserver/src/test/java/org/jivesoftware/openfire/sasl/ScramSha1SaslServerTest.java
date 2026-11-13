@@ -345,11 +345,10 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
     }
 
     /**
-     * Verifies that a refused SCRAM attempt (a locked account, or a blocked username or address) goes through the same
-     * steps as an attempt for a user that does not exist: a normal server-first message with a fake salt and the
-     * default iteration count, then a failure at client-final whatever the proof. It performs the same salt and
-     * iteration lookups, so that it takes as long, but never looks up a key. Otherwise anyone could learn, without a
-     * password, that an existing account is locked (OF-2279).
+     * Verifies that a SCRAM attempt refused by a block of its username from its IP address, or of its IP address, goes
+     * through the same steps as an attempt for a user that does not exist: a normal server-first message with a fake
+     * salt and the default iteration count, then a not-authorized failure at client-final whatever the proof. It
+     * performs the same salt and iteration lookups, so that it takes as long, but never looks up a key (OF-2279).
      */
     @Test
     public void testRefusedAttemptLooksLikeUnknownUser() throws Exception
@@ -390,6 +389,38 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
         assertArrayEquals(unknownFirst.salt, refusedFirst.salt, "a refused attempt must be given the salt an unknown user gets");
         assertEquals(unknownFirst.iterations, refusedFirst.iterations, "a refused attempt must be given the iteration count an unknown user gets");
         assertEquals(unknownFinal.getMessage(), refusedFinal.getMessage(), "a refused attempt must fail at client-final as an unknown user does");
+        assertEquals(Failure.NOT_AUTHORIZED, SASLAuthentication.failureOf(refusedFinal), "a refused attempt must be answered as a wrong password is");
+        assertEquals(Failure.NOT_AUTHORIZED, SASLAuthentication.failureOf(unknownFinal), "an unknown user must be answered as a wrong password is");
+    }
+
+    /**
+     * Verifies that a SCRAM attempt for a username that is locked out (its account is locked, or the per-username limit
+     * has blocked it) is sent a server-first message, looks up no key, and fails at client-final with account-disabled,
+     * whatever the proof (OF-2279).
+     */
+    @Test
+    public void testLockedOutAttemptFailsWithAccountDisabled() throws Exception
+    {
+        // Setup test fixture.
+        final String username = "lockeduser";
+        authFactory.when(() -> AuthFactory.getSalt(eq(username), anyString())).thenThrow(new UserNotFoundException());
+        authFactory.when(() -> AuthFactory.getIterations(eq(username), anyString())).thenThrow(new UserNotFoundException());
+        final LocalSession session = mock(LocalSession.class);
+        when(session.getHostAddress()).thenReturn("192.0.2.1");
+        when(loginLimits.tryAcquireAttempt(username, "192.0.2.1")).thenReturn(null);
+        when(loginLimits.isLockedOut(username)).thenReturn(true);
+        final Map<String, Object> props = new HashMap<>();
+        props.put(LocalSession.class.getCanonicalName(), session);
+        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, props, ScramSha1TestFixtures.SUPPORTED_MECHANISMS, ScramSha1TestFixtures.SUPPORTED_CHANNEL_BINDING_TYPES);
+
+        // Execute system under test.
+        final FirstExchangeResult first = FirstExchangeResult.fromFirstServerResponse(new String(server.evaluateResponse(createClientInitialMessage("n,,", username, ScramSha1TestFixtures.CLIENT_NONCE)), StandardCharsets.UTF_8));
+        final SaslException failure = assertThrows(SaslException.class, () -> server.evaluateResponse(finalMessageWithProof(first.serverNonce, new byte[expectedProofLengthBytes()])), "a locked-out attempt must fail at client-final");
+
+        // Verify result.
+        assertEquals(Failure.ACCOUNT_DISABLED, SASLAuthentication.failureOf(failure), "a locked-out attempt must be answered account-disabled");
+        authFactory.verify(() -> AuthFactory.getStoredKey(anyString(), anyString()), never().description("a locked-out attempt must not look up the stored key"));
+        authFactory.verify(() -> AuthFactory.getServerKey(anyString(), anyString()), never().description("a locked-out attempt must not look up the server key"));
     }
 
     /**

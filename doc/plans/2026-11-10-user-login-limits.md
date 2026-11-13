@@ -31,7 +31,7 @@ Add brute-force protection for XMPP user logins, equivalent to the protection th
 | 2 | one address, any username | that address may not attempt any username for the block duration | 40 in 15 minutes, blocked for 15 minutes |
 | 3 | one username, from any address | the account is locked through `LockOutManager` for a set duration | 50 in 1 hour, locked for 30 minutes |
 
-The feature is off by default. While a block or lock applies, every attempt is refused with the same `not-authorized` failure, before the password is evaluated. An admin console page sets the limits and lists the active blocks.
+The feature is off by default. While a block or lock applies, every attempt is refused before the password is evaluated: with `account-disabled` for a locked account or a username blocked by tier 3, and with `not-authorized` for a tier 1 or tier 2 block. An admin console page sets the limits and lists the active blocks.
 
 The decision and the options considered are recorded in `doc/adr/008-login-limits-for-user-accounts.md`.
 
@@ -88,10 +88,10 @@ Each has a `system_property.*` description in `openfire_i18n.properties`. With `
 - When an administrator unlocks an account (`LockOutEventListener.accountUnlocked`), the tier 3 counter and cache block for that username are cleared, so the next failure does not lock it again at once.
 - Usernames and addresses are escaped before they reach logs or audit entries (`UserLoginLimitManager.forLog`), so control characters cannot forge log lines.
 
-### 6. Refuse before the password is evaluated, with one answer
-- When a password mechanism knows the username, it first checks whether the account is locked and then reserves the attempt (decision 4). If the account is locked or the reservation is refused, the attempt fails with `not-authorized` without evaluating the credentials.
-- This also closes a password-guessing hole that exists today for accounts locked by an administrator: for SCRAM (and DIGEST-MD5) the lockout is only checked after the credentials are verified, so a locked account answers `account-disabled` to a correct password and `not-authorized` to a wrong one. With the check at the username, a locked account answers `not-authorized` whatever the password. This applies whether or not the login limits are enabled. The lock check after a successful exchange in `SASLAuthentication` stays as a backstop, and also answers `not-authorized`; when the early check in the same attempt found the account not locked (recorded on the reservation), the backstop relies on it rather than querying again, because `LockOutManager` does not cache that an account is not locked and the second lookup would cost a database query on every login. A lock set during the exchange is then seen on the next login. Mechanisms without an early check (EXTERNAL), a failed early check, and an authorization identity other than the username are still checked after the exchange.
-- Over SCRAM, a refused attempt continues the exchange with the salt and iteration count an admitted attempt would get (the account's own, or a generated salt for an unknown user), looks up no stored keys, and fails at the client's final message with the same failure as a wrong proof, so neither the refusal nor the account's existence is visible at an earlier step.
+### 6. Refuse before the password is evaluated, with an answer that does not depend on it
+- When a password mechanism knows the username, it first checks whether the account is locked and then reserves the attempt (decision 4). If the account is locked or the reservation is refused, the attempt fails without evaluating the credentials: with `account-disabled` when the username is locked out from every address (its account is locked, or tier 3 has blocked it, whether or not a lock could be set), and otherwise with `not-authorized`, the answer to a wrong password (`SASLAuthentication.refusalFailure`, through `UserLoginLimitManager.isLockedOut`).
+- This also closes a password-guessing hole that exists today for accounts locked by an administrator: for SCRAM (and DIGEST-MD5) the lockout is only checked after the credentials are verified, so a locked account answers `account-disabled` to a correct password and `not-authorized` to a wrong one. With the check at the username, a locked account answers `account-disabled` whatever the password, for every mechanism (PLAIN and FAST tokens answered `not-authorized` before). Anyone who knows a username can learn that its account is locked; a genuine user who is locked out is told so, rather than seeing what looks like a wrong password. This applies whether or not the login limits are enabled. The lock check after a successful exchange in `SASLAuthentication` stays as a backstop, and also answers `account-disabled`; when the early check in the same attempt found the account not locked (recorded on the reservation), the backstop relies on it rather than querying again, because `LockOutManager` does not cache that an account is not locked and the second lookup would cost a database query on every login. A lock set during the exchange is then seen on the next login. Mechanisms without an early check (EXTERNAL), a failed early check, and an authorization identity other than the username are still checked after the exchange.
+- Over SCRAM, a refused attempt continues the exchange with the salt and iteration count an admitted attempt would get (the account's own, or a generated salt for an unknown user), looks up no stored keys, and fails at the client's final message, so neither the refusal nor the account's existence is visible at an earlier step.
 - If the early lock check itself throws (for example for a username `LockOutManager` cannot turn into a JID), the attempt is not refused on that alone: the backstop still stops a locked account, and refusing would turn a lookup bug into a login outage.
 - Refused attempts are not counted, so a block does not extend itself.
 
@@ -109,9 +109,9 @@ Each has a `system_property.*` description in `openfire_i18n.properties`. With `
 |---|---|
 | `auth/UserLoginLimitManager` (new) | Settings, counters, blocks, tier 3 lock, unlock listener, audit entries |
 | `net/XMPPCallbackHandler` | Takes the session; on `NameCallback` reserves the attempt, refusing a blocked or locked username before the password callbacks |
-| `net/SASLAuthentication` | Passes the session to the callback handler; keeps the reservation on the session; gives it back on success; the post-success lock check answers `not-authorized` |
+| `net/SASLAuthentication` | Passes the session to the callback handler; keeps the reservation on the session; gives it back on success; answers a refusal `account-disabled` or `not-authorized`; the post-success lock check answers `account-disabled` |
 | `sasl/ScramSaslServer` | After parsing client-first: reserves the attempt; a refused attempt gets the same salt and iteration count as an admitted one and fails at client-final |
-| `sasl/AbstractHtSaslServer` | Refuses an attempt the limits block alongside the existing lock check |
+| `sasl/AbstractHtSaslServer` | Refuses an attempt the limits block alongside the existing lock check; a locked account is answered `account-disabled` |
 | `JMXManager` | Reserves JMX attempts (tier 3) and refuses blocked or locked usernames |
 | `XMPPServer` | Creates `UserLoginLimitManager` at start-up and after setup, so its unlock listener is registered on every node |
 | `util/cache/CacheFactory` | Registers the new caches |
@@ -119,7 +119,7 @@ Each has a `system_property.*` description in `openfire_i18n.properties`. With `
 | `i18n/openfire_i18n.properties` | Property descriptions and page text |
 | `documentation/login-limits-guide.html` (new), `documentation/index.html` | Admin guide |
 
-Behaviour change with the feature off: a locked account answers SCRAM and DIGEST-MD5 with `not-authorized` instead of `account-disabled` (decision 6). PLAIN already answered `not-authorized`.
+Behaviour change with the feature off: a locked account answers `account-disabled` whatever the password, for every mechanism (decision 6). Before, SCRAM and DIGEST-MD5 answered `account-disabled` to the correct password only, and PLAIN and FAST tokens answered `not-authorized`.
 
 ---
 
@@ -261,7 +261,7 @@ Tests are written before the code in each session. Inside a worktree, pass `-Dma
 - [x] Disabled by default; with it disabled, nothing is counted or blocked
 - [x] Each tier blocks after its limit, scoped to its key; a tier 1 or 2 block lasts its block duration from the attempt that reached the limit
 - [x] Tier 3 locks through `LockOutManager`, leaves existing locks alone, and an administrator's unlock resets it
-- [x] A locked or blocked account answers `not-authorized` whatever the password, for PLAIN, SCRAM and DIGEST-MD5; over SCRAM a refused attempt gets the same salt and iteration count as an admitted one
+- [x] A refused attempt gets an answer that does not depend on the password, for PLAIN, SCRAM, DIGEST-MD5 and FAST tokens: `account-disabled` for a locked account or a username blocked by tier 3, `not-authorized` for a tier 1 or tier 2 block; over SCRAM a refused attempt gets the same salt and iteration count as an admitted one
 - [ ] Counts are shared across cluster nodes (clustered caches): by construction and unit tests; not run on a cluster
 - [x] JMX failures counted for tier 3; admin console and the "Authenticate a user" command not counted
 - [x] Full `xmppserver` test suite passes

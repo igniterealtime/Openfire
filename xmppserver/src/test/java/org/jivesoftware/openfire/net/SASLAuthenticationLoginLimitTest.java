@@ -195,8 +195,8 @@ public class SASLAuthenticationLoginLimitTest
     }
 
     /**
-     * Verifies that a refused attempt (a locked account, or a blocked username or address) answers not-authorized,
-     * whatever the password, without evaluating the credentials or being counted.
+     * Verifies that an attempt refused by a block of its username from its IP address, or of its IP address, answers
+     * not-authorized, whatever the password, without evaluating the credentials or being counted.
      */
     @Test
     public void testRefusedAttemptAnswersNotAuthorizedWithoutCheckingCredentials()
@@ -220,6 +220,31 @@ public class SASLAuthenticationLoginLimitTest
     }
 
     /**
+     * Verifies that an attempt refused because its username is locked out (its account is locked, or the per-username
+     * limit has blocked it) answers account-disabled, whatever the password, without evaluating the credentials.
+     */
+    @Test
+    public void testLockedOutAttemptAnswersAccountDisabledWithoutCheckingCredentials()
+    {
+        // Setup test fixture.
+        when(loginLimits.tryAcquireAttempt(USER, ADDRESS)).thenReturn(null);
+        when(loginLimits.isLockedOut(USER)).thenReturn(true);
+
+        // Execute system under test.
+        final SASLAuthentication.Status correct = SASLAuthentication.handle(session, plainAuth(USER, PASSWORD), false);
+        final SASLAuthentication.Status wrong = SASLAuthentication.handle(session, plainAuth(USER, "wrong"), false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, correct, "a locked-out attempt with the correct password must fail");
+        assertEquals(SASLAuthentication.Status.failed, wrong, "a locked-out attempt with a wrong password must fail");
+        final ArgumentCaptor<String> responses = ArgumentCaptor.forClass(String.class);
+        verify(connection, times(2).description("each attempt must be answered")).deliverRawText(responses.capture());
+        assertEquals(responses.getAllValues().get(0), responses.getAllValues().get(1), "the answer must not depend on the password");
+        assertTrue(responses.getAllValues().get(0).contains("<account-disabled"), "a locked-out attempt must answer account-disabled: " + responses.getAllValues().get(0));
+        authFactory.verify(() -> AuthFactory.authenticate(anyString(), anyString()), never().description("the credentials of a locked-out attempt must not be evaluated"));
+    }
+
+    /**
      * Verifies that a successful PLAIN login gives back the attempt it reserved, and clears the attempted username.
      */
     @Test
@@ -237,9 +262,8 @@ public class SASLAuthenticationLoginLimitTest
 
     /**
      * Verifies that the lock check after a successful exchange stays as a backstop: if the account turns out to be
-     * locked then (for example, locked while the exchange was in progress), the login still fails, with the same
-     * not-authorized answer as a wrong password rather than one that would confirm the password, and the attempt is
-     * not given back.
+     * locked then (for example, locked while the exchange was in progress), the login still fails, with
+     * account-disabled, and the attempt is not given back.
      */
     @Test
     public void testLockCheckAfterSuccessRemainsAsBackstop()
@@ -254,15 +278,14 @@ public class SASLAuthenticationLoginLimitTest
         assertEquals(SASLAuthentication.Status.failed, status, "a locked account must not authenticate");
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection, times(1).description("the refused login must be answered once")).deliverRawText(response.capture());
-        assertTrue(response.getValue().contains("<not-authorized"), "a lock found after a correct password must be answered with not-authorized");
-        assertFalse(response.getValue().contains("account-disabled"), "a lock found after a correct password must not be answered with account-disabled");
+        assertTrue(response.getValue().contains("<account-disabled"), "a lock found after a correct password must be answered with account-disabled");
         verify(loginLimits, never().description("an attempt refused after the exchange must not be given back")).recordSuccessfulLogin(any());
     }
 
     /**
      * Verifies that when the authorization identity differs from the username whose lock was checked when the attempt
      * was admitted (here only in case), the lock of the authorization identity is still looked up after the exchange,
-     * and a lock found then refuses the login with not-authorized.
+     * and a lock found then refuses the login with account-disabled.
      */
     @Test
     public void testLockCheckAfterExchangeCatchesLockedAuthorizationIdentity()
@@ -279,7 +302,7 @@ public class SASLAuthenticationLoginLimitTest
         verify(lockOutManager, times(1).description("the lock of the authorization identity must be looked up after the exchange")).isAccountDisabled("Alice");
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection, times(1).description("the refused login must be answered once")).deliverRawText(response.capture());
-        assertTrue(response.getValue().contains("<not-authorized"), "a lock found after the exchange must be answered with not-authorized");
+        assertTrue(response.getValue().contains("<account-disabled"), "a lock found after the exchange must be answered with account-disabled");
         verify(loginLimits, never().description("an attempt refused after the exchange must not be given back")).recordSuccessfulLogin(any());
     }
 
@@ -307,7 +330,7 @@ public class SASLAuthenticationLoginLimitTest
     }
 
     /**
-     * Verifies that a completed EXTERNAL (certificate) login is refused, with not-authorized, when the account is
+     * Verifies that a completed EXTERNAL (certificate) login is refused, with account-disabled, when the account is
      * locked: the lock check after the exchange applies to every mechanism.
      */
     @Test
@@ -324,7 +347,7 @@ public class SASLAuthenticationLoginLimitTest
         assertEquals(SASLAuthentication.Status.failed, status, "an EXTERNAL login for a locked account must fail");
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection, times(1).description("the refused login must be answered once")).deliverRawText(response.capture());
-        assertTrue(response.getValue().contains("<not-authorized"), "a locked account must be answered with not-authorized over EXTERNAL too");
+        assertTrue(response.getValue().contains("<account-disabled"), "a locked account must be answered with account-disabled over EXTERNAL too");
     }
 
     /**

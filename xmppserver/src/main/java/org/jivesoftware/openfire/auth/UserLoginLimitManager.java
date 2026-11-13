@@ -530,6 +530,60 @@ public class UserLoginLimitManager implements LockOutEventListener
     }
 
     /**
+     * Returns whether attempts for a username are refused from every IP address: its account is locked through
+     * {@link LockOutManager} (whether or not the limits are enabled), or tier 3 has blocked the username or is at its
+     * limit. A refused attempt for such a username is answered as for a locked account; one refused by a tier 1 or
+     * tier 2 block is answered as a wrong password would be. This does not report a refusal to LockOutManager's
+     * listeners, and a failure to check the lock counts as not locked.
+     *
+     * @param username the username the attempt is for (as provided by the client).
+     * @return true if the username is locked out from every IP address.
+     */
+    public boolean isLockedOut(@Nonnull final String username)
+    {
+        final String user = normalise(username);
+        if (!isAccountName(user)) {
+            return false;
+        }
+        try {
+            if (lockOutManager.get().isAccountDisabled(user)) {
+                return true;
+            }
+        } catch (final RuntimeException e) {
+            Log.debug("Unable to check whether account {} is locked", logName(user), e);
+        }
+        if (!ENABLED.getValue()) {
+            return false;
+        }
+        final String userKey = usernameKey(user);
+        return isLimitReached(usernameFailures.get(userKey), MAX_ATTEMPTS_PER_USERNAME.getValue(), PER_USERNAME_INTERVAL.getValue(), clock.millis())
+            || hasUsernameBlock(username);
+    }
+
+    /**
+     * Returns whether tier 3 holds a block for a username that is in force: one set when the username reached the
+     * limit per username from any IP address. Such a block goes with a LockOutManager lock set at the same time, except
+     * where none could be set (see {@link #tryAcquireAttempt(String, String)}), so an administrator can tell a lock set
+     * by the login limits from one set by hand. False while the limits are disabled or tier 3 is off, as a block then
+     * refuses nothing.
+     *
+     * @param username the username, as given by the client or as the account's name.
+     * @return true if the username is blocked by tier 3.
+     */
+    public boolean hasUsernameBlock(@Nonnull final String username)
+    {
+        if (!ENABLED.getValue() || MAX_ATTEMPTS_PER_USERNAME.getValue() <= 0) {
+            return false;
+        }
+        final String user = normalise(username);
+        if (!isAccountName(user)) {
+            return false;
+        }
+        final UsernameBlock block = usernameBlocks.get(usernameKey(user));
+        return block != null && !block.hasEnded(clock.millis());
+    }
+
+    /**
      * Records that an attempt admitted by {@link #tryAcquireAttempt(String, String)} succeeded: the tier 1 count for
      * its username and address is cleared, and the attempt is given back to the tier 2 and tier 3 counts it was counted
      * in, if those windows are still open (a refund never reduces the count of a later window). Earlier failures in

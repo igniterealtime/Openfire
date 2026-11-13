@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.crypto.Mac;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
@@ -201,11 +202,13 @@ public abstract class ScramSaslServer implements SaslServer
     private State state = State.INITIAL;
 
     /**
-     * Set when the user login limits refuse the attempt at client-first (OF-2279). The exchange then continues as for a
-     * user that does not exist, without looking up any credential, and fails at client-final, so that a refusal (for
-     * example of a locked account) cannot be told apart from an unknown user or a wrong password.
+     * The failure to answer at client-final, set when the attempt is refused at client-first (OF-2279), or null when it
+     * is not. The exchange then continues without looking up any key, and fails at client-final with this failure,
+     * whatever the password: account-disabled for a username that is locked out, and otherwise not-authorized, the same
+     * answer as for a wrong password.
      */
-    private boolean refused;
+    @Nullable
+    private Failure refusal;
     private String nonce;
     private String serverFirstMessage;
     private String clientFirstMessageBare;
@@ -472,25 +475,25 @@ public abstract class ScramSaslServer implements SaslServer
 
         // Apply the user login limits before any key is looked up (OF-2279). A refused attempt is sent the server-first
         // message an attempt that is not refused would get (the account's own salt and iteration count, or a fake salt
-        // for a user that does not exist), looks up no key and fails at client-final, so the answer depends neither on
-        // the password nor on whether the account is locked or a block applies.
+        // for a user that does not exist), looks up no key and fails at client-final, so the answer does not depend on
+        // the password.
         if (username.indexOf('@') >= 0) {
             // The SCRAM username is the localpart (RFC 6120 section 6.3.7), and no account has an '@' in its name, so
             // this attempt cannot succeed. It is refused without being counted: the limits normalise 'alice@domain' to
             // 'alice', so counting it would build up failures against alice from a client that has her right password.
-            refused = true;
+            refusal = Failure.NOT_AUTHORIZED;
         } else {
             try {
                 SASLAuthentication.admitPasswordAttempt(props == null ? null : (LocalSession) props.get(LocalSession.class.getCanonicalName()), username);
-                refused = false;
+                refusal = null;
             } catch (final SaslFailureException e) {
-                refused = true;
+                refusal = e.getFailure() != null ? e.getFailure() : Failure.NOT_AUTHORIZED;
             }
         }
 
         nonce = clientNonce + UUID.randomUUID().toString();
 
-        final byte[] salt = refused ? getSaltWithoutCreating(username) : getOrCreateSalt(username);
+        final byte[] salt = refusal != null ? getSaltWithoutCreating(username) : getOrCreateSalt(username);
         final int iterations = getIterations(username);
         serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(salt), iterations);
 
@@ -569,9 +572,9 @@ public abstract class ScramSaslServer implements SaslServer
             throw new SaslException("Invalid client final message: channel binding payload does not match expected payload");
         }
 
-        if (refused) {
-            // The same failure as a wrong proof, without looking up any credential.
-            throw new SaslException("Authentication failed for: '"+username+"'");
+        if (refusal != null) {
+            // Refused without looking up any credential, whatever the proof.
+            throw new SaslFailureException(refusal, "Authentication failed for: '"+username+"'");
         }
 
         try {
@@ -703,7 +706,7 @@ public abstract class ScramSaslServer implements SaslServer
         clientFirstMessageBare = null;
         expectedChannelBindingPayloadInFinalClientMessage = null;
         gs2CbindName = null;
-        refused = false;
+        refusal = null;
         state = State.INITIAL;
     }
 

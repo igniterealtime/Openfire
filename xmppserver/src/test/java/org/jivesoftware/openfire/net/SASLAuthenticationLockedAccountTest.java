@@ -67,9 +67,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * Verifies, through {@link SASLAuthentication} with the real {@link UserLoginLimitManager} and the login limits turned
- * off, that an account locked by an administrator gets the same not-authorized answer whether the password is right or
- * wrong, for SCRAM-SHA-1 and DIGEST-MD5, without its password being checked (OF-2279, decision 6). Before, both
- * mechanisms answered account-disabled to a correct password only.
+ * off, that an account locked by an administrator is answered account-disabled whether the password is right or wrong,
+ * for SCRAM-SHA-1, DIGEST-MD5 and PLAIN, without its password being checked (OF-2279). Before, SCRAM-SHA-1 and
+ * DIGEST-MD5 answered account-disabled to a correct password only, and PLAIN answered not-authorized.
  *
  * @author Matthew Vivian
  */
@@ -105,7 +105,7 @@ public class SASLAuthenticationLockedAccountTest
         Fixtures.clearExistingProperties();
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         XMPPServer.setInstance(Fixtures.mockXMPPServer());
-        SaslMechanismCatalog.setEnabledMechanisms(List.of("SCRAM-SHA-1", "DIGEST-MD5"));
+        SaslMechanismCatalog.setEnabledMechanisms(List.of("SCRAM-SHA-1", "DIGEST-MD5", "PLAIN"));
 
         lockOutManager = mock(LockOutManager.class);
         when(lockOutManager.isAccountDisabled(USER)).thenReturn(true);
@@ -124,7 +124,7 @@ public class SASLAuthenticationLockedAccountTest
     }
 
     /**
-     * Verifies that a locked account answers SCRAM-SHA-1 with not-authorized at the end of the exchange, the same for
+     * Verifies that a locked account answers SCRAM-SHA-1 with account-disabled at the end of the exchange, the same for
      * the right and a wrong password, and that no key is looked up, so no proof is verified. (The salt and iteration
      * count are looked up and discarded, as for an unknown user, so that a refusal takes as long.)
      */
@@ -139,7 +139,7 @@ public class SASLAuthenticationLockedAccountTest
         final String wrong = scramFailure("wrong");
 
         // Verify result.
-        assertTrue(right.contains("<not-authorized"), "a locked account must answer not-authorized to the right password");
+        assertTrue(right.contains("<account-disabled"), "a locked account must answer account-disabled to the right password: " + right);
         assertEquals(wrong, right, "a locked account must answer the right and a wrong password the same way");
         authFactory.verify(() -> AuthFactory.getStoredKey(anyString(), anyString()), never().description("a locked account's stored key must not be looked up"));
         authFactory.verify(() -> AuthFactory.getServerKey(anyString(), anyString()), never().description("a locked account's server key must not be looked up"));
@@ -147,7 +147,7 @@ public class SASLAuthenticationLockedAccountTest
     }
 
     /**
-     * Verifies that a locked account answers DIGEST-MD5 with not-authorized, the same for the right and a wrong
+     * Verifies that a locked account answers DIGEST-MD5 with account-disabled, the same for the right and a wrong
      * password, and that its password is not read.
      */
     @Test
@@ -161,9 +161,43 @@ public class SASLAuthenticationLockedAccountTest
         final String wrong = digestMd5Failure("wrong");
 
         // Verify result.
-        assertTrue(right.contains("<not-authorized"), "a locked account must answer not-authorized to the right password");
+        assertTrue(right.contains("<account-disabled"), "a locked account must answer account-disabled to the right password: " + right);
         assertEquals(wrong, right, "a locked account must answer the right and a wrong password the same way");
         authFactory.verifyNoInteractions();
+    }
+
+    /**
+     * Verifies that a locked account answers PLAIN with account-disabled, the same for the right and a wrong password,
+     * and that its password is not verified.
+     */
+    @Test
+    public void testLockedAccountOverPlainAnswersTheSameForRightAndWrongPassword() throws Exception
+    {
+        // Setup test fixture.
+        assertFalse(UserLoginLimitManager.ENABLED.getValue(), "this test is about locks with the login limits turned off");
+
+        // Execute system under test.
+        final String right = plainFailure(PASSWORD);
+        final String wrong = plainFailure("wrong");
+
+        // Verify result.
+        assertTrue(right.contains("<account-disabled"), "a locked account must answer account-disabled to the right password: " + right);
+        assertEquals(wrong, right, "a locked account must answer the right and a wrong password the same way");
+        authFactory.verifyNoInteractions();
+    }
+
+    /**
+     * Runs a PLAIN exchange on a new session and returns the last stanza the server sent.
+     */
+    private String plainFailure(final String password) throws Exception
+    {
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = newSession(connection, "PLAIN");
+        final String initialResponse = Base64.getEncoder().encodeToString(("\0" + USER + "\0" + password).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        final Element auth = element("auth", initialResponse);
+        auth.addAttribute("mechanism", "PLAIN");
+        assertEquals(SASLAuthentication.Status.failed, SASLAuthentication.handle(session, auth, false), "a locked account must not authenticate");
+        return lastStanza(connection);
     }
 
     /**

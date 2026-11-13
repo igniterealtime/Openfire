@@ -744,9 +744,9 @@ public class SASLAuthentication {
                         // Interception!  This person is locked out, fail instead!
                         Log.info("SASL authentication for account '{}' succeeded, but the account is locked out. Failing the authentication attempt for session '{}'.", saslServer.getAuthorizationID(), session);
                         LockOutManager.getInstance().recordFailedLogin(saslServer.getAuthorizationID());
-                        // Answered as a wrong password would be: account-disabled here would tell a client that the
-                        // password it guessed is right.
-                        throw new SaslFailureException(Failure.NOT_AUTHORIZED);
+                        // Password mechanisms answer a locked account account-disabled before the password is checked,
+                        // so this answer reveals nothing about the password either.
+                        throw new SaslFailureException(Failure.ACCOUNT_DISABLED);
                     }
                     recordSuccessfulPasswordAttempt(session);
 
@@ -799,15 +799,7 @@ public class SASLAuthentication {
         catch ( SaslException ex )
         {
             Log.debug( "SASL negotiation failed for session: {}", session, ex );
-            final Failure failure;
-            if ( ex instanceof SaslFailureException && ((SaslFailureException) ex).getFailure() != null )
-            {
-                failure = ((SaslFailureException) ex).getFailure();
-            }
-            else
-            {
-                failure = Failure.NOT_AUTHORIZED;
-            }
+            final Failure failure = failureOf( ex );
 
             // The attempt was counted when it was admitted, so a failure only clears its reservation.
             session.removeSessionData(SASL_LOGIN_ATTEMPT);
@@ -834,9 +826,47 @@ public class SASLAuthentication {
     }
 
     /**
+     * Returns the failure to answer a SASL exception with: that of the exception, or of the first exception in its
+     * causes that carries one (a mechanism wraps an exception thrown by its callback handler, such as the refusal of
+     * {@link #admitPasswordAttempt(LocalSession, String)}); or not-authorized if none does.
+     */
+    @Nonnull
+    public static Failure failureOf(@Nonnull final SaslException ex)
+    {
+        for (Throwable cause = ex; cause != null; cause = cause.getCause() == cause ? null : cause.getCause()) {
+            if (cause instanceof SaslFailureException failureException && failureException.getFailure() != null) {
+                return failureException.getFailure();
+            }
+        }
+        return Failure.NOT_AUTHORIZED;
+    }
+
+    /**
+     * Returns the failure to refuse an attempt with, once the user login limits have refused it: account-disabled when
+     * the username is locked out from every IP address (its account is locked, or the per-username limit has blocked
+     * it), and otherwise not-authorized, the same answer as for a wrong password. Either way the answer does not depend
+     * on the password, which has not been checked.
+     *
+     * @param username the username of the refused attempt.
+     * @return the failure to answer the attempt with.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2279">OF-2279: Login limits for user accounts</a>
+     */
+    @Nonnull
+    public static Failure refusalFailure(@Nonnull final String username)
+    {
+        try {
+            return UserLoginLimitManager.getInstance().isLockedOut(username) ? Failure.ACCOUNT_DISABLED : Failure.NOT_AUTHORIZED;
+        } catch (final RuntimeException e) {
+            Log.debug("Unable to determine whether {} is locked out; answering its refused attempt not-authorized.", UserLoginLimitManager.forLog(username), e);
+            return Failure.NOT_AUTHORIZED;
+        }
+    }
+
+    /**
      * Applies the user login limits to a password authentication attempt, as soon as its mechanism knows the username
      * and before the credentials are evaluated. If the account is locked, or a login limit blocks the attempt, the
-     * attempt is refused with not-authorized, the same answer as for a wrong password. Otherwise, with a session, the
+     * attempt is refused without its password being checked: with account-disabled if the username is locked out from
+     * every IP address, and otherwise with not-authorized (see {@link #refusalFailure(String)}). Otherwise, with a session, the
      * attempt is counted against the limits (see {@link UserLoginLimitManager#tryAcquireAttempt(String, String)}) and
      * its reservation is recorded on the session (see {@link #SASL_LOGIN_ATTEMPT}), so that a success can give the
      * attempt back; an attempt that does not succeed, for whatever reason, stays counted. Without a session a success
@@ -848,7 +878,8 @@ public class SASLAuthentication {
      * @param session the session that is authenticating, or null if the mechanism has none (then the attempt is checked
      *                without an address, and not counted).
      * @param username the username the peer provided.
-     * @throws SaslFailureException with {@link Failure#NOT_AUTHORIZED} if the attempt is refused.
+     * @throws SaslFailureException with {@link Failure#ACCOUNT_DISABLED} or {@link Failure#NOT_AUTHORIZED} if the
+     *                              attempt is refused.
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2279">OF-2279: Login limits for user accounts</a>
      */
     public static void admitPasswordAttempt(@Nullable final LocalSession session, @Nonnull final String username) throws SaslFailureException
@@ -857,7 +888,7 @@ public class SASLAuthentication {
         if (session == null) {
             if (!loginLimits.isAttemptAllowed(username, null)) {
                 Log.debug("Refusing the authentication attempt for '{}' before evaluating its credentials, as the account is locked or a login limit applies.", UserLoginLimitManager.forLog(username));
-                throw new SaslFailureException(Failure.NOT_AUTHORIZED, "The account is locked or a login limit applies.");
+                throw new SaslFailureException(refusalFailure(username), "The account is locked or a login limit applies.");
             }
             return;
         }
@@ -865,7 +896,7 @@ public class SASLAuthentication {
         final UserLoginLimitManager.Reservation reservation = loginLimits.tryAcquireAttempt(username, getHostAddress(session));
         if (reservation == null) {
             Log.debug("Refusing the authentication attempt for '{}' before evaluating its credentials, as the account is locked or a login limit applies. Session: {}", UserLoginLimitManager.forLog(username), session);
-            throw new SaslFailureException(Failure.NOT_AUTHORIZED, "The account is locked or a login limit applies.");
+            throw new SaslFailureException(refusalFailure(username), "The account is locked or a login limit applies.");
         }
         session.setSessionData(SASL_LOGIN_ATTEMPT, reservation);
     }

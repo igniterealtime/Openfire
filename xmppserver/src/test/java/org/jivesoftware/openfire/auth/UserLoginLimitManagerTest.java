@@ -2411,6 +2411,87 @@ public class UserLoginLimitManagerTest
     }
 
     /**
+     * Verifies that an account locked through LockOutManager counts as locked out, whether or not the limits are
+     * enabled, and that asking does not report a refused login to LockOutManager's listeners.
+     */
+    @Test
+    public void testLockedAccountIsLockedOut()
+    {
+        // Setup test fixture.
+        when(lockOutManager.isAccountDisabled(USER)).thenReturn(true);
+
+        // Execute system under test & verify result.
+        assertTrue(manager.isLockedOut("Alice"), "a locked account must count as locked out");
+        UserLoginLimitManager.ENABLED.setValue(false);
+        assertTrue(manager.isLockedOut(USER), "a locked account must count as locked out while the limits are disabled");
+        assertFalse(manager.isLockedOut(OTHER_USER), "an account that is not locked and has no block must not count as locked out");
+        verify(lockOutManager, never().description("asking must not report a refused login")).recordFailedLogin(anyString());
+    }
+
+    /**
+     * Verifies that a username blocked by the per-username limit counts as locked out, including one whose account is
+     * not locked (an administrator's), so that its attempts get the same answer as those for a locked account; and that
+     * it no longer does once the block has ended.
+     */
+    @Test
+    public void testUsernameBlockIsLockedOut()
+    {
+        // Setup test fixture.
+        UserLoginLimitManager.MAX_ATTEMPTS_PER_USERNAME.setValue(3L);
+        administrators.add(USER);
+        fail(USER, ADDRESS, 4);
+
+        // Execute system under test & verify result.
+        assertTrue(manager.hasUsernameBlock(USER), "the per-username limit must hold a block for the username");
+        assertTrue(manager.isLockedOut(USER), "a username blocked by the per-username limit must count as locked out");
+        clock.advance(LOCKOUT_DURATION);
+        assertFalse(manager.hasUsernameBlock(USER), "the block must end after the lockout duration");
+        assertFalse(manager.isLockedOut(USER), "a username whose block has ended must not count as locked out");
+    }
+
+    /**
+     * Verifies that blocks of a username from one IP address and of an IP address do not count as locked out, as they
+     * do not apply to the account from everywhere.
+     */
+    @Test
+    public void testPairAndAddressBlocksAreNotLockedOut()
+    {
+        // Setup test fixture.
+        UserLoginLimitManager.MAX_ATTEMPTS_PER_PAIR.setValue(2L);
+        UserLoginLimitManager.MAX_ATTEMPTS_PER_ADDRESS.setValue(3L);
+        fail(USER, ADDRESS, 2);
+        fail(OTHER_USER, OTHER_ADDRESS, 3);
+
+        // Execute system under test & verify result.
+        assertFalse(manager.isLoginAllowed(USER, ADDRESS), "the pair must be blocked");
+        assertFalse(manager.isLoginAllowed(OTHER_USER, OTHER_ADDRESS), "the address must be blocked");
+        assertFalse(manager.isLockedOut(USER), "a block from one IP address must not count as locked out");
+        assertFalse(manager.isLockedOut(OTHER_USER), "a block of an IP address must not count as locked out");
+        assertFalse(manager.hasUsernameBlock(USER), "the per-username limit must hold no block");
+    }
+
+    /**
+     * Verifies that no username block is reported while the limits are disabled or the per-username limit is off, as
+     * a block left in the cache then refuses nothing.
+     */
+    @Test
+    public void testUsernameBlockIsNotReportedWhileOff()
+    {
+        // Setup test fixture.
+        UserLoginLimitManager.MAX_ATTEMPTS_PER_USERNAME.setValue(3L);
+        administrators.add(USER);
+        fail(USER, ADDRESS, 4);
+
+        // Execute system under test & verify result.
+        UserLoginLimitManager.MAX_ATTEMPTS_PER_USERNAME.setValue(0L);
+        assertFalse(manager.hasUsernameBlock(USER), "no block must be reported while the per-username limit is off");
+        UserLoginLimitManager.MAX_ATTEMPTS_PER_USERNAME.setValue(3L);
+        UserLoginLimitManager.ENABLED.setValue(false);
+        assertFalse(manager.hasUsernameBlock(USER), "no block must be reported while the limits are disabled");
+        assertFalse(manager.isLockedOut(USER), "a username must not count as locked out by a block while the limits are disabled");
+    }
+
+    /**
      * Returns every block in force, ordered by tier and then by when it ends.
      */
     private List<UserLoginLimitManager.ActiveBlock> activeBlocks()

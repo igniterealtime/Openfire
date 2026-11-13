@@ -94,7 +94,7 @@ class HtSaslServerTest {
 
             final SaslFailureException error = assertThrows(SaslFailureException.class,
                 () -> server.evaluateResponse(message("user", PROOF)));
-            assertEquals(Failure.NOT_AUTHORIZED, error.getFailure());
+            assertEquals(Failure.ACCOUNT_DISABLED, error.getFailure(), "a locked account must be answered account-disabled, whatever the token (OF-2279)");
             verify(lockOutManager).recordFailedLogin("user");
             tokens.verifyNoInteractions();
         }
@@ -123,6 +123,32 @@ class HtSaslServerTest {
             assertEquals(Failure.NOT_AUTHORIZED, error.getFailure(), "a blocked username must get the same answer as an invalid token");
             tokens.verifyNoInteractions();
             verify(loginLimits, never().description("a FAST attempt must not be counted")).tryAcquireAttempt(anyString(), any());
+        }
+    }
+
+    /**
+     * A username the per-username login limit has blocked from every IP address (OF-2279) must be refused before the
+     * token is validated, with account-disabled, as for a locked account.
+     */
+    @Test
+    void lockedOutUsernameIsAnsweredAccountDisabled() throws Exception {
+        final LockOutManager lockOutManager = mock(LockOutManager.class);
+        final UserLoginLimitManager loginLimits = mock(UserLoginLimitManager.class);
+        final LocalSession session = sessionExpecting("user");
+        when(session.getHostAddress()).thenReturn("192.0.2.1");
+        when(loginLimits.isLoginAllowed("user", "192.0.2.1")).thenReturn(false);
+        when(loginLimits.isLockedOut("user")).thenReturn(true);
+        try (final var lockOut = mockStatic(LockOutManager.class);
+             final var limits = mockStatic(UserLoginLimitManager.class);
+             final var tokens = mockStatic(FastTokenManager.class)) {
+            lockOut.when(LockOutManager::getInstance).thenReturn(lockOutManager);
+            limits.when(UserLoginLimitManager::getInstance).thenReturn(loginLimits);
+            final HtSaslServer server = new HtSaslServer(FastTokenManager.HT_SHA_256_NONE, propsFor(session));
+
+            final SaslFailureException error = assertThrows(SaslFailureException.class,
+                () -> server.evaluateResponse(message("user", PROOF)), "a locked-out username must be refused");
+            assertEquals(Failure.ACCOUNT_DISABLED, error.getFailure(), "a locked-out username must be answered as a locked account");
+            tokens.verifyNoInteractions();
         }
     }
 

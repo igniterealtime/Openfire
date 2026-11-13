@@ -99,7 +99,6 @@
 <head>
     <title><fmt:message key="server2server.settings.testing.title"/></title>
     <meta name="pageID" content="server-connectiontest"/>
-    <script src="js/server-connectiontest.js"></script>
     <link rel="stylesheet" type="text/css" href="style/server-connectiontest.css">
 </head>
 <body>
@@ -161,6 +160,7 @@
         </form>
     </admin:contentBox>
 
+    <script src="js/server-connectiontest.js"></script>
 </body>
 </html>
 

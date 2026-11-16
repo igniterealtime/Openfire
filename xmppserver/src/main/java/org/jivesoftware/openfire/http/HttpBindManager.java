@@ -326,9 +326,10 @@ public final class HttpBindManager implements CertificateEventListener {
         .build();
 
     /**
-     * Number of entries in the per-connection HTTP header cache. Jetty allocates the cache (about 96 KB at the
-     * default of 1024) for every connection, which adds up for BOSH clients that hold long-lived connections and
-     * repeat few headers. A value of 0 disables the cache.
+     * Capacity of the per-connection HTTP header cache, measured in trie nodes (roughly one per cached character of
+     * header name and value), not in headers. A header whose name and value do not fit in the remaining capacity is
+     * not cached. Jetty allocates the cache (about 96 KB at the default of 1024) for every connection, which adds up
+     * for BOSH clients that hold long-lived connections and repeat few headers. A value of 0 disables the cache.
      */
     public static final SystemProperty<Integer> HTTP_BIND_HEADER_CACHE_SIZE = SystemProperty.Builder.ofType(Integer.class)
         .setKey("httpbind.header-cache.size")

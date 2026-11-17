@@ -73,9 +73,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * List of domains, subdomains and virtual hostnames of the remote server that were
      * validated with this server. The remote server is allowed to send packets to this
      * server from any of the validated domains.
-     *
-     * Domains are added by the thread that processes data from the remote server, and read by other threads, such as
-     * the one that closes the session.
      */
     private final Set<String> validatedDomains = ConcurrentHashMap.newKeySet();
 

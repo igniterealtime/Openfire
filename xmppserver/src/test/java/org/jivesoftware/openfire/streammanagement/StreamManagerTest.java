@@ -35,8 +35,10 @@ import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -65,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -1801,6 +1804,58 @@ public class StreamManagerTest
         assertFalse(sender.isAlive(), "The thread that sends the stanza must finish once the lock is released.");
         assertNull(failure.get(), "Sending the stanza must not fail, but it threw: " + failure.get());
         assertEquals(0, unacknowledgedStanzaCount(sm), "A stanza that is sent after the unacknowledged stanzas of the session were handled must not be tracked, as it would never be handled.");
+    }
+
+    /**
+     * Stream Management elements that close the session with a stream error before they are processed any further.
+     */
+    static Stream<Named<Element>> invalidStreamManagementElements()
+    {
+        return Stream.of(
+            Named.of("acknowledgement with a value that is not a number", ack(StreamManager.NAMESPACE_V3, "not-a-number")),
+            Named.of("acknowledgement with a negative value", ack(StreamManager.NAMESPACE_V3, "-1")),
+            Named.of("acknowledgement with a value above 2^32-1", ack(StreamManager.NAMESPACE_V3, String.valueOf(StreamManager.MASK + 1))),
+            Named.of("resume request without a 'previd'", smElement("resume", StreamManager.NAMESPACE_V3).addAttribute("h", "0"))
+        );
+    }
+
+    /**
+     * Verifies that the stream error that closes a session for an invalid Stream Management element describes the
+     * stanzas that are unacknowledged when it is built, and reads them under the lock of the stream manager (OF-3420).
+     * The threads that deliver stanzas to the session change those stanzas while they hold that lock.
+     *
+     * The test holds the lock while another thread processes the element, and sends a stanza before it releases it.
+     */
+    @ParameterizedTest
+    @MethodSource("invalidStreamManagementElements")
+    void streamErrorForInvalidElementReadsUnacknowledgedStanzasUnderLock(final Element element) throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+        final Thread processor = new Thread(() -> {
+            try {
+                sm.process(element);
+            } catch (final Throwable t) {
+                failure.set(t);
+            }
+        }, "OF-3420-processor");
+
+        // Execute system under test.
+        synchronized (sm) {
+            processor.start();
+            awaitBlockedOn(processor, sm);
+            sm.sentStanza(message("2"));
+        }
+        processor.join(TimeUnit.SECONDS.toMillis(10));
+
+        // Verify result.
+        assertFalse(processor.isAlive(), "The thread that processes the element must finish once the lock is released.");
+        assertNull(failure.get(), "Processing the element must not fail, but it threw: " + failure.get());
+        final String streamError = assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition);
+        assertTrue(streamError.toLowerCase(Locale.ROOT).contains("our last unacknowledged stanza: 2"), "The stream error must name the stanza that was sent last before it was built, but was: " + streamError);
     }
 
     /**

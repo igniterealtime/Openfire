@@ -212,7 +212,7 @@ public class StreamManager {
                     resumeRequest = ResumeRequest.from(element);
                 } catch (MalformedResumeRequestException e) {
                     Log.info( "Closing client session that sent a malformed 'resume' request. Error message: {}. Affected session: {}", e.getMessage(), session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, e.getMessage() + " Our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, e.getMessage() + " Our last unacknowledged stanza: " + describeLastUnacknowledgedStanza() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
@@ -617,6 +617,15 @@ public class StreamManager {
     }
 
     /**
+     * Describes the last stanza sent to the client that the client has not acknowledged yet, for use in error messages.
+     *
+     * @return the sequence number of the last unacknowledged stanza, or "(none)" when there is none.
+     */
+    private synchronized String describeLastUnacknowledgedStanza() {
+        return unacknowledgedServerStanzas.isEmpty() ? "(none)" : String.valueOf(unacknowledgedServerStanzas.getLast().x);
+    }
+
+    /**
      * Checks a value of 'h' against the stanzas that were sent, on a stream on which the acknowledged count has not
      * rolled over.
      *
@@ -682,7 +691,7 @@ public class StreamManager {
 
             if ( !validateClientAcknowledgement(h) ) {
                 // All paths leading up to here should have checked for this. Race condition?
-                throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last unacknowledged stanza: " + describeLastUnacknowledgedStanza() );
             }
 
             final long oldH = clientProcessedStanzas.get();
@@ -726,21 +735,21 @@ public class StreamManager {
                     h = Long.parseLong(hValue);
                 } catch (NumberFormatException e) {
                     Log.warn( "Closing client session. Client sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + describeLastUnacknowledgedStanza() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
                 if (h < 0) {
                     Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + describeLastUnacknowledgedStanza() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
                 if (h > MASK) {
                     Log.warn( "Closing client session. Client sends value for SM 'h' that is larger than 2^32-1: {}, affected session: {}", h, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + describeLastUnacknowledgedStanza() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
@@ -750,8 +759,8 @@ public class StreamManager {
 
                 synchronized ( this ) {
                     if (!validateClientAcknowledgement(h)) {
-                        Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x, session );
-                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                        Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, describeLastUnacknowledgedStanza(), session );
+                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + describeLastUnacknowledgedStanza() );
                         final long sendCount = unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x;
                         error.getElement().addElement( QName.get( "handled-count-too-high", namespace ) ).addAttribute( "h", String.valueOf( h ) ).addAttribute( "send-count", String.valueOf( sendCount ) );
                         // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).

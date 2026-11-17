@@ -79,8 +79,7 @@ public class StreamManager {
     private final Logger Log;
 
     /**
-     * Whether the session can be resumed. It is read without a lock by threads other than the one that changes it, such
-     * as the thread of a connection that resumes the session, and the listener that handles the closing of a connection.
+     * Whether the session can be resumed.
      */
     private volatile boolean resume = false;
 
@@ -150,9 +149,8 @@ public class StreamManager {
     private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
 
     /**
-     * Delegates that can determine if a detached session can be terminated. They are added and removed by any thread,
-     * and read by the task that cleans up detached sessions. A copy of this set reflects it at a single moment, so that
-     * a delegate that is replaced while the copy is made cannot be missed together with its replacement.
+     * Delegates that can determine if a detached session can be terminated. A copy of this set reflects it at a single
+     * moment, so that a delegate that is replaced while the copy is made cannot be missed together with its replacement.
      */
     private final Set<TerminationDelegate> terminationDelegates = new CopyOnWriteArraySet<>();
 

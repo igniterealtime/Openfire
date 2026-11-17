@@ -510,12 +510,14 @@ public class StreamManager {
             Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed does not have the stream management resumption feature enabled.", fullJid);
             return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
-        if (otherSession.getStreamManager().namespace == null) {
-            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed disabled SM functionality as a response to an earlier error.", fullJid);
+        // OF-3420: Read once, as the session to be resumed can disable Stream Management concurrently (e.g. when it is closed).
+        final String otherNamespace = otherSession.getStreamManager().namespace;
+        if (otherNamespace == null) {
+            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed disabled SM functionality, as a response to an earlier error or because it is being closed.", fullJid);
             return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
-        if (!otherSession.getStreamManager().namespace.equals(namespace)) {
-            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", fullJid, otherSession.getStreamManager().namespace, namespace);
+        if (!otherNamespace.equals(namespace)) {
+            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", fullJid, otherNamespace, namespace);
             return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
         if (!otherSession.getStreamManager().validateClientAcknowledgement(h)) {

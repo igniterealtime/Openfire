@@ -186,6 +186,7 @@ public class RespondingServerStanzaHandlerTest
         handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
         handler.process(SASL_SUCCESS, reader);
         handler.process(streamHeader("stream-2"), reader);
+        assertTrue(authenticatedSession.isDone(), "Test fixture: authentication must be reported once the remote server has restarted the stream after SASL success.");
         final LocalSession reportedSession = authenticatedSession.join();
         final int closeCallbacks = closeFuture.getNumberOfDependents();
         clearInvocations(connection);
@@ -271,6 +272,7 @@ public class RespondingServerStanzaHandlerTest
         handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
         handler.process(SASL_SUCCESS, reader);
         handler.process(streamHeader("stream-2"), reader);
+        assertTrue(authenticatedSession.isDone(), "Test fixture: authentication must be reported once the remote server has restarted the stream after SASL success.");
         final LocalSession reportedSession = authenticatedSession.join();
 
         // Execute system under test.

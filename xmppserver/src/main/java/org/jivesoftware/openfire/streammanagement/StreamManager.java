@@ -111,9 +111,10 @@ public class StreamManager {
     private final LocalSession session;
 
     /**
-     * Namespace to be used in stanzas sent to client (depending on XEP-0198 version used by client)
+     * Namespace to be used in stanzas sent to client (depending on XEP-0198 version used by client), or null when Stream
+     * Management is not enabled.
      */
-    private String namespace;
+    private volatile String namespace;
 
     /**
      * Count of how many stanzas/packets

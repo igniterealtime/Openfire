@@ -133,6 +133,15 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             return;
         }
 
+        // OF-3447: a connection that is closed by another thread is marked closed before its close callbacks run. A stream header that arrives in between is ignored too.
+        if (startOfStream && sessionCreated && connection.isClosed()) {
+            LOG.debug("Ignoring stream header from remote domain '{}', as the connection is closed. SASL EXTERNAL succeeded: {}, authentication reported: {}. Connection: {}", domainPair.getRemote(), saslExternalSucceeded, isSessionAuthenticated.isDone(), connection);
+            if (saslExternalSucceeded && !isSessionAuthenticated.isDone()) {
+                abandonSessionInitiation();
+            }
+            return;
+        }
+
         if (startOfStream) {
             // Capture the prefixed namespaces declared on the peer's stream header so that prefixed content in
             // stanzas can be parsed later (OF-2556), using the same pull-parser extraction as every other session type.
@@ -177,11 +186,11 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
                 // OF-3447: after SASL success, the restarted stream (and its session) is the one to report.
                 if (saslExternalSucceeded && !isSessionAuthenticated.isDone()) {
-                    if (session.isAuthenticated()) {
+                    if (session.isAuthenticated() && !connection.isClosed()) {
                         reportSessionAuthenticated();
                     } else {
-                        // OF-3447: authentication was lost, e.g. as the connection was closed by another thread before the stream was restarted.
-                        LOG.debug("Session with stream ID '{}' of remote domain '{}' is not authenticated after the stream was restarted. Session initiation failed. Session: {}", session.getStreamID(), domainPair.getRemote(), session);
+                        // OF-3447: authentication was lost, or the connection closed, e.g. by another thread while the stream was restarted.
+                        LOG.debug("Session with stream ID '{}' of remote domain '{}' is not authenticated, or its connection closed, after the stream was restarted. Session initiation failed. Connection closed: {}, session: {}", session.getStreamID(), domainPair.getRemote(), connection.isClosed(), session);
                         abandonSessionInitiation();
                     }
                 }

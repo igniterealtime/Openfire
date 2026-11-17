@@ -41,6 +41,7 @@ import org.xmpp.packet.StreamError;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -344,6 +345,113 @@ public class RespondingServerStanzaHandlerTest
         // Verify result.
         assertFalse(authenticatedSession.isDone(), "Authentication must not be reported for a stream that is restarted after the connection closed.");
         assertNull(handler.getSession(), "No session must be available when session initiation failed.");
+    }
+
+    /**
+     * Asserts that a stream header that the remote server sends after SASL success is ignored when the connection is
+     * closed but its close callbacks have not yet run (as when it is closed by another thread), and that the failure to
+     * initiate a session is reported, rather than authentication.
+     */
+    @Test
+    public void testRestartedStreamOnClosedConnectionBeforeCloseCallbacksReportsFailure() throws Exception
+    {
+        // Setup test fixture.
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
+        handler.process(SASL_SUCCESS, reader);
+        doReturn(true).when(connection).isClosed();
+        clearInvocations(connection);
+
+        // Execute system under test.
+        handler.process(streamHeader("stream-2"), reader);
+
+        // Verify result.
+        verify(connection, never().description("The connection must not be bound to a new session after it closed.")).reinit(any());
+        assertFalse(closeFuture.isDone(), "Test fixture: the close callbacks must not have run.");
+        assertFalse(authenticatedSession.isDone(), "Authentication must not be reported for a stream that is restarted on a closed connection.");
+        assertTrue(handler.haveAttemptedAllAuthenticationMethods().isDone(), "The failure to initiate a session must be reported when the stream is restarted on a closed connection.");
+        assertNull(handler.getSession(), "No session must be available when session initiation failed.");
+    }
+
+    /**
+     * Asserts that authentication is not reported when the connection is closed while the stream that the remote server
+     * restarted after SASL success is processed, before the close callbacks have run (as when it is closed by another
+     * thread), and that the failure to initiate a session is reported instead.
+     */
+    @Test
+    public void testConnectionClosedWhileStreamIsRestartedReportsFailure() throws Exception
+    {
+        // Setup test fixture.
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
+        handler.process(SASL_SUCCESS, reader);
+        final AtomicBoolean closed = new AtomicBoolean(false);
+        doAnswer(invocation -> closed.get()).when(connection).isClosed();
+        doAnswer(invocation -> { closed.set(true); return null; }).when(connection).reinit(any());
+
+        // Execute system under test.
+        handler.process(streamHeader("stream-2"), reader);
+
+        // Verify result.
+        assertTrue(closed.get(), "Test fixture: the connection must have been closed while the stream was restarted.");
+        assertFalse(closeFuture.isDone(), "Test fixture: the close callbacks must not have run.");
+        assertFalse(authenticatedSession.isDone(), "Authentication must not be reported when the connection closed while the stream was restarted.");
+        assertTrue(handler.haveAttemptedAllAuthenticationMethods().isDone(), "The failure to initiate a session must be reported when the connection closed while the stream was restarted.");
+        assertNull(handler.getSession(), "No session must be available when session initiation failed.");
+    }
+
+    /**
+     * Asserts that a stream header that the remote server sends after authentication was reported is ignored when the
+     * connection is closed but its close callbacks have not yet run, and that it neither withdraws the session that was
+     * reported nor reports a failure to initiate a session.
+     */
+    @Test
+    public void testStreamHeaderOnClosedConnectionAfterAuthenticationKeepsReportedSession() throws Exception
+    {
+        // Setup test fixture.
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
+        handler.process(SASL_SUCCESS, reader);
+        handler.process(streamHeader("stream-2"), reader);
+        assertTrue(authenticatedSession.isDone(), "Test fixture: authentication must be reported once the remote server has restarted the stream after SASL success.");
+        final LocalSession reportedSession = authenticatedSession.join();
+        doReturn(true).when(connection).isClosed();
+        clearInvocations(connection);
+
+        // Execute system under test.
+        handler.process(streamHeader("stream-3"), reader);
+
+        // Verify result.
+        verify(connection, never().description("The connection must not be bound to a new session after it closed.")).reinit(any());
+        assertFalse(closeFuture.isDone(), "Test fixture: the close callbacks must not have run.");
+        assertSame(reportedSession, handler.getSession(), "The session that was reported must remain the session of the handler.");
+        assertFalse(handler.haveAttemptedAllAuthenticationMethods().isDone(), "A failure to initiate a session must not be reported after authentication was reported.");
+    }
+
+    /**
+     * Asserts that a stream header that the remote server sends after TLS negotiation, before SASL, is ignored when the
+     * connection is closed but its close callbacks have not yet run: the connection is not bound to a new session, and
+     * authentication is not reported.
+     */
+    @Test
+    public void testRestartedStreamAfterTlsOnClosedConnectionIsIgnored() throws Exception
+    {
+        // Setup test fixture.
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_STARTTLS, reader);
+        handler.process(TLS_PROCEED, reader);
+        final LocalSession previousSession = handler.getSession();
+        doReturn(true).when(connection).isClosed();
+        clearInvocations(connection);
+
+        // Execute system under test.
+        handler.process(streamHeader("stream-2"), reader);
+
+        // Verify result.
+        verify(connection, never().description("The connection must not be bound to a new session after it closed.")).reinit(any());
+        assertFalse(closeFuture.isDone(), "Test fixture: the close callbacks must not have run.");
+        assertSame(previousSession, handler.getSession(), "The session of the previous stream must remain the session of the handler.");
+        assertFalse(authenticatedSession.isDone(), "Authentication must not be reported for a stream that is restarted on a closed connection.");
     }
 
     /**

@@ -34,9 +34,11 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -234,20 +236,44 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
 
     /**
-     * Returns true if the request of a new domain was valid. Sessions may receive subsequent
-     * domain validation request. If the validation of the new domain fails then the session and
-     * the underlying TCP connection will be closed.<p>
+     * Processes a dialback request (a 'db:result' element) that the remote server sent on the stream of this session.
      *
-     * For optimization reasons, the same session may be servicing several domains of a
-     * remote server.
+     * A session is authenticated for one domain of the remote server. A request from that domain, or the first request
+     * on the session, is validated, and when the validation fails, the underlying TCP connection may be closed. A request
+     * from another domain, on a session that already authenticated one, is for a further domain on the same stream
+     * (sender multiplexing, XEP-0220 section 2.6.1). Such a request is first checked against the configuration of this
+     * server, and refused with the dialback error that applies: 'item-not-found' for a target domain that is not hosted
+     * here, or 'policy-violation' when the configuration does not allow the request. When it passes those checks, it is
+     * refused with a 'resource-constraint' dialback error, which asks the remote server to establish a new connection for
+     * that domain (XEP-0220 section 2.5). Each of these dialback errors leaves the stream open for the domain that is
+     * already authenticated. Domains are compared in their prepared form (see {@link JID#domainprep(String)}), so that a
+     * domain written in another case is the same domain.
      *
      * @param dbResult the DOM stanza requesting the domain validation.
-     * @return true if the requested domain was valid.
+     * @return true if the requested domain was valid, or the request was refused while keeping the stream open.
      */
     public boolean validateSubsequentDomain(Element dbResult) {
+        final String requested = dbResult.attributeValue("from");
+        final boolean additionalDomain = !validatedDomains.isEmpty() && !isValidatedDomainInPreparedForm(requested);
+
         final DomainPair domainPair = new DomainPair(getServerName(), fromDomain);
         ServerDialback method = new ServerDialback(getConnection(), domainPair);
         try {
+            if (additionalDomain) {
+                // OF-3470: each domain of a remote server gets a connection of its own (XEP-0220 section 2.5).
+                final String recipient;
+                try {
+                    recipient = method.checkRequest(dbResult);
+                } catch (StreamErrorException e) {
+                    if (e.getStreamError().getCondition() != StreamError.Condition.policy_violation) {
+                        throw e;
+                    }
+                    // OF-3470: a refusal by configuration is a dialback error here, so that the stream stays open for the domain that is already authenticated.
+                    throw new ServerDialbackErrorException(dbResult.attributeValue("to"), requested, policyViolation(e.getStreamError().getText()), e);
+                }
+                throw new ServerDialbackErrorException(recipient, requested, new PacketError(PacketError.Condition.resource_constraint, PacketError.Type.wait, "This connection is already authenticated for another domain. Use a new connection for this domain."));
+            }
+
             final String recipient = method.validateRemoteDomain(dbResult, getStreamID());
             final String remoteDomain = dbResult.attributeValue("from");
 
@@ -271,20 +297,22 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
             return true;
         } catch (StreamErrorException e) {
-            Log.info("Unable to validate domain '{}' (full stack trace is logged on debug level): {}", fromDomain, e.getStreamError().getText());
-            Log.debug("Unable to validate domain '{}'", fromDomain, e);
+            Log.info("Unable to validate domain '{}' (full stack trace is logged on debug level): {}", requested, e.getStreamError().getText());
+            Log.debug("Unable to validate domain '{}'", requested, e);
             getConnection().deliverRawText(e.getStreamError().toXML());
 
             // Close the underlying connection
             getConnection().close();
         } catch (ServerDialbackErrorException e) {
-            Log.debug( "Unable to validate domain '{}': (full stack trace is logged on debug level): {}", fromDomain, e.getError().getText());
-            Log.debug("Unable to validate domain '{}'", fromDomain, e);
+            Log.debug("Unable to validate domain '{}' on incoming server session {}, which is authenticated for {}: {}", requested, getStreamID(), validatedDomains, e.getError().getText());
+            Log.trace("Unable to validate domain '{}'", requested, e);
 
-            // The namespace was already defined in a parent element that was sent earlier. Strip it from the XML.
-            final Namespace ns = Namespace.get("db", "jabber:server:dialback");
-            final String send = e.toXML().asXML().replaceAll(ns.asXML(), "").replace("  "," ");
-            getConnection().deliverRawText(send);
+            // OF-3470: the error declares the 'db' prefix itself, as the stream header declares it only when dialback is enabled.
+            getConnection().deliverRawText(e.toXML().asXML());
+            if (additionalDomain) {
+                // OF-3470: refusing a further domain leaves the stream open for the domain that is already authenticated.
+                return true;
+            }
         } catch (ServerDialbackKeyInvalidException e) {
             Log.debug( "Dialback key is invalid. Sending verification result to remote domain." );
 
@@ -296,6 +324,53 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             getConnection().close();
         }
         return false;
+    }
+
+    /**
+     * Returns whether the domain is one of the validated domains of this session, when both are compared in their
+     * prepared form (see {@link JID#domainprep(String)}).
+     *
+     * @param domain the domain to look up, as the remote server wrote it.
+     * @return true if the domain was validated for this session, false if it was not, or is not a valid domain.
+     */
+    private boolean isValidatedDomainInPreparedForm(@Nullable final String domain) {
+        if (domain == null) {
+            return false;
+        }
+        final String prepared;
+        try {
+            prepared = JID.domainprep(domain);
+        } catch (IllegalArgumentException e) {
+            Log.trace("Domain '{}' is not a valid domain, and is not taken to be a validated domain of incoming server session {}.", domain, getStreamID(), e);
+            return false;
+        }
+        for (final String validated : validatedDomains) {
+            try {
+                if (prepared.equals(JID.domainprep(validated))) {
+                    return true;
+                }
+            } catch (IllegalArgumentException e) {
+                Log.trace("Validated domain '{}' of incoming server session {} is not a valid domain, and is skipped in the comparison.", validated, getStreamID(), e);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Creates a 'policy-violation' error, which {@link PacketError.Condition} of the Tinder version in use does not offer.
+     *
+     * @param text a description of the error, or null.
+     * @return the error.
+     */
+    private static PacketError policyViolation(@Nullable final String text) {
+        final String ns = "urn:ietf:params:xml:ns:xmpp-stanzas";
+        final Element error = DocumentHelper.createElement("error");
+        error.addAttribute("type", "cancel");
+        error.addElement(QName.get("policy-violation", ns));
+        if (text != null) {
+            error.addElement(QName.get("text", ns)).setText(text);
+        }
+        return new PacketError(error);
     }
 
     /**

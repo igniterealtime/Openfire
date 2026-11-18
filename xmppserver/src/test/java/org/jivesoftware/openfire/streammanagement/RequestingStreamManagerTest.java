@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -405,6 +406,44 @@ public class RequestingStreamManagerTest
         // Verify result.
         verify(sm.session, times(1).description("The connection on which the stream was resumed must be closed.")).close();
         verify(sessionManager, after(200).never().description("A session that was ended meanwhile must not be ended again.")).terminateDetached(any());
+    }
+
+    /**
+     * Verifies that a stream on which stanzas were sent while the request to enable Stream Management awaited its
+     * answer, which are counted as acknowledged without being tracked, is not resumed when the peer reports an 'h' that
+     * is lower than that count, as the stanzas that follow could not be numbered as the peer counts them. The connection
+     * is closed with a stream error and the detached session is ended. An 'h' that is not lower resumes the stream.
+     */
+    @ParameterizedTest
+    @CsvSource({"0, false", "1, false", "2, true", "3, true"})
+    public void resumedBelowStanzasCountedWhileEnablePendingIsNotResumed(final long h, final boolean resumes) throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useServer().getSessionManager();
+        StreamManager.SERVER_ACTIVE.setValue(true);
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        final RequestingStreamManager targetSm = newStreamManager();
+        targetSm.requestEnable(StreamManager.NAMESPACE_V3);
+        targetSm.sentStanza(message("pending-1"));
+        targetSm.sentStanza(message("pending-2"));
+        targetSm.process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)).addAttribute("resume", "true").addAttribute("id", "some-sm-id"));
+        targetSm.sentStanza(message("tracked"));
+        final LocalOutgoingServerSession target = target(targetSm);
+        doReturn(true).when(target).resumeWithConnectionOf(any(), anyLong());
+        final RequestingStreamManager sm = newStreamManager();
+        sm.getResumeRequest().send(target, List.of(StreamManager.NAMESPACE_V3));
+
+        // Execute system under test.
+        sm.process(resumed("some-sm-id", String.valueOf(h)));
+
+        // Verify result.
+        if (resumes) {
+            verify(target, times(1).description("An 'h' that is not lower than the stanzas counted before must resume the stream.")).resumeWithConnectionOf((LocalOutgoingServerSession) sm.session, h);
+        } else {
+            verify(target, never().description("An 'h' that is lower than the stanzas counted before must not resume the stream (h: " + h + ").")).resumeWithConnectionOf(any(), anyLong());
+            verify(sm.session, times(1).description("The connection must be closed with a stream error (h: " + h + ").")).close(argThat(error -> error != null && error.getCondition() == StreamError.Condition.undefined_condition));
+            verify(sessionManager, timeout(5000).times(1).description("The detached session must be ended (h: " + h + ").")).terminateDetached(target);
+        }
     }
 
     /**

@@ -191,6 +191,15 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
                     return;
                 }
 
+                if (resumeTarget != null) {
+                    // OF-2425: a session that the fallback creates on a separate connection would never ask to resume the stream, and its connection would stay open.
+                    Log.debug("TLS negotiation with '{}' was unsuccessful on a connection that was opened to resume the stream of session {}. Not falling back to Server Dialback over a plain connection; the attempt to resume fails.", domainPair.getRemote(), resumeTarget);
+                    stanzaHandler.setSession(null);
+                    stanzaHandler.setAttemptedAllAuthenticationMethods();
+                    ctx.channel().close();
+                    return;
+                }
+
                 if (ServerDialback.isEnabled() && connectionConfigDoesNotRequireTls()) {
                     Log.debug("By configuration, TLS is not required. As the Server Dialback authentication mechanism is available, it may be used for authentication over a plain connection.");
 

@@ -505,6 +505,29 @@ public class RequestingStreamManager extends StreamManager
     }
 
     /**
+     * Asks the peer to acknowledge the stanzas that it received ({@code <r/>}), when Stream Management is enabled and
+     * stanzas are unacknowledged. This is for a connection that has gone quiet: an acknowledgement is otherwise only
+     * requested after a number of stanzas (see {@code stream.management.requestFrequency}), so the last stanzas that are
+     * sent before a connection goes quiet would stay unacknowledged, and would be sent again or returned to their
+     * senders when the connection is closed for being idle.
+     *
+     * @return true if an acknowledgement was requested.
+     */
+    public boolean requestAcknowledgementOfUnacknowledgedStanzas()
+    {
+        final int unacknowledged;
+        synchronized ( this ) {
+            unacknowledged = getUnacknowledgedEntries().size();
+            if ( !isEnabled() || unacknowledged == 0 ) {
+                return false;
+            }
+            requestOutboundAcknowledgement();
+        }
+        Log.debug( "Requested an acknowledgement from the peer of session {}, which has {} unacknowledged stanza(s) on a connection that has gone quiet.", session, unacknowledged );
+        return true;
+    }
+
+    /**
      * Checks whether the peer sent a valid acknowledgement ({@code <a/>}) on the stream since it was most recently
      * resumed (see {@link #onResume(JID, long)}), which shows that the resumed stream works. This is also true when the
      * stream was never resumed.

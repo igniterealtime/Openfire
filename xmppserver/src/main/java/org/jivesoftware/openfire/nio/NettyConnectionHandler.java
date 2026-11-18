@@ -57,6 +57,7 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
     public static final AttributeKey<Long> WRITTEN_BYTES = AttributeKey.valueOf("WRITTEN_BYTES");
     static final AttributeKey<StanzaHandler> HANDLER = AttributeKey.valueOf("HANDLER");
     public static final AttributeKey<Boolean> IDLE_FLAG = AttributeKey.valueOf("IDLE_FLAG");
+    static final AttributeKey<Boolean> IDLE_CLOSE_DEFERRED = AttributeKey.valueOf("IDLE_CLOSE_DEFERRED");
 
     private final CompletableFuture<H> stanzaHandlerFuture = new CompletableFuture<>();
 
@@ -221,11 +222,14 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
 
     /**
      * Updates the system counter of read bytes. This information is used by the incoming
-     * bytes statistic.
+     * bytes statistic. Also marks the connection as no longer idle (see {@link NettyIdleStateKeepAliveHandler}).
      *
      * @param ctx the context for the channel reading bytes
      */
     private void updateReadBytesCounter(ChannelHandlerContext ctx) {
+        // OF-2425: Any inbound data is activity, also on connections without a traffic handler, such as those that Openfire opens to other servers, on which an acknowledgement shows that the peer is there.
+        ctx.channel().attr(IDLE_FLAG).set(null);
+        ctx.channel().attr(IDLE_CLOSE_DEFERRED).set(null);
         ChannelTrafficShapingHandler handler = (ChannelTrafficShapingHandler) ctx.channel().pipeline().get(TRAFFIC_HANDLER_NAME);
         if (handler != null) {
             long currentBytes = handler.trafficCounter().currentReadBytes();
@@ -238,7 +242,6 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
                 delta = currentBytes - prevBytes;
             }
             ctx.channel().attr(READ_BYTES).set(currentBytes);
-            ctx.channel().attr(IDLE_FLAG).set(null);
             ServerTrafficCounter.incrementIncomingCounter(delta);
         }
     }

@@ -27,6 +27,8 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -34,6 +36,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
+import static org.jivesoftware.openfire.nio.NettyConnectionHandler.IDLE_CLOSE_DEFERRED;
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.IDLE_FLAG;
 
 /**
@@ -86,9 +89,32 @@ public class NettyIdleStateKeepAliveHandler extends ChannelDuplexHandler {
                 if (doPing) {
                     sendPingPacket(channel);
                 }
+                // OF-2425: the answer clears the stanzas that would otherwise be sent again or returned when the connection is closed for being idle. It also counts as activity.
+                // Not for a closed connection, as the session writes to the connection that it was resumed on.
+                final NettyConnection connection = channel.attr(CONNECTION).get();
+                if (connection != null && !connection.isClosed() && connection.getSession() instanceof LocalOutgoingServerSession outgoingSession) {
+                    outgoingSession.getStreamManager().requestAcknowledgementOfUnacknowledgedStanzas();
+                }
             } else {
                 // Idle flag already present. Connection has been idle for a while. Close it.
                 final NettyConnection connection = channel.attr(CONNECTION).get();
+                // OF-2425: The session writes to its current connection, which is another one once it was resumed after this one closed. Send nothing for a closed connection.
+                final boolean open = connection != null && !connection.isClosed();
+                if (connection != null && !open) {
+                    Log.debug("Not asking for or sending an acknowledgement before closing idle connection {}, as it is closed already.", connection);
+                }
+                // OF-2425: A request made when the connection went quiet does not cover stanzas sent after it. Ask once more, and close at the next event if no answer arrives.
+                if (open && connection.getSession() instanceof LocalOutgoingServerSession outgoingSession
+                    && channel.attr(IDLE_CLOSE_DEFERRED).getAndSet(true) == null
+                    && outgoingSession.getStreamManager().requestAcknowledgementOfUnacknowledgedStanzas()) {
+                    Log.debug("Not closing idle connection {} yet, as stanzas on it are unacknowledged: waiting for an answer to the request for an acknowledgement.", connection);
+                    super.userEventTriggered(ctx, evt);
+                    return;
+                }
+                // OF-2425: An unrequested acknowledgement (XEP-0198 § 4) tells the remote server which stanzas were handled, so that it does not send them again after the close.
+                if (open && connection.getSession() instanceof LocalIncomingServerSession incomingSession) {
+                    incomingSession.getStreamManager().acknowledgeInboundStanzas();
+                }
                 Log.debug("Closing connection because of inactivity: {}", connection);
                 connection.close(new StreamError(StreamError.Condition.connection_timeout, doPing ? "Connection has been idle and did not respond to a keep-alive check." : "Connection has been idle."));
             }

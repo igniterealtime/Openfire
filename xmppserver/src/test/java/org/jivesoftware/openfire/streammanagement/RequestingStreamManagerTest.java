@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.nio.NettyConnection;
 import org.jivesoftware.openfire.nio.NettyConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyIdleStateKeepAliveHandler;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -1072,6 +1073,31 @@ public class RequestingStreamManagerTest
         // Verify result.
         assertTrue(sm.isEnabled(), "Stream Management must be enabled.");
         assertFalse(sm.getResume(), "The stream must not be resumable, as resumption was not requested.");
+    }
+
+    /**
+     * Verifies that the maximum number of unacknowledged stanzas on a connection that Openfire opened to another server
+     * is that of server connections, not that of clients: the session is closed only once more stanzas than that
+     * maximum are unacknowledged.
+     */
+    @Test
+    public void maximumOfUnacknowledgedStanzasIsThatOfServerConnections() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        RequestingStreamManager.MAX_UNACKNOWLEDGED.setValue(2);
+        final RequestingStreamManager sm = enabledStreamManager();
+        final Connection connection = sm.session.getConnection();
+
+        // Execute system under test.
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        final boolean closedAtMaximum = mockingDetails(connection).getInvocations().stream().anyMatch(invocation -> invocation.getMethod().getName().equals("close"));
+        sm.sentStanza(message("3"));
+
+        // Verify result.
+        assertFalse(closedAtMaximum, "The session must not be closed while no more stanzas than the maximum for server connections are unacknowledged, also when that is more than the maximum for clients.");
+        verify(connection, times(1).description("The session must be closed once more stanzas than the maximum for server connections are unacknowledged.")).close(argThat((StreamError error) -> error != null && error.getCondition() == StreamError.Condition.policy_violation));
     }
 
     /**

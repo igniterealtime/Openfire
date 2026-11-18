@@ -1172,7 +1172,7 @@ public class StreamManagerTest extends AbstractStreamManagerTest
     void reachingMaximumOfUnacknowledgedStanzasKeepsStreamOpen(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "3");
+        end.setMaximumUnacknowledgedStanzas(3);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
 
@@ -1198,7 +1198,7 @@ public class StreamManagerTest extends AbstractStreamManagerTest
     void exceedingMaximumOfUnacknowledgedStanzasClosesStream(final End end)
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "3");
+        end.setMaximumUnacknowledgedStanzas(3);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
@@ -1225,7 +1225,7 @@ public class StreamManagerTest extends AbstractStreamManagerTest
     void exceedingMaximumOfUnacknowledgedStanzasDoesNotDiscardThem(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "3");
+        end.setMaximumUnacknowledgedStanzas(3);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
@@ -1248,7 +1248,7 @@ public class StreamManagerTest extends AbstractStreamManagerTest
     void exceedingMaximumOfUnacknowledgedStanzasDisablesResumption(final End end)
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        end.setMaximumUnacknowledgedStanzas(1);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.newStreamManager(session);
         end.enableResumable(sm, StreamManager.NAMESPACE_V3);
@@ -1273,7 +1273,7 @@ public class StreamManagerTest extends AbstractStreamManagerTest
     void exceedingMaximumOfUnacknowledgedStanzasClosesStreamOnce(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        end.setMaximumUnacknowledgedStanzas(1);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));

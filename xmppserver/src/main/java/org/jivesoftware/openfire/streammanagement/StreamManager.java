@@ -841,10 +841,11 @@ public abstract class StreamManager {
     }
 
     /**
-     * The maximum amount of stanzas we keep, waiting for ack.
+     * The maximum amount of stanzas we keep, waiting for ack. When more stanzas are unacknowledged, the session is
+     * closed.
      * @return The maximum number of stanzas.
      */
-    private int getMaximumUnacknowledgedStanzas()
+    int getMaximumUnacknowledgedStanzas()
     {
         return JiveGlobals.getIntProperty( "stream.management.max-unacked", 10000 );
     }

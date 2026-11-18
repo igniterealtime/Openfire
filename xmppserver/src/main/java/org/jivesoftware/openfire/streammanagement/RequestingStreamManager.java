@@ -91,6 +91,18 @@ import java.util.function.Function;
 public class RequestingStreamManager extends StreamManager
 {
     /**
+     * The maximum number of stanzas that the peer has not acknowledged, on a connection that Openfire opened to another
+     * server. When more are unacknowledged, the session is closed. This is separate from the maximum for clients
+     * ({@code stream.management.max-unacked}), as another server decides when it acknowledges stanzas.
+     */
+    public static final SystemProperty<Integer> MAX_UNACKNOWLEDGED = SystemProperty.Builder.ofType( Integer.class )
+        .setKey( "stream.management.server.max-unacked" )
+        .setDefaultValue( 10000 )
+        .setMinValue( 1 )
+        .setDynamic( true )
+        .build();
+
+    /**
      * The maximum number of stanzas that are queued on a session of which the connection broke while its stream can be
      * resumed. When more are queued, the session is ended, after which the queued stanzas are routed again.
      */
@@ -502,6 +514,12 @@ public class RequestingStreamManager extends StreamManager
             Log.debug( "Unable to determine the address of the peer of session {}.", session, e );
             return null;
         }
+    }
+
+    @Override
+    int getMaximumUnacknowledgedStanzas()
+    {
+        return MAX_UNACKNOWLEDGED.getValue();
     }
 
     /**

@@ -93,6 +93,17 @@ public class DNSUtil {
     }
 
     /**
+     * Whether {@link #resolveXMPPDomain(String, int)} answers for a domain from a DNS override configured on this
+     * server, rather than from DNS.
+     *
+     * @param domain the domain.
+     * @return true when an override (exact, wildcard or global) applies to the domain.
+     */
+    public static boolean hasDnsOverride(String domain) {
+        return resolveOverrideRecursively(domain, new HashSet<>(), 0) != null;
+    }
+
+    /**
      * Returns a collection of host names and ports that the specified XMPP
      * domain can be reached at for server-to-server communication.
      *

@@ -256,7 +256,13 @@ public class NettySessionInitializer {
                 Log.debug("Unable to connect to location '{}' that the peer named for resuming the stream of session {}. Connecting to the hosts of the remote domain of {} instead.", location, resumeTarget, domainPair);
             }
         }
-        if (socketToXmppDomain == null) {
+        if (socketToXmppDomain == null && resumeTarget != null) {
+            // OF-2425: not longer than the detached session is kept, so that a slow attempt does not take the time of the next one.
+            final Duration timeLeft = resumeTarget.getTimeLeftWhileDetached();
+            final Duration timeout = timeLeft == null || timeLeft.compareTo(SocketUtil.RESOLUTION_TIMEOUT.getValue()) > 0 ? SocketUtil.RESOLUTION_TIMEOUT.getValue() : timeLeft;
+            Log.debug("Connecting to the hosts of the remote domain of {} to resume the stream of session {}, for at most {}.", domainPair, resumeTarget, timeout);
+            socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port, timeout);
+        } else if (socketToXmppDomain == null) {
             socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port);
         }
 

@@ -2500,6 +2500,31 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies the time that a detached session is still kept: what remains of its detach timeout since it was detached,
+     * and zero once that has passed.
+     */
+    @Test
+    public void timeLeftWhileDetachedIsWhatRemainsOfDetachTimeout() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession detached = detachedSession(sessionManager);
+        final Duration timeout = sessionManager.getDetachTimeout(detached);
+        assertTrue(timeout.compareTo(Duration.ofSeconds(60)) > 0, "Test fixture expects a detach timeout of more than a minute, but it is " + timeout);
+
+        // Execute system under test.
+        setDetachedSince(detached, Instant.now().minus(timeout).plusSeconds(30));
+        final Duration leftBefore = detached.getTimeLeftWhileDetached();
+        setDetachedSince(detached, Instant.now().minus(timeout).minusSeconds(1));
+        final Duration leftAfter = detached.getTimeLeftWhileDetached();
+
+        // Verify result.
+        assertNotNull(leftBefore, "A detached session with a detach timeout must report the time that it is still kept.");
+        assertTrue(leftBefore.compareTo(Duration.ofSeconds(25)) > 0 && leftBefore.compareTo(Duration.ofSeconds(30)) <= 0, "The time left must be what remains of the detach timeout, about 30 seconds, but was " + leftBefore);
+        assertEquals(Duration.ZERO, leftAfter, "No time must be left once the detach timeout has passed.");
+    }
+
+    /**
      * Verifies that a detached session that another cluster node asks to close is ended now, rather than kept until its
      * detach timeout.
      */

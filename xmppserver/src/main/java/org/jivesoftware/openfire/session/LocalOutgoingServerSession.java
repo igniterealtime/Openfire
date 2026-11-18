@@ -642,6 +642,25 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     }
 
     /**
+     * Returns how much longer this session is kept while it is detached, before it is ended: the time until its detach
+     * timeout (see {@link SessionManager#getDetachTimeout(LocalSession)}) has passed since {@link #getDetachedSince()}.
+     *
+     * @return the time left, which is zero when that time has passed, or null when there is no such limit, as the detach
+     * timeout is negative or the session was never detached.
+     */
+    @Nullable
+    public Duration getTimeLeftWhileDetached()
+    {
+        final Duration timeout = sessionManager.getDetachTimeout(this);
+        final Instant since = detachedSince;
+        if (timeout.isNegative() || since == null) {
+            return null;
+        }
+        final Duration left = Duration.between(Instant.now(), since.plus(timeout));
+        return left.isNegative() ? Duration.ZERO : left;
+    }
+
+    /**
      * Starts an attempt to resume the stream of this session, which is detached, on a new connection, on another thread
      * (see {@link #resumeOnNewConnection()}).
      */

@@ -126,12 +126,26 @@ public class SocketUtil
      */
     public static Map.Entry<Socket, Boolean> createSocketToXmppDomain( String xmppDomain, int port )
     {
-        Log.debug( "Creating a socket connection to XMPP domain '{}' ...", xmppDomain );
+        return createSocketToXmppDomain( xmppDomain, port, RESOLUTION_TIMEOUT.getValue() );
+    }
+
+    /**
+     * Creates a socket connection to an XMPP domain, as {@link #createSocketToXmppDomain(String, int)} does, spending at
+     * most the provided time on resolving its hosts and connecting to them.
+     *
+     * @param xmppDomain The XMPP domain to connect to.
+     * @param port The port to connect to when DNS resolution fails.
+     * @param timeout The maximum time to spend resolving and connecting.
+     * @return a Socket instance that is connected, or null.
+     */
+    public static Map.Entry<Socket, Boolean> createSocketToXmppDomain( @Nonnull final String xmppDomain, final int port, @Nonnull final Duration timeout )
+    {
+        Log.debug( "Creating a socket connection to XMPP domain '{}' (timeout: {}) ...", xmppDomain, timeout );
 
         final Map.Entry<Socket, Boolean> result = createSocket( xmppDomain, () -> {
             Log.debug( "Use DNS to resolve remote hosts for the provided XMPP domain '{}' (default port: {}) ...", xmppDomain, port );
             return DNSUtil.resolveXMPPDomain(xmppDomain, port);
-        }, RESOLUTION_TIMEOUT.getValue(), address -> true );
+        }, timeout, address -> true );
         if ( result == null ) {
             Log.warn( "Unable to create a socket connection to XMPP domain '{}': Unable to connect to any of its remote hosts.", xmppDomain );
         }

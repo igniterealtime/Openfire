@@ -764,6 +764,55 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies that a stanza that is routed again when a connection breaks, and that OutgoingSessionPromise queues and
+     * then hands to the session of a new connection, is tracked by that session as sent again, so that it is returned
+     * to its sender as an error rather than sent a third time when that connection breaks too (decision 4 of OF-2425).
+     * OutgoingSessionPromise queues a copy of the stanza, which must keep the marker of the stanza.
+     */
+    @Test
+    public void stanzaRoutedAgainThroughOutgoingSessionPromiseIsTrackedAsSentAgain() throws Exception
+    {
+        // Setup test fixture.
+        enableStreamManagement();
+        final Message message = message("message");
+        message.setFrom(SENDER);
+        message.setType(Message.Type.chat);
+        session.deliver(message);
+        final PacketRouter firstRouter = mock(PacketRouter.class);
+        session.getStreamManager().onClose(firstRouter, SERVER_ADDRESS);
+        final List<Packet> routedAtFirstBreak = routed(firstRouter);
+        assertEquals(List.of("message"), routedAtFirstBreak.stream().map(Packet::getID).toList(), "Test fixture expects the unacknowledged stanza to be routed again at the first break.");
+
+        final LocalOutgoingServerSession secondSession = newSessionWithStreamManagement("stream-2");
+        secondSession.addOutgoingDomainPair(DOMAIN_PAIR);
+        doReturn(secondSession).when(routingTable).getServerRoute(DOMAIN_PAIR);
+        final OutgoingSessionPromise promise = OutgoingSessionPromise.getInstance();
+        final Field routingTableField = OutgoingSessionPromise.class.getDeclaredField("routingTable");
+        routingTableField.setAccessible(true);
+        final Object originalRoutingTable = routingTableField.get(promise);
+        routingTableField.set(promise, routingTable);
+        try {
+            // Execute system under test.
+            promise.createProcess(DOMAIN_PAIR, routedAtFirstBreak.get(0));
+            final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (UnacknowledgedStanzas.ids(secondSession.getStreamManager()).isEmpty() && System.nanoTime() < deadline) {
+                Thread.onSpinWait();
+            }
+        } finally {
+            routingTableField.set(promise, originalRoutingTable);
+        }
+        final PacketRouter secondRouter = mock(PacketRouter.class);
+        secondSession.getStreamManager().onClose(secondRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        assertEquals(List.of("message"), UnacknowledgedStanzas.sentAgainIds(secondSession.getStreamManager()), "The session of the new connection must track the stanza that OutgoingSessionPromise handed to it as sent again.");
+        final List<Packet> routedAtSecondBreak = routed(secondRouter);
+        assertEquals(1, routedAtSecondBreak.size(), "The stanza must be handled once at the second break, but these were routed: " + routedAtSecondBreak);
+        assertEquals(Message.Type.error, ((Message) routedAtSecondBreak.get(0)).getType(), "A stanza that was sent again must be returned to its sender as an error, not routed again.");
+        assertEquals(SENDER, routedAtSecondBreak.get(0).getTo(), "The error must be addressed to the sender of the stanza.");
+    }
+
+    /**
      * Verifies that a stanza that is unacknowledged when two connections in a row break is sent again once, on the
      * second connection, and is then returned to its sender as an error, or dropped when it is a presence, while a
      * stanza that was first sent on the second connection is routed again (decision 4 of OF-2425).

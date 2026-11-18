@@ -399,17 +399,31 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * longer connect, so that it is not kept to be resumed (XEP-0198): the session is made non-resumable before it is
      * closed. A server session on this cluster node that is detached has no connection to close: it is ended now, as
      * when its detach timeout passes (see {@link #terminateDetached(LocalSession)}), which handles the stanzas that it
-     * holds. A detached session of another type is left as {@link Session#close()} leaves it.
+     * holds. That also applies to a server session that the close listener of its connection detaches after this, as
+     * when that connection was closing already. A detached session of another type is left as {@link Session#close()}
+     * leaves it.
      *
      * @param session The session to close.
      */
     public void closeWithoutResumption(@Nonnull final Session session) {
         session.markNonResumable();
+        final Connection connection = session instanceof LocalServerSession serverSession ? serverSession.getConnection() : null;
         session.close();
+        if (!(session instanceof LocalServerSession serverSession)) {
+            return;
+        }
         // OF-2425: Checked after closing, so that a session that its close listener detached meanwhile is ended too.
-        if (session instanceof LocalServerSession serverSession && serverSession.isDetached()) {
+        if (serverSession.isDetached()) {
             Log.debug("Ending detached server session '{}' ({}), as it is closed on purpose and has no connection to close.", session.getAddress(), session.getStreamID());
             terminateDetached(serverSession);
+        } else if (connection != null) {
+            // OF-2425: A connection that was closing already can have a close listener that found the session resumable before it was made non-resumable, and that detaches it after the check above. End it then (as StreamManager#closeForExceedingMaximum does).
+            connection.getCloseFuture().thenRun(() -> {
+                if (serverSession.isDetached()) {
+                    Log.debug("Ending server session '{}' ({}), which its close listener detached after it was closed on purpose.", session.getAddress(), session.getStreamID());
+                    TaskEngine.getInstance().submit(() -> terminateDetached(serverSession));
+                }
+            });
         }
     }
 

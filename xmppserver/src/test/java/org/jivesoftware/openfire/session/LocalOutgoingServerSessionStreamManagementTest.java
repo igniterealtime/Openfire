@@ -2469,6 +2469,37 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies that a session that Openfire closes on purpose while its connection was closing already, and that the
+     * close listener of that connection detaches afterwards, as it found the session resumable before it was made
+     * non-resumable, is ended once the connection has closed, rather than kept until its detach timeout.
+     */
+    @Test
+    public void sessionDetachedByClosingConnectionAfterCloseOnPurposeIsEnded() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.deliver(message("unacked"));
+
+        // Execute system under test.
+        sessionManager.closeWithoutResumption(resumable);
+        // As the close listener does when it found the session resumable before closeWithoutResumption made it non-resumable.
+        doReturn(true).when(connection).isClosed();
+        resumable.setDetached();
+        assertTrue(sessionManager.isDetached(resumable), "Test fixture expects the close listener to have detached the session.");
+        closeFuture.complete(null);
+
+        // Verify result.
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (sessionManager.isDetached(resumable) && System.nanoTime() < deadline) {
+            Thread.onSpinWait();
+        }
+        assertFalse(sessionManager.isDetached(resumable), "A session that is detached after it was closed on purpose must be ended once its connection has closed.");
+        verify(packetRouter, timeout(5000).times(1).description("The unacknowledged stanza of the ended session must be routed again.")).route(argThat((Packet packet) -> "unacked".equals(packet.getID())));
+    }
+
+    /**
      * Verifies that a detached session that another cluster node asks to close is ended now, rather than kept until its
      * detach timeout.
      */

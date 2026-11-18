@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
@@ -39,6 +40,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -129,7 +131,7 @@ public class SocketUtil
         final Map.Entry<Socket, Boolean> result = createSocket( xmppDomain, () -> {
             Log.debug( "Use DNS to resolve remote hosts for the provided XMPP domain '{}' (default port: {}) ...", xmppDomain, port );
             return DNSUtil.resolveXMPPDomain(xmppDomain, port);
-        }, RESOLUTION_TIMEOUT.getValue() );
+        }, RESOLUTION_TIMEOUT.getValue(), address -> true );
         if ( result == null ) {
             Log.warn( "Unable to create a socket connection to XMPP domain '{}': Unable to connect to any of its remote hosts.", xmppDomain );
         }
@@ -222,17 +224,23 @@ public class SocketUtil
      * creates, and has to meet the same requirements: the stream that is negotiated on it is addressed to the XMPP
      * domain, and the identity of the peer is verified against that domain, not against the location.
      *
+     * Only the addresses that the location resolves to and that the provided filter accepts are connected to (see
+     * {@link #locationAddressFilter(InetAddress)}), so that a peer cannot make Openfire connect to an address that it
+     * should not, such as a loopback address.
+     *
      * Note that this method blocks while performing network IO, for at most the provided timeout.
      *
      * @param xmppDomain The XMPP domain of the peer that named the location.
      * @param location The location, as named by the peer.
      * @param defaultPort The port to connect to when the location names none.
      * @param timeout The maximum time to spend resolving the location and connecting to it.
+     * @param addressFilter Accepts the addresses that the location resolves to that may be connected to.
      * @return a connected socket and whether it uses direct TLS, or null when the location is not valid, a DNS override
-     *         applies to the XMPP domain, or no connection could be established within the timeout.
+     *         applies to the XMPP domain, or no connection could be established within the timeout to an address that
+     *         the filter accepts.
      */
     @Nullable
-    public static Map.Entry<Socket, Boolean> createSocketToLocation( @Nonnull final String xmppDomain, @Nonnull final String location, final int defaultPort, @Nonnull final Duration timeout )
+    public static Map.Entry<Socket, Boolean> createSocketToLocation( @Nonnull final String xmppDomain, @Nonnull final String location, final int defaultPort, @Nonnull final Duration timeout, @Nonnull final Predicate<InetAddress> addressFilter )
     {
         final Location parsed = parseLocation( location );
         if ( parsed == null ) {
@@ -249,7 +257,51 @@ public class SocketUtil
         Log.debug( "Creating a socket connection to location '{}' of XMPP domain '{}' (resolved as an XMPP domain: {}, timeout: {}) ...", location, xmppDomain, resolveAsXmppDomain, timeout );
         return createSocket( xmppDomain + " (location: " + location + ")", () -> resolveAsXmppDomain
             ? DNSUtil.resolveXMPPDomain( parsed.host(), parsed.port() == null ? defaultPort : parsed.port() )
-            : List.of( Set.of( new SrvRecord( parsed.host(), parsed.port() == null ? defaultPort : parsed.port(), false ) ) ), timeout );
+            : List.of( Set.of( new SrvRecord( parsed.host(), parsed.port() == null ? defaultPort : parsed.port(), false ) ) ), timeout, addressFilter );
+    }
+
+    /**
+     * Returns the filter for the addresses that a location that a peer named for reconnecting to it may be connected to
+     * (see {@link #createSocketToLocation(String, String, int, Duration, Predicate)}). A peer names that location, so it
+     * could otherwise make Openfire connect to an address of the host of Openfire, or of its own network. The filter
+     * does not know the addresses of the host of Openfire: one that is not of a kind that is refused, such as a public
+     * address of that host, is accepted.
+     *
+     * Loopback, link-local, unspecified and multicast addresses are never accepted. Private addresses (the IPv4 ranges
+     * of RFC 1918 and IPv6 unique local addresses, RFC 4193) are accepted only when the original connection to the peer,
+     * on which it named the location, was made to a private address too, as between servers on the same private
+     * network. Other addresses are accepted.
+     *
+     * @param addressOfOriginalConnection The address to which the original connection to the peer was made, or null
+     *                                    when it is not known.
+     * @return the filter (never null).
+     */
+    @Nonnull
+    public static Predicate<InetAddress> locationAddressFilter( @Nullable final InetAddress addressOfOriginalConnection )
+    {
+        final boolean privateAllowed = addressOfOriginalConnection != null && isPrivateAddress( addressOfOriginalConnection );
+        return address -> {
+            if ( address.isLoopbackAddress() || address.isLinkLocalAddress() || address.isAnyLocalAddress() || address.isMulticastAddress() ) {
+                return false;
+            }
+            return privateAllowed || !isPrivateAddress( address );
+        };
+    }
+
+    /**
+     * Checks whether an address is a private address: in one of the IPv4 ranges of RFC 1918 (10.0.0.0/8, 172.16.0.0/12
+     * and 192.168.0.0/16), or an IPv6 unique local address (fc00::/7, RFC 4193), or a deprecated IPv6 site-local
+     * address (fec0::/10).
+     *
+     * @param address The address to check.
+     * @return true if the address is private.
+     */
+    static boolean isPrivateAddress( @Nonnull final InetAddress address )
+    {
+        if ( address.isSiteLocalAddress() ) {
+            return true;
+        }
+        return address instanceof Inet6Address && ( address.getAddress()[0] & 0xfe ) == 0xfc;
     }
 
     /**
@@ -259,10 +311,11 @@ public class SocketUtil
      * @param xmppDomain A description of what is connected to, for logging.
      * @param hostResolver Resolves the hosts to connect to, grouped by priority. Called on another thread.
      * @param timeout The maximum time to spend resolving and connecting.
+     * @param addressFilter Accepts the resolved addresses that may be connected to.
      * @return a connected socket and whether it uses direct TLS, or null if no connection could be established.
      */
     @Nullable
-    private static Map.Entry<Socket, Boolean> createSocket( @Nonnull final String xmppDomain, @Nonnull final Supplier<List<Set<SrvRecord>>> hostResolver, @Nonnull final Duration timeout )
+    private static Map.Entry<Socket, Boolean> createSocket( @Nonnull final String xmppDomain, @Nonnull final Supplier<List<Set<SrvRecord>>> hostResolver, @Nonnull final Duration timeout, @Nonnull final Predicate<InetAddress> addressFilter )
     {
         final Instant deadline = Instant.now().plus(timeout);
         final List<Future<Map.Entry<SocketChannel, Boolean>>> futures = new CopyOnWriteArrayList<>();
@@ -292,6 +345,11 @@ public class SocketUtil
                         final ResolvedServiceAddress resolvedAddress = resolver.getNext(); // Blocks.
                         Log.trace("Next resolved address for '{}': {}", xmppDomain, resolvedAddress);
                         if (resolvedAddress == null) {
+                            continue;
+                        }
+
+                        if (!addressFilter.test(resolvedAddress.getInetAddress())) {
+                            Log.debug("Skipping address {} of '{}', which may not be connected to.", resolvedAddress, xmppDomain);
                             continue;
                         }
 

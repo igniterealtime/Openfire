@@ -462,7 +462,10 @@ _xmpps-server._tcp.conference.example.org. 86400 IN SRV 0 5 5270 xmpp.example.or
                     stream. When the remote server named a location to reconnect to when it enabled Stream Management,
                     such as the cluster node that holds its session, the first attempt connects there first. When that
                     connection cannot be made, or that attempt fails, Openfire connects to the remote domain as it does
-                    for any new connection. A location is not used for a remote domain to which a DNS override applies. When the stream is resumed, Openfire first sends the stanzas that the remote server did not
+                    for any new connection. A location is not used for a remote domain to which a DNS override applies.
+                    Openfire does not connect to an address of a location that is a loopback, link-local, unspecified
+                    or multicast address, nor to a private address unless the original connection to the remote server
+                    was made to a private address too. When the stream is resumed, Openfire first sends the stanzas that the remote server did not
                     receive, and then the queued stanzas, in order. A stanza that was sent again before, after an earlier
                     break, is not sent again: as when a stream is not resumed, its sender receives an error, or the
                     stanza is dropped. This differs from XEP-0198, which requires all stanzas that the remote server did

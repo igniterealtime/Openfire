@@ -30,15 +30,21 @@ import java.net.Socket;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the connection to a location that the peer of a stream named for reconnecting to it (XEP-0198 § 3),
- * as made by {@link SocketUtil#createSocketToLocation(String, String, int, Duration)}.
+ * as made by {@link SocketUtil#createSocketToLocation(String, String, int, Duration, java.util.function.Predicate)}.
  */
 public class SocketUtilLocationTest
 {
+    /**
+     * A filter that accepts every address, so that a test can connect to a location on this host.
+     */
+    private static final Predicate<InetAddress> ANY_ADDRESS = address -> true;
+
     private Map<String, SrvRecord> originalDnsOverride;
 
     @BeforeAll
@@ -104,6 +110,70 @@ public class SocketUtilLocationTest
     }
 
     /**
+     * Verifies which addresses of a location may be connected to: never loopback, link-local, unspecified or multicast
+     * addresses; private addresses only when the original connection to the peer was made to a private address too; and
+     * any other address.
+     */
+    @ParameterizedTest
+    @CsvSource(value = {
+        "127.0.0.1, 203.0.113.5, false",
+        "127.0.0.1, 127.0.0.2, false",
+        "::1, , false",
+        "169.254.10.1, 10.0.0.1, false",
+        "fe80::1, fd00::1, false",
+        "0.0.0.0, , false",
+        "::, , false",
+        "224.0.0.1, , false",
+        "ff02::1, , false",
+        "10.0.0.5, 203.0.113.5, false",
+        "10.0.0.5, , false",
+        "10.0.0.5, 10.1.1.1, true",
+        "172.16.0.5, 192.168.1.1, true",
+        "192.168.1.2, 203.0.113.5, false",
+        "fd00::5, 2001:db8::1, false",
+        "fd00::5, fd12::1, true",
+        "fd00::5, 10.0.0.1, true",
+        "203.0.113.7, 203.0.113.5, true",
+        "203.0.113.7, 10.0.0.1, true",
+        "203.0.113.7, , true",
+        "2001:db8::7, , true",
+    })
+    public void locationAddressFilterAcceptsOnlyAddressesThatMayBeConnectedTo(final String address, final String originalAddress, final boolean expected) throws Exception
+    {
+        // Setup test fixture.
+        final Predicate<InetAddress> filter = SocketUtil.locationAddressFilter(originalAddress == null ? null : InetAddress.getByName(originalAddress));
+
+        // Execute system under test.
+        final boolean result = filter.test(InetAddress.getByName(address));
+
+        // Verify result.
+        assertEquals(expected, result, "Address " + address + " of a location, with an original connection to " + originalAddress + ", must " + (expected ? "" : "not ") + "be accepted.");
+    }
+
+    /**
+     * Verifies that no connection is made to a location on this host, whether the location names its IP address or a
+     * domain name that resolves to it, when the filter for locations is used.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"127.0.0.1", "localhost"})
+    public void noConnectionToLocationOnThisHost(final String host) throws Exception
+    {
+        // Setup test fixture.
+        try (final ServerSocket server = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")))
+        {
+            server.setSoTimeout(200);
+            final String location = host + ":" + server.getLocalPort();
+
+            // Execute system under test.
+            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", location, 5269, Duration.ofSeconds(2), SocketUtil.locationAddressFilter(InetAddress.getByName("203.0.113.5")));
+
+            // Verify result.
+            assertNull(result, "No connection must be made to location " + location + " on this host.");
+            assertThrows(java.net.SocketTimeoutException.class, server::accept, "Nothing must have connected to the listener of location " + location + ".");
+        }
+    }
+
+    /**
      * Verifies that a connection is made to a location that names an IP address and port.
      */
     @Test
@@ -115,7 +185,7 @@ public class SocketUtilLocationTest
             final String location = server.getInetAddress().getHostAddress() + ":" + server.getLocalPort();
 
             // Execute system under test.
-            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", location, 5269, Duration.ofSeconds(5));
+            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", location, 5269, Duration.ofSeconds(5), ANY_ADDRESS);
 
             // Verify result.
             assertNotNull(result, "A connection must be made to location " + location);
@@ -140,7 +210,7 @@ public class SocketUtilLocationTest
             final String location = server.getInetAddress().getHostAddress() + ":" + server.getLocalPort();
 
             // Execute system under test.
-            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", location, 5269, Duration.ofSeconds(5));
+            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", location, 5269, Duration.ofSeconds(5), ANY_ADDRESS);
 
             // Verify result.
             assertNull(result, "No connection must be made to a location when a DNS override applies to the domain.");
@@ -158,7 +228,7 @@ public class SocketUtilLocationTest
         try (final ServerSocket server = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")))
         {
             // Execute system under test.
-            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "127.0.0.1", server.getLocalPort(), Duration.ofSeconds(5));
+            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "127.0.0.1", server.getLocalPort(), Duration.ofSeconds(5), ANY_ADDRESS);
 
             // Verify result.
             assertNotNull(result, "A connection must be made to a location that names an IP address without a port.");
@@ -179,7 +249,7 @@ public class SocketUtilLocationTest
         try (final ServerSocket server = new ServerSocket(0, 1, InetAddress.getByName("localhost")))
         {
             // Execute system under test.
-            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "localhost:" + server.getLocalPort(), 5269, Duration.ofSeconds(5));
+            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "localhost:" + server.getLocalPort(), 5269, Duration.ofSeconds(5), ANY_ADDRESS);
 
             // Verify result.
             assertNotNull(result, "A connection must be made to a location that names a domain name and a port.");
@@ -202,7 +272,7 @@ public class SocketUtilLocationTest
             DNSUtil.setDnsOverride(Map.of("node2.example.org", new SrvRecord("127.0.0.1", server.getLocalPort(), false)));
 
             // Execute system under test.
-            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "node2.example.org", 5269, Duration.ofSeconds(5));
+            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "node2.example.org", 5269, Duration.ofSeconds(5), ANY_ADDRESS);
 
             // Verify result.
             assertNotNull(result, "A connection must be made to the host that resolving the domain name of the location gives.");
@@ -225,7 +295,7 @@ public class SocketUtilLocationTest
             DNSUtil.setDnsOverride(Map.of("node2.example.org", new SrvRecord("127.0.0.1", server.getLocalPort(), false)));
 
             // Execute system under test.
-            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "node2.example.org:5270", 5269, Duration.ofSeconds(5));
+            final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "node2.example.org:5270", 5269, Duration.ofSeconds(5), ANY_ADDRESS);
 
             // Verify result.
             assertNotNull(result, "A connection must be made to the host that the DNS override for the domain name of the location names.");
@@ -249,7 +319,7 @@ public class SocketUtilLocationTest
         }
 
         // Execute system under test.
-        final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "127.0.0.1:" + closedPort, 5269, Duration.ofSeconds(5));
+        final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "127.0.0.1:" + closedPort, 5269, Duration.ofSeconds(5), ANY_ADDRESS);
 
         // Verify result.
         assertNull(result, "No connection must be made to a location at which nothing accepts connections.");
@@ -264,7 +334,7 @@ public class SocketUtilLocationTest
         // Setup test fixture.
 
         // Execute system under test.
-        final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "2001:db8::1", 5269, Duration.ofSeconds(5));
+        final Map.Entry<Socket, Boolean> result = SocketUtil.createSocketToLocation("example.org", "2001:db8::1", 5269, Duration.ofSeconds(5), ANY_ADDRESS);
 
         // Verify result.
         assertNull(result, "No connection must be made to a location that is not valid.");

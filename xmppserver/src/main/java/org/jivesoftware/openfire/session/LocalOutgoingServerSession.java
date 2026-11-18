@@ -453,12 +453,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             return;
         }
         synchronized (streamManager) {
+            // OF-2425: read again under the lock, as the session may have been resumed on a new connection meanwhile, which happens under this lock.
+            final Connection current = conn;
+            final boolean currentOpen = current != null && !current.isClosed();
             // OF-2425: decided under the lock, so that no stanza is sent once stanzas are queued (decision 7).
-            if (streamManager.queue(packet, !open)) {
+            if (streamManager.queue(packet, !currentOpen)) {
                 return;
             }
-            if (open) {
-                connection.deliver(packet);
+            if (currentOpen) {
+                current.deliver(packet);
                 streamManager.sentStanza(packet);
                 return;
             }

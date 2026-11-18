@@ -157,7 +157,7 @@
         if ( negotiationShown && negotiationTimeout < 0 ) {
             errors.put( "sm-negotiation-timeout", "invalid" );
         }
-        if ( resumptionShown && detachTimeout < -1 ) {
+        if ( resumptionShown && detachTimeout < 0 ) {
             errors.put( "sm-detach-timeout", "invalid" );
         }
         if ( resumptionShown && maxQueued < 0 ) {
@@ -177,7 +177,7 @@
                 LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.setValue( Duration.ofSeconds( negotiationTimeout ) );
             }
             if ( resumptionShown && SessionManager.SERVER_SESSION_DETACH_TIMEOUT.getValue().toSeconds() != detachTimeout ) {
-                SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue( detachTimeout < 0 ? Duration.ofMillis( -1 ) : Duration.ofSeconds( detachTimeout ) );
+                SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue( Duration.ofSeconds( detachTimeout ) );
             }
             if ( resumptionShown && RequestingStreamManager.MAX_QUEUED_WHILE_BROKEN.getValue() != maxQueued ) {
                 RequestingStreamManager.MAX_QUEUED_WHILE_BROKEN.setValue( maxQueued );
@@ -343,7 +343,7 @@
     pageContext.setAttribute( "smNegotiationTimeout", LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue().toSeconds() );
     pageContext.setAttribute( "smResumeEnabled", StreamManager.SERVER_RESUME_ENABLED.getValue() );
     final Duration serverDetachTimeout = SessionManager.SERVER_SESSION_DETACH_TIMEOUT.getValue();
-    pageContext.setAttribute( "smDetachTimeout", serverDetachTimeout.isNegative() ? -1 : serverDetachTimeout.toSeconds() );
+    pageContext.setAttribute( "smDetachTimeout", serverDetachTimeout.toSeconds() );
     pageContext.setAttribute( "smMaxQueued", RequestingStreamManager.MAX_QUEUED_WHILE_BROKEN.getValue() );
     if ( smSettings && !errors.isEmpty() ) {
         // OF-2425: A refused save shows what was submitted, so that the sections that hold the errors are shown (only fields of shown sections are checked).
@@ -529,7 +529,7 @@
                     <tr>
                         <td style="width: 1%; white-space: nowrap"><label for="sm-detach-timeout"><fmt:message key="server2server.settings.sm.detach_timeout"/></label></td>
                         <td>
-                            <input type="number" name="sm-detach-timeout" id="sm-detach-timeout" value="${fn:escapeXml(smDetachTimeout)}" min="-1" max="2147483647" step="1"/>
+                            <input type="number" name="sm-detach-timeout" id="sm-detach-timeout" value="${fn:escapeXml(smDetachTimeout)}" min="0" max="2147483647" step="1"/>
                             <fmt:message key="server2server.settings.sm.detach_timeout.unit"/>
                             <c:if test="${not empty errors['sm-detach-timeout']}">
                                 <br/>

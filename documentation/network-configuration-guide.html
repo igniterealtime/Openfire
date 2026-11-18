@@ -529,9 +529,7 @@ _xmpps-server._tcp.conference.example.org. 86400 IN SRV 0 5 5270 xmpp.example.or
                 <dt>xmpp.server.session.detach.timeout</dt>
                 <dd>How long, in milliseconds, a server-to-server session is kept after its connection broke while its
                     stream can be resumed. Openfire tells servers that connect to it this time, unless
-                    <code>stream.management.max-server.enabled</code> is set to <code>false</code>. A value of
-                    <code>-1</code> keeps such a session until it is resumed, or, for a connection that Openfire opened,
-                    until the time for which the remote server said it keeps the stream has passed. Client sessions use
+                    <code>stream.management.max-server.enabled</code> is set to <code>false</code>. Client sessions use
                     <code>xmpp.session.detach.timeout</code> instead. Defaults to 2 minutes.</dd>
 
                 <dt>stream.management.server.resume.max-queued</dt>

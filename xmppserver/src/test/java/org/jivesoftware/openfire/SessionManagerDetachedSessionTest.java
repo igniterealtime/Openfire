@@ -326,25 +326,24 @@ public class SessionManagerDetachedSessionTest
     }
 
     /**
-     * Verifies that a detached server session is kept, however long it has been detached, when
-     * xmpp.server.session.detach.timeout is set to -1, while detached client sessions are still ended after their own
-     * timeout.
+     * Verifies that xmpp.server.session.detach.timeout cannot keep detached server sessions until they are resumed: a
+     * value of -1, as client sessions allow, is not a valid value for server sessions, so its default applies, and a
+     * detached server session is ended once it has been detached for longer than that.
      */
     @Test
-    void detachedServerSessionIsKeptWhenServerDetachTimeoutIsDisabled() throws Exception
+    void detachedServerSessionIsEndedWhenServerDetachTimeoutIsSetToMinusOne() throws Exception
     {
         // Setup test fixture.
         SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMillis(-1));
         final SessionManager spiedSessionManager = spy(sessionManager);
         final LocalIncomingServerSession serverSession = detachedServerSession(Duration.ofDays(1));
-        final LocalClientSession clientSession = detachedSession(DETACH_TIMEOUT.plusMinutes(1));
 
         // Execute system under test.
         runDetachedCleanupTask(spiedSessionManager);
 
         // Verify result.
-        verify(spiedSessionManager, never().description("A detached server session must be kept when the server detach timeout is disabled.")).terminateDetached(serverSession);
-        verify(spiedSessionManager, times(1).description("A detached client session must still be ended after the client detach timeout when the server detach timeout is disabled.")).terminateDetached(clientSession);
+        assertEquals(SessionManager.SERVER_SESSION_DETACH_TIMEOUT.getDefaultValue(), SessionManager.SERVER_SESSION_DETACH_TIMEOUT.getValue(), "A value of -1 must not be used for server sessions: the default must apply.");
+        verify(spiedSessionManager, times(1).description("A detached server session must be ended after the server detach timeout, also when that is set to -1.")).terminateDetached(serverSession);
     }
 
     /**

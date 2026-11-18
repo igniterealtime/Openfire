@@ -117,8 +117,11 @@ public final class OutboundResumeRequest
      *
      * No request is sent when Stream Management or resumption on server connections is disabled, when the stream of the
      * detached session cannot be resumed, when the peer does not offer its version of Stream Management, or when a
-     * request to enable Stream Management or to resume a stream was sent on this connection before. The future returned
-     * by {@link #getFinished()} then completes, and the caller is responsible for ending the detached session.
+     * request to enable Stream Management was sent on this connection before. The future returned by
+     * {@link #getFinished()} then completes, and the caller is responsible for ending the detached session.
+     *
+     * Whether to ask is decided once per connection. A later invocation, for example after the peer sent its stream
+     * features again, has no effect: a request that was sent keeps waiting for its answer.
      *
      * @param target The detached session of which the stream is to be resumed.
      * @param offeredNamespaces The namespaces of the versions of Stream Management that the peer offers on this connection.
@@ -132,7 +135,12 @@ public final class OutboundResumeRequest
         final boolean active = StreamManager.SERVER_ACTIVE.getValue() && StreamManager.SERVER_RESUME_ENABLED.getValue();
         final boolean send;
         synchronized ( owner ) {
-            send = status == Status.NOT_SENT && owner.getEnableRequestStatus() == RequestingStreamManager.EnableRequestStatus.NOT_SENT && !owner.isEnabled()
+            if ( status != Status.NOT_SENT || finished.isDone() ) {
+                // A repeated call, for example after the peer sent its stream features again, leaves the request that was decided on before as it is.
+                owner.Log.debug( "Not asking the peer of session {} again to resume the stream of session {}, as that was decided on before on this connection (request status: {}).", owner.session, target, status );
+                return;
+            }
+            send = owner.getEnableRequestStatus() == RequestingStreamManager.EnableRequestStatus.NOT_SENT && !owner.isEnabled()
                 && active && resumable && targetNamespace != null && previd != null && offeredNamespaces.contains( targetNamespace );
             if ( send ) {
                 this.target = target;

@@ -545,6 +545,29 @@ public class RespondingServerStanzaHandlerStreamManagementTest
     }
 
     /**
+     * Verifies that stream features that the remote server sends again, after Openfire asked it to resume a stream, do
+     * not lead to a second request, and leave the first request waiting for its answer, so that the attempt to resume
+     * the stream is not given up.
+     */
+    @Test
+    public void repeatedFeaturesLeaveResumeRequestWaiting() throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+        authenticate(ServerSession.AuthenticationMethod.SASL_EXTERNAL, SM_FEATURE_V3);
+        assertEquals(OutboundResumeRequest.Status.PENDING, streamManager().getResumeRequest().getStatus(), "Test fixture expects the request to resume the stream to await an answer.");
+
+        // Execute system under test.
+        handler.process(features(SM_FEATURE_V3), reader);
+
+        // Verify result.
+        assertEquals(1, allDelivered().stream().filter(text -> text.startsWith("<resume")).count(), "Only one request to resume the stream must be sent, but these were delivered: " + allDelivered());
+        assertEquals(OutboundResumeRequest.Status.PENDING, streamManager().getResumeRequest().getStatus(), "The request must still await an answer of the remote server.");
+        assertFalse(streamManager().getResumeRequest().getFinished().isDone(), "The request must not be reported as finished, which would make the attempt give up on it.");
+    }
+
+    /**
      * Verifies that Openfire does not ask the remote server to resume a stream of which the version of Stream
      * Management is not offered on the new connection, and does not enable Stream Management on it either.
      */

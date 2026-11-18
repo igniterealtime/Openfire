@@ -511,6 +511,58 @@ public class RequestingStreamManagerTest
     }
 
     /**
+     * Verifies that asking again to resume a stream while a request awaits its answer, as when the peer sends its stream
+     * features again, sends nothing and leaves the request waiting, so that the answer of the peer still resumes the
+     * detached session.
+     */
+    @Test
+    public void repeatedResumeRequestLeavesPendingRequestWaiting() throws Exception
+    {
+        // Setup test fixture.
+        final RequestingStreamManager targetSm = resumableStreamManager();
+        final LocalOutgoingServerSession target = target(targetSm);
+        doReturn(true).when(target).resumeWithConnectionOf(any(), anyLong());
+        final RequestingStreamManager sm = newStreamManager();
+        sm.getResumeRequest().send(target, List.of(StreamManager.NAMESPACE_V3));
+        assertEquals(OutboundResumeRequest.Status.PENDING, sm.getResumeRequest().getStatus(), "Test fixture expects the first request to await an answer.");
+        clearInvocations(sm.session);
+
+        // Execute system under test.
+        sm.getResumeRequest().send(target, List.of(StreamManager.NAMESPACE_V3));
+        final OutboundResumeRequest.Status statusAfterRepeat = sm.getResumeRequest().getStatus();
+        final boolean finishedAfterRepeat = sm.getResumeRequest().getFinished().isDone();
+        sm.process(resumed("some-sm-id", "0"));
+
+        // Verify result.
+        assertEquals(OutboundResumeRequest.Status.PENDING, statusAfterRepeat, "A repeated request must leave the first request waiting for its answer.");
+        assertFalse(finishedAfterRepeat, "A repeated request must not report the first request as finished, which would make the caller give up on it.");
+        verify(sm.session, never().description("A repeated request must not send a second 'resume'.")).deliverRawText(anyString());
+        verify(target, times(1).description("The answer to the first request must still resume the detached session.")).resumeWithConnectionOf((LocalOutgoingServerSession) sm.session, 0);
+    }
+
+    /**
+     * Verifies that asking again to resume a stream after it was decided not to ask on a connection sends nothing,
+     * also when asking became possible meanwhile, as the caller gives up on the connection once that was decided.
+     */
+    @Test
+    public void resumeRequestAfterDecisionNotToAskIsNotSent() throws Exception
+    {
+        // Setup test fixture.
+        final RequestingStreamManager targetSm = resumableStreamManager();
+        final LocalOutgoingServerSession target = target(targetSm);
+        final RequestingStreamManager sm = newStreamManager();
+        sm.getResumeRequest().send(target, List.of(StreamManager.NAMESPACE_V2));
+        assertTrue(sm.getResumeRequest().getFinished().isDone(), "Test fixture expects the first request not to be sent, as the version of the stream is not offered.");
+
+        // Execute system under test.
+        sm.getResumeRequest().send(target, List.of(StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        verify(sm.session, never().description("No request must be sent once it was decided not to ask on this connection.")).deliverRawText(anyString());
+        assertEquals(OutboundResumeRequest.Status.NOT_SENT, sm.getResumeRequest().getStatus(), "The request must stay recorded as not sent.");
+    }
+
+    /**
      * Verifies that negotiation is not reported as finished while a request to enable Stream Management awaits an
      * answer of the peer.
      */

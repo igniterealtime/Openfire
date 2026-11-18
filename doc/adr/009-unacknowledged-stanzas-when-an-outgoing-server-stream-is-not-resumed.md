@@ -110,7 +110,7 @@ When an outgoing server session with Stream Management closes without being resu
 
 On resumption, Openfire does not send again every stanza that the 'h' of `<resumed/>` leaves unhandled, as § 5 requires ("MUST re-send to the peer any stanzas that are still marked as unhandled"): a stanza that was sent again once before is not sent again, but returned to its sender as an error, or dropped, as described above. A stanza that makes the connection break, for example because the remote server fails on it, would otherwise break every resumed connection in turn, as it would every new one. When the remote server instead ends the stream, with a closing stream tag or a stream error, the stream is not resumed, and its unacknowledged stanzas are handled as for any stream that is not resumed.
 
-Stanzas that were queued while the connection was broken, and that were never sent, are routed again after the unacknowledged ones, in order, without a delay stamp; that follows from how a broken outgoing session queues stanzas (decision 7 of the OF-2425 plan), not from this ADR.
+Stanzas that were queued while the connection was broken, and that were never sent, are routed again after the unacknowledged ones, in order, without a delay stamp; that follows from how a broken outgoing session queues stanzas (ADR-013), not from this ADR.
 
 ## Rationale
 
@@ -138,12 +138,13 @@ XEP-0198 § 4 says to treat unacknowledged stanzas as stanzas sent to an unavail
 ### Constraints
 
 - The marker exists in memory on one cluster node only, and is not part of the stanza, so nothing about it is sent to the remote server. A stanza that another cluster node delivers, or that is serialized, loses it, and can then be sent again once more on that node
-- Stanzas sent while the request to enable Stream Management is pending are counted, as the remote server counts them, but not tracked, so they are not covered. When the remote server did not receive them all, and later resumes the stream with an 'h' that is lower than that count, the stanzas that follow cannot be numbered as it counts them: such a stream is not resumed, and is handled as one that is not resumed. Decision 3 of the OF-2425 plan keeps a new outgoing connection from being used until that negotiation has finished, but only for up to `xmpp.server.session.stream-management-negotiation-timeout`, after which the connection is used anyway
+- Stanzas sent while the request to enable Stream Management is pending are counted, as the remote server counts them, but not tracked, so they are not covered. When the remote server did not receive them all, and later resumes the stream with an 'h' that is lower than that count, the stanzas that follow cannot be numbered as it counts them: such a stream is not resumed, and is handled as one that is not resumed. Openfire does not use a new outgoing connection until that negotiation has finished, but waits only for up to `xmpp.server.session.stream-management-negotiation-timeout`, after which the connection is used anyway
 - The stanzas of a domain pair must be handled after its route is removed, as a stanza that is routed again would otherwise reach the closing session, and under the mutex of that domain pair, as a newer stanza could otherwise go out ahead of them. The errors that return stanzas to their senders are routed without holding that mutex, so they can reach their senders after newer stanzas for the domain pair
 
 ## References
 
-- **OF-2425**: Stream Management for server-to-server connections (engineering plan: `doc/plan/2026-10-23-stream-management-s2s.md`, decisions 3, 4 and 7)
+- **OF-2425**: Stream Management for server-to-server connections
+- **ADR-013**: Routing While a Broken Outgoing Server Session Waits to Be Resumed
 - **OF-3442**: Unacknowledged stanzas when a session closes (behaviour at the answering end)
 - **XEP-0198**: Stream Management, version 1.6.3, § 4 (Acks) and § 5 (Resumption)
 - **XEP-0203**: Delayed Delivery

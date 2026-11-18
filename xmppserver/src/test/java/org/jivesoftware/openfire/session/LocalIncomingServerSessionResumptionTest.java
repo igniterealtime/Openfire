@@ -636,7 +636,7 @@ public class LocalIncomingServerSessionResumptionTest
 
     /**
      * Verifies that stanzas from the domain that was validated on the original connection are accepted on the new
-     * connection after resumption, without the remote server authenticating it again (decision 2 of OF-2425).
+     * connection after resumption, without the remote server authenticating it again (ADR-007).
      */
     @Test
     void stanzasFromValidatedDomainAreAcceptedAfterResumption() throws Exception
@@ -682,7 +682,7 @@ public class LocalIncomingServerSessionResumptionTest
     /**
      * Verifies that the remote server can authenticate the domain that was validated on the original connection again
      * after resumption, which Openfire accepts and confirms, and that stanzas from that domain are accepted after that
-     * (decision 2 of OF-2425).
+     * (ADR-007).
      */
     @Test
     void domainAuthenticatedAgainAfterResumptionIsAccepted() throws Exception

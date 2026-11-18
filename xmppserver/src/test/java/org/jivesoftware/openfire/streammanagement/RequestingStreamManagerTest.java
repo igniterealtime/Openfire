@@ -149,7 +149,7 @@ public class RequestingStreamManagerTest
 
     /**
      * Verifies that, when the connection closes while the unacknowledged stanzas are sent again on resumption, only the
-     * stanzas that were sent are marked as sent again, so that the others keep their one retry (decision 4 of OF-2425),
+     * stanzas that were sent are marked as sent again, so that the others keep their one retry (ADR-009),
      * and that no other stanza is sent on the closed connection.
      */
     @Test
@@ -234,7 +234,7 @@ public class RequestingStreamManagerTest
 
     /**
      * Verifies that a stanza that was sent again before, and that is unacknowledged when the stream is resumed again, is
-     * not sent again a second time, but returned to its sender as an error (decision 4 of OF-2425), and that the stanzas
+     * not sent again a second time, but returned to its sender as an error (ADR-009), and that the stanzas
      * that are sent again are numbered after the acknowledged ones without it.
      */
     @Test

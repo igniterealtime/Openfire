@@ -107,4 +107,4 @@ Not every change can be made switchable at a reasonable cost, and some old behav
 
 - **ADR-006**: Migrate AES Encryption from CBC to GCM Mode (a change in stored data, made compatible by reading the old format)
 - **ADR-010**: Compatibility of Public Methods for Plugins
-- **OF-2425**: Stream Management for server-to-server connections (engineering plan: `doc/plan/2026-10-23-stream-management-s2s.md`), which puts its new behaviour behind switches that are off by default
+- **OF-2425**: Stream Management for server-to-server connections, which puts its new behaviour behind switches that are off by default

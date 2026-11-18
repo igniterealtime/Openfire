@@ -58,7 +58,7 @@ import static org.mockito.Mockito.*;
 /**
  * Verifies that stanzas for the domain pairs of an outgoing server session that is detached, while its stream can be
  * resumed, reach that session from every cluster node, and do not cause a second outgoing connection to be started
- * (decision 7 of OF-2425).
+ * (ADR-013).
  *
  * The cluster is simulated by two routing tables that share their caches, as cluster nodes do, but not the sessions that
  * they hold. The routing table of the other cluster node passes a stanza for a route on this node to this node by running

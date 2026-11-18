@@ -524,8 +524,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
     /**
      * Verifies that, when the session closes without being resumed, unacknowledged messages, presences and IQ responses
-     * are routed again, in the order in which they were sent, so that they can go out over a new connection (decision 4
-     * of OF-2425).
+     * are routed again, in the order in which they were sent, so that they can go out over a new connection (ADR-009).
      */
     @Test
     public void unacknowledgedMessagesPresencesAndIqResponsesAreRoutedAgainOnClose() throws Exception
@@ -579,8 +578,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
     /**
      * Verifies that, when the session closes without being resumed, the sender of an unacknowledged IQ request receives
-     * a 'service-unavailable' error, and the request is not routed again, as it can have side effects (decision 4 of
-     * OF-2425).
+     * a 'service-unavailable' error, and the request is not routed again, as it can have side effects (ADR-009).
      */
     @Test
     public void unacknowledgedIqRequestsAreReturnedAsErrorOnClose() throws Exception
@@ -766,7 +764,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
     /**
      * Verifies that a stanza that is routed again when a connection breaks, and that OutgoingSessionPromise queues and
      * then hands to the session of a new connection, is tracked by that session as sent again, so that it is returned
-     * to its sender as an error rather than sent a third time when that connection breaks too (decision 4 of OF-2425).
+     * to its sender as an error rather than sent a third time when that connection breaks too (ADR-009).
      * OutgoingSessionPromise queues a copy of the stanza, which must keep the marker of the stanza.
      */
     @Test
@@ -815,7 +813,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
     /**
      * Verifies that a stanza that is unacknowledged when two connections in a row break is sent again once, on the
      * second connection, and is then returned to its sender as an error, or dropped when it is a presence, while a
-     * stanza that was first sent on the second connection is routed again (decision 4 of OF-2425).
+     * stanza that was first sent on the second connection is routed again (ADR-009).
      */
     @Test
     public void stanzaUnacknowledgedAtTwoBreaksInARowIsReturnedAsErrorAfterOneRetry() throws Exception
@@ -941,8 +939,8 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
     /**
      * Verifies that a session of which the stream can be resumed is detached when its connection breaks, while
-     * resumption on server connections is enabled, and that it stays the route for its domain pairs (decision 7 of
-     * OF-2425), without handling its unacknowledged stanzas yet.
+     * resumption on server connections is enabled, and that it stays the route for its domain pairs (ADR-013),
+     * without handling its unacknowledged stanzas yet.
      */
     @Test
     public void resumableSessionIsDetachedAndKeepsItsRoutesWhenConnectionBreaks() throws Exception
@@ -1073,7 +1071,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
     /**
      * Verifies that a detached session is ended once it was detached for longer than the server detach timeout: its
      * routes are removed, after which its unacknowledged stanzas are handled as for a session that closes without being
-     * resumed, and then its queued stanzas are routed again, in order (decision 7 of OF-2425).
+     * resumed, and then its queued stanzas are routed again, in order (ADR-013).
      */
     @Test
     public void detachedSessionIsEndedAfterServerDetachTimeout() throws Exception
@@ -1494,7 +1492,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
     /**
      * Verifies that authenticating a domain pair of a detached session succeeds without opening a new connection, as the
-     * detached session stays the route for it (decision 7).
+     * detached session stays the route for it (ADR-013).
      */
     @Test
     public void authenticateDomainForDomainPairOfDetachedSessionOpensNoConnection() throws Exception
@@ -1543,7 +1541,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
      * Verifies that a session that is detached when its connection breaks is resumed on a new connection, of which the
      * session is not made a route: Openfire asks the remote server to resume the stream, and once it did, the stanzas
      * that the remote server did not receive are sent first, then the queued stanzas, in order, and then the stanzas that
-     * are delivered after that (decision 7 of OF-2425).
+     * are delivered after that (ADR-013).
      */
     @Test
     public void detachedSessionIsResumedOnNewConnection() throws Exception
@@ -2108,7 +2106,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
     /**
      * Verifies that a detached session that is not resumed within the server detach timeout is ended, and that each of
-     * its stanzas is then handled once, as decision 4 of OF-2425 describes: the unacknowledged message is routed again,
+     * its stanzas is then handled once, as ADR-009 describes: the unacknowledged message is routed again,
      * the unacknowledged IQ request is returned as an error, the queued stanza is routed again, and the acknowledged
      * stanza is not handled.
      */
@@ -2360,7 +2358,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
         assertEquals(firstDetach, resumable.getDetachedSince(), "A session that is detached again before its resumed stream was acknowledged must be kept while detached from its first detach.");
         assertFalse(sessionManager.isDetached(resumable), "A session that is detached again before its resumed stream was acknowledged must be ended once the detach timeout passed since its first detach.");
         assertEquals(List.of("unacked"), routed(packetRouter).stream().map(Packet::getID).toList(), "The stanza that was sent again on the resumed stream must be handled once.");
-        assertEquals(IQ.Type.error.toString(), routed(packetRouter).get(0).getElement().attributeValue("type"), "A stanza that was sent again on the resumed stream, and is unacknowledged again, must be returned as an error (decision 4).");
+        assertEquals(IQ.Type.error.toString(), routed(packetRouter).get(0).getElement().attributeValue("type"), "A stanza that was sent again on the resumed stream, and is unacknowledged again, must be returned as an error (ADR-009).");
     }
 
     /**
@@ -2610,7 +2608,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
     /**
      * Verifies that exactly the stanzas with the provided IDs were routed, each once, in order, and that an IQ request
-     * among them was returned to its sender as an error while the others were routed again (decision 4 of OF-2425). The
+     * among them was returned to its sender as an error while the others were routed again (ADR-009). The
      * errors are routed after the stanzas that are routed again.
      */
     private void assertEachStanzaHandledOnce(final PacketRouter packetRouter, final List<String> expectedIds)

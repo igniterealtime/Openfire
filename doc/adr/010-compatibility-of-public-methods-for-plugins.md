@@ -10,7 +10,7 @@ Openfire is extended by plugins, many of them written and maintained by third pa
 
 When a public or protected member is renamed, moved to another class or given another signature, a plugin that calls it is no longer binary compatible with Openfire. The Java runtime reports this only when the call is first made, with a `NoSuchMethodError` or `NoSuchFieldError`, which can be long after the plugin was loaded. Administrators then find out that a plugin is broken when a feature fails in production, and plugin developers find out from their users.
 
-Refactoring needs to rename and move members all the same: names that no longer describe what a member does, or classes that hold unrelated concerns, make the code harder to change. Engineering plan OF-2425 (Stream Management for server-to-server connections) made such a choice for the classes that it changed, as its decision 8. This ADR applies that decision to all of Openfire.
+Refactoring needs to rename and move members all the same: names that no longer describe what a member does, or classes that hold unrelated concerns, make the code harder to change. OF-2425 (Stream Management for server-to-server connections) needed such changes in the classes that it changed. This ADR records how they are made, for all of Openfire.
 
 ## Options Considered
 
@@ -95,5 +95,5 @@ Option 3 would be clearer in the long run, but needs an inventory that cannot be
 
 ## References
 
-- **OF-2425**: Stream Management for server-to-server connections (engineering plan: `doc/plan/2026-10-23-stream-management-s2s.md`, decision 8)
+- **OF-2425**: Stream Management for server-to-server connections
 - **ADR-011**: Backwards Compatibility With Older Versions of Openfire

@@ -1604,7 +1604,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Terminating the connection should also trigger the OutgoingServerSessionListener#onConnectionClose in SessionManagerImpl.
             // That will result in the s2s connection actually being removed from the LocalRoutingTable.
             try {
-                route.close();
+                // OF-2425: ended rather than kept for resumption, as the connection on the other node replaces it.
+                SessionManager.getInstance().closeWithoutResumption(route);
             } catch (Exception e) {
                 Log.warn("Failed to terminate the local s2s connection for {}.", route, e);
             }

@@ -85,13 +85,13 @@ public class NettySessionInitializerLocationTest
         try (final MockedStatic<SocketUtil> socketUtil = mockStatic(SocketUtil.class))
         {
             socketUtil.when(() -> SocketUtil.createSocketToLocation(anyString(), anyString(), anyInt(), any(), any())).thenAnswer(invocation -> { connectedTo.add("location"); return null; });
-            socketUtil.when(() -> SocketUtil.createSocketToXmppDomain(anyString(), anyInt())).thenAnswer(invocation -> { connectedTo.add("domain"); return null; });
+            socketUtil.when(() -> SocketUtil.createSocketToXmppDomain(anyString(), anyInt(), any())).thenAnswer(invocation -> { connectedTo.add("domain"); return null; });
 
             // Execute system under test & Verify result.
             assertThrows(NetworkEntityUnreachableException.class, () -> initialiser.init(mock(ConnectionListener.class)), "When neither the location nor the remote domain can be connected to, the initialiser must report that the remote domain is unreachable.");
             assertEquals(List.of("location", "domain"), connectedTo, "The location must be connected to first, and the remote domain when no connection to the location can be made.");
             socketUtil.verify(() -> SocketUtil.createSocketToLocation(eq(DOMAIN_PAIR.getRemote()), eq(LOCATION), eq(5269), eq(LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue()), any()), times(1).description("The location must be connected to for at most the time that the remote server is given to answer a request to resume."));
-            socketUtil.verify(() -> SocketUtil.createSocketToXmppDomain(DOMAIN_PAIR.getRemote(), 5269), times(1).description("The remote domain must be connected to on the port for that domain."));
+            socketUtil.verify(() -> SocketUtil.createSocketToXmppDomain(DOMAIN_PAIR.getRemote(), 5269, SocketUtil.RESOLUTION_TIMEOUT.getValue()), times(1).description("The remote domain must be connected to on the port for that domain."));
             socketUtil.verify(() -> SocketUtil.locationAddressFilter(PEER_ADDRESS), times(1).description("The addresses of the location must be filtered by the address of the original connection to the peer."));
         }
     }
@@ -109,7 +109,29 @@ public class NettySessionInitializerLocationTest
             // Execute system under test & Verify result.
             assertThrows(NetworkEntityUnreachableException.class, () -> initialiser.init(mock(ConnectionListener.class)), "When the remote domain cannot be connected to, the initialiser must report that it is unreachable.");
             socketUtil.verify(() -> SocketUtil.createSocketToLocation(any(), any(), anyInt(), any(Duration.class), any()), never().description("No location must be connected to when the peer named none."));
-            socketUtil.verify(() -> SocketUtil.createSocketToXmppDomain(DOMAIN_PAIR.getRemote(), 5269), times(1).description("The remote domain must be connected to."));
+            socketUtil.verify(() -> SocketUtil.createSocketToXmppDomain(DOMAIN_PAIR.getRemote(), 5269, SocketUtil.RESOLUTION_TIMEOUT.getValue()), times(1).description("The remote domain must be connected to."));
+        }
+    }
+
+    /**
+     * Verifies that the hosts of the remote domain are connected to for at most the time that the detached session of
+     * which the stream is to be resumed is still kept, when that is shorter than the usual time to resolve and connect,
+     * so that an attempt does not run on after the session is to be ended.
+     */
+    @Test
+    public void connectsToRemoteDomainForAtMostTheTimeThatTheSessionIsStillKept()
+    {
+        // Setup test fixture.
+        final Duration timeLeft = Duration.ofSeconds(30);
+        final LocalOutgoingServerSession target = resumeTarget();
+        doReturn(timeLeft).when(target).getTimeLeftWhileDetached();
+        final NettySessionInitializer initialiser = new NettySessionInitializer(DOMAIN_PAIR, 5269, target, null);
+        try (final MockedStatic<SocketUtil> socketUtil = mockStatic(SocketUtil.class))
+        {
+            // Execute system under test & Verify result.
+            assertThrows(NetworkEntityUnreachableException.class, () -> initialiser.init(mock(ConnectionListener.class)), "When the remote domain cannot be connected to, the initialiser must report that it is unreachable.");
+            assertTrue(timeLeft.compareTo(SocketUtil.RESOLUTION_TIMEOUT.getValue()) < 0, "Test fixture expects the time left to be shorter than the usual time to resolve and connect.");
+            socketUtil.verify(() -> SocketUtil.createSocketToXmppDomain(DOMAIN_PAIR.getRemote(), 5269, timeLeft), times(1).description("The remote domain must be connected to for at most the time that the session is still kept."));
         }
     }
 
@@ -129,13 +151,13 @@ public class NettySessionInitializerLocationTest
             // Execute system under test & Verify result.
             assertThrows(NetworkEntityUnreachableException.class, () -> initialiser.init(mock(ConnectionListener.class)), "When interrupted while connecting to the location, the initialiser must report that the remote domain is unreachable.");
             assertTrue(Thread.currentThread().isInterrupted(), "The interrupt must be kept.");
-            socketUtil.verify(() -> SocketUtil.createSocketToXmppDomain(anyString(), anyInt()), never().description("The remote domain must not be connected to when the thread was interrupted while connecting to the location."));
+            socketUtil.verify(() -> SocketUtil.createSocketToXmppDomain(anyString(), anyInt(), any()), never().description("The remote domain must not be connected to when the thread was interrupted while connecting to the location."));
         }
     }
 
     /**
      * Creates a detached session of which the stream is to be resumed, of which the original connection was made to
-     * {@link #PEER_ADDRESS}.
+     * {@link #PEER_ADDRESS}, and that has no limit on the time that it is still kept.
      */
     private static LocalOutgoingServerSession resumeTarget()
     {
@@ -143,6 +165,8 @@ public class NettySessionInitializerLocationTest
         doReturn(PEER_ADDRESS).when(streamManager).getPeerAddress();
         final LocalOutgoingServerSession target = mock(LocalOutgoingServerSession.class);
         doReturn(streamManager).when(target).getStreamManager();
+        // No limit by default; Mockito would otherwise return Duration.ZERO.
+        doReturn(null).when(target).getTimeLeftWhileDetached();
         return target;
     }
 }

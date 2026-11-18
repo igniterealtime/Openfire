@@ -36,6 +36,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
+import java.net.InetAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -927,15 +928,18 @@ public class RequestingStreamManagerTest
 
     /**
      * Verifies that the stream can be resumed when the peer allows it, with either lexical form of a true boolean
-     * (XEP-0198 § 5), and that its SM-ID, preferred maximum resumption time and location are recorded.
+     * (XEP-0198 § 5), and that its SM-ID, preferred maximum resumption time and location are recorded, as is the address
+     * to which the connection was made, by which the addresses of that location are filtered.
      */
     @ParameterizedTest
     @ValueSource(strings = {"true", "1"})
-    public void resumableEnabledIsRecorded(final String resume)
+    public void resumableEnabledIsRecorded(final String resume) throws Exception
     {
         // Setup test fixture.
         StreamManager.SERVER_RESUME_ENABLED.setValue(true);
         final RequestingStreamManager sm = newStreamManager();
+        final Connection connection = sm.session.getConnection();
+        doReturn(new byte[] {(byte) 203, 0, 113, 5}).when(connection).getAddress();
         sm.requestEnable(StreamManager.NAMESPACE_V3);
 
         // Execute system under test.
@@ -947,6 +951,7 @@ public class RequestingStreamManagerTest
         assertEquals("some-sm-id", sm.getSmId(), "The SM-ID that the peer provided must be recorded.");
         assertEquals(Duration.ofSeconds(90), sm.getPeerMaximumResumptionTime(), "The preferred maximum resumption time of the peer must be recorded.");
         assertEquals("[2001:db8::1]:5270", sm.getPeerLocation(), "The location that the peer named for reconnecting must be recorded.");
+        assertEquals(InetAddress.getByName("203.0.113.5"), sm.getPeerAddress(), "The address to which the connection was made must be recorded.");
     }
 
     /**

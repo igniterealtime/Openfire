@@ -41,6 +41,8 @@ import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -180,6 +182,15 @@ public class RequestingStreamManager extends StreamManager
      */
     @Nullable
     private volatile String peerLocation;
+
+    /**
+     * The address of the peer to which the connection was made on which it enabled Stream Management with a stream that
+     * can be resumed, or null when that is not known, or the stream cannot be resumed. A location that the peer names is
+     * connected to at a private address only when this address is private too (see
+     * {@link org.jivesoftware.openfire.net.SocketUtil#locationAddressFilter(InetAddress)}).
+     */
+    @Nullable
+    private volatile InetAddress peerAddress;
 
     /**
      * Copies of the stanzas that were delivered to the session while its connection was broken, in the order in which
@@ -371,6 +382,7 @@ public class RequestingStreamManager extends StreamManager
                     setSmId( element.attributeValue( "id" ) );
                     peerMaximumResumptionTime = parseMaximumResumptionTime( element.attributeValue( "max" ) );
                     peerLocation = element.attributeValue( "location" );
+                    peerAddress = addressOfConnection();
                     setResume( true );
                 }
                 setNamespace( requested );
@@ -387,7 +399,7 @@ public class RequestingStreamManager extends StreamManager
         }
 
         if ( resumable ) {
-            Log.debug( "The peer of session {} enabled Stream Management ({}), and allows the stream to be resumed (SM-ID: {}, preferred maximum resumption time: {}, location: {}). Stanzas sent while the request awaited an answer, which are counted but not tracked: {}.", session, requested, getSmId(), peerMaximumResumptionTime, peerLocation, sentWhilePending );
+            Log.debug( "The peer of session {} enabled Stream Management ({}), and allows the stream to be resumed (SM-ID: {}, preferred maximum resumption time: {}, location: {}, address of the connection: {}). Stanzas sent while the request awaited an answer, which are counted but not tracked: {}.", session, requested, getSmId(), peerMaximumResumptionTime, peerLocation, peerAddress, sentWhilePending );
         } else if ( enabled ) {
             // An offer of resumption that was not requested, or that lacks an 'id', is not used.
             Log.debug( "The peer of session {} enabled Stream Management ({}), without a stream that can be resumed (requested: {}, 'resume': {}, 'id': {}). Stanzas sent while the request awaited an answer, which are counted but not tracked: {}.", session, requested, resumeRequested, element.attributeValue( "resume" ), element.attributeValue( "id" ), sentWhilePending );
@@ -448,7 +460,7 @@ public class RequestingStreamManager extends StreamManager
      * Returns the location at which the peer prefers to be reconnected to for resuming the stream, as it reported when it
      * enabled Stream Management with a stream that can be resumed (the 'location' attribute of {@code <enabled/>},
      * XEP-0198 § 3). The value is as the peer sent it: a domain name or IP address, optionally followed by a port (see
-     * {@link org.jivesoftware.openfire.net.SocketUtil#createSocketToLocation(String, String, int, Duration)}).
+     * {@link org.jivesoftware.openfire.net.SocketUtil#createSocketToLocation(String, String, int, Duration, java.util.function.Predicate)}).
      *
      * @return the location that the peer reported, or null when it reported none, or the stream cannot be resumed.
      */
@@ -456,6 +468,40 @@ public class RequestingStreamManager extends StreamManager
     public String getPeerLocation()
     {
         return peerLocation;
+    }
+
+    /**
+     * Returns the address of the peer to which the connection was made on which it enabled Stream Management with a
+     * stream that can be resumed. A location that the peer names (see {@link #getPeerLocation()}) is connected to at a
+     * private address only when this address is private too (see
+     * {@link org.jivesoftware.openfire.net.SocketUtil#locationAddressFilter(InetAddress)}).
+     *
+     * @return the address, or null when it is not known, or the stream cannot be resumed.
+     */
+    @Nullable
+    public InetAddress getPeerAddress()
+    {
+        return peerAddress;
+    }
+
+    /**
+     * Returns the address of the peer of the current connection of the session.
+     *
+     * @return the address, or null when the session has no connection, or its address cannot be determined.
+     */
+    @Nullable
+    private InetAddress addressOfConnection()
+    {
+        final Connection connection = session.getConnection();
+        if ( connection == null ) {
+            return null;
+        }
+        try {
+            return InetAddress.getByAddress( connection.getAddress() );
+        } catch ( UnknownHostException | RuntimeException e ) {
+            Log.debug( "Unable to determine the address of the peer of session {}.", session, e );
+            return null;
+        }
     }
 
     /**

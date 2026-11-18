@@ -50,6 +50,7 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -222,7 +223,7 @@ public class NettySessionInitializer {
      *                     enabling Stream Management on it, or null when no stream is to be resumed.
      * @param location the location that the peer named for reconnecting to it to resume a stream (XEP-0198 § 3), which
      *                 is connected to before any other host of the remote domain, or null to connect to the hosts of the
-     *                 remote domain only (see {@link SocketUtil#createSocketToLocation(String, String, int, Duration)}).
+     *                 remote domain only (see {@link SocketUtil#createSocketToLocation(String, String, int, Duration, java.util.function.Predicate)}).
      */
     public NettySessionInitializer(DomainPair domainPair, int port, @Nullable LocalOutgoingServerSession resumeTarget, @Nullable String location) {
         this.domainPair = domainPair;
@@ -245,7 +246,9 @@ public class NettySessionInitializer {
         Map.Entry<Socket, Boolean> socketToXmppDomain = null;
         if (location != null) {
             // OF-2425: XEP-0198 § 3: prefer the location that the peer named. If connecting to it fails, the usual connection algorithm applies.
-            socketToXmppDomain = SocketUtil.createSocketToLocation(domainPair.getRemote(), location, port, LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue());
+            // OF-2425: never loopback, link-local, unspecified or multicast; private only after a private original connection (see SocketUtil#locationAddressFilter).
+            final InetAddress addressOfOriginalConnection = resumeTarget == null ? null : resumeTarget.getStreamManager().getPeerAddress();
+            socketToXmppDomain = SocketUtil.createSocketToLocation(domainPair.getRemote(), location, port, LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue(), SocketUtil.locationAddressFilter(addressOfOriginalConnection));
             if (socketToXmppDomain == null && Thread.currentThread().isInterrupted()) {
                 throw new NetworkEntityUnreachableException("Interrupted while connecting to location '" + location + "' of the XMPP domain '" + domainPair.getRemote() + "'.");
             }

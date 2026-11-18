@@ -31,6 +31,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,6 +113,12 @@ abstract class AbstractStreamManagerTest
             {
                 sm.redeliverUnackedStanzas(SERVER_ADDRESS, h);
             }
+
+            @Override
+            void setMaximumUnacknowledgedStanzas(final int maximum)
+            {
+                JiveGlobals.setProperty("stream.management.max-unacked", Integer.toString(maximum));
+            }
         },
 
         /**
@@ -150,6 +157,12 @@ abstract class AbstractStreamManagerTest
             {
                 sm.onResume(SERVER_ADDRESS, h);
             }
+
+            @Override
+            void setMaximumUnacknowledgedStanzas(final int maximum)
+            {
+                RequestingStreamManager.MAX_UNACKNOWLEDGED.setValue(maximum);
+            }
         };
 
         /**
@@ -179,6 +192,11 @@ abstract class AbstractStreamManagerTest
          * reported.
          */
         abstract void resume(StreamManager sm, long h);
+
+        /**
+         * Sets the maximum number of unacknowledged stanzas that applies at this end.
+         */
+        abstract void setMaximumUnacknowledgedStanzas(int maximum);
 
         /**
          * Creates a stream manager for this end with Stream Management enabled, and clears the interaction with the

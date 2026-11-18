@@ -52,7 +52,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
     void stanzasSentToDetachedSessionAfterExceedingMaximumAreTracked(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        end.setMaximumUnacknowledgedStanzas(1);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
@@ -83,7 +83,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
     void sessionDetachedWhileClosingForExceedingMaximumIsEnded(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        end.setMaximumUnacknowledgedStanzas(1);
         final LocalSession session = end.newSession();
         final Connection connection = session.getConnection();
         final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
@@ -111,7 +111,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
     void sessionNotDetachedWhenClosedForExceedingMaximumIsNotEndedAgain(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        end.setMaximumUnacknowledgedStanzas(1);
         final LocalSession session = end.newSession();
         final Connection connection = session.getConnection();
         final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
@@ -138,7 +138,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
     void exceedingMaximumOfUnacknowledgedStanzasOnDetachedSessionEndsSession(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        end.setMaximumUnacknowledgedStanzas(1);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
@@ -167,7 +167,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
     void stanzaDeliveredOnResumedConnectionAfterExceedingMaximumIsTracked(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        end.setMaximumUnacknowledgedStanzas(1);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
@@ -198,7 +198,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
     void resumptionAfterExceedingMaximumOfUnacknowledgedStanzasClosesStream(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        end.setMaximumUnacknowledgedStanzas(1);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
@@ -240,7 +240,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
     void resumedStreamIsClosedForExceedingMaximumWhileHoldingLock(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        end.setMaximumUnacknowledgedStanzas(1);
         final LocalSession session = end.newSession();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
@@ -275,7 +275,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
     void stanzaExceedingMaximumDuringResumptionDoesNotCloseStreamBeforeRedelivery(final End end) throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("stream.management.max-unacked", "2");
+        end.setMaximumUnacknowledgedStanzas(2);
         final LocalSession session = end.newSession();
         final Connection connection = session.getConnection();
         final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);

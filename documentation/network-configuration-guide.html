@@ -532,6 +532,12 @@ _xmpps-server._tcp.conference.example.org. 86400 IN SRV 0 5 5270 xmpp.example.or
                     <code>stream.management.max-server.enabled</code> is set to <code>false</code>. Client sessions use
                     <code>xmpp.session.detach.timeout</code> instead. Defaults to 2 minutes.</dd>
 
+                <dt>stream.management.server.max-unacked</dt>
+                <dd>The maximum number of stanzas that a remote server has not confirmed on a connection that Openfire
+                    opened to it. When more are unconfirmed, Openfire closes the connection, and the session is ended:
+                    the unconfirmed stanzas are then handled as when a stream is not resumed. Client connections use
+                    <code>stream.management.max-unacked</code> instead. Defaults to 10000.</dd>
+
                 <dt>stream.management.server.resume.max-queued</dt>
                 <dd>The maximum number of stanzas that are queued for a remote domain while a connection that Openfire
                     opened to it is broken and waits to be resumed. When more are queued, Openfire stops trying to resume
@@ -547,7 +553,7 @@ _xmpps-server._tcp.conference.example.org. 86400 IN SRV 0 5 5270 xmpp.example.or
 
             <p>
                 The properties <code>stream.management.requestFrequency</code>,
-                <code>stream.management.max-unacked</code>, <code>stream.management.location.enabled</code> and
+                <code>stream.management.location.enabled</code> and
                 <code>stream.management.max-server.enabled</code>, which configure Stream Management for clients, apply
                 to server-to-server connections as well.
             </p>

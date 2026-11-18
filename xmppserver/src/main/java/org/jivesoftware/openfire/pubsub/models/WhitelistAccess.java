@@ -40,10 +40,13 @@ public class WhitelistAccess extends AccessModel {
         if (node.isAdmin(owner)) {
             return true;
         }
-        // User is in the whitelist if he has an affiliation and it is not of type outcast
+        // Whitelist access requires an explicit privileged affiliation. A "none" affiliation can
+        // linger after a subscription is removed and must not keep granting access.
         NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
-        return nodeAffiliate != null &&
-                nodeAffiliate.getAffiliation() != NodeAffiliate.Affiliation.outcast;
+        return nodeAffiliate != null && (
+                nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.member ||
+                nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.publisher ||
+                nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.owner);
     }
 
     @Override

@@ -268,6 +268,12 @@ public final class OutboundResumeRequest
                 endFailedResumption( resumeTarget, error );
                 return;
             }
+            if ( !targetStreamManager.isOutboundAcknowledgementNotLowerThanBefore( h ) ) {
+                // OF-2425: Stanzas sent while <enable/> awaited its answer were counted as acknowledged without being tracked. When the peer did not receive them all, the stanzas that follow cannot be numbered as it counts them.
+                owner.Log.debug( "The peer of session {} resumed the stream of session {} with an 'h' that is lower than the number of stanzas that were acknowledged, or counted as such, before (h: {}, send-count: {}). Not resuming the stream.", owner.session, resumeTarget, h, targetStreamManager.getLastSentNumber() );
+                endFailedResumption( resumeTarget, new StreamError( StreamError.Condition.undefined_condition, "Your 'h' (" + h + ") is lower than the number of stanzas that this server counts as acknowledged. The stream cannot be resumed." ) );
+                return;
+            }
             if ( !( owner.session instanceof LocalOutgoingServerSession connectionProvider ) ) {
                 // Unreachable: StreamManager#forSession creates RequestingStreamManager for outgoing server sessions only.
                 endFailedResumption( resumeTarget, new StreamError( StreamError.Condition.internal_server_error ) );

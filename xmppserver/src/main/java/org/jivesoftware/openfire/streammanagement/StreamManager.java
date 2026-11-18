@@ -457,6 +457,17 @@ public abstract class StreamManager {
     }
 
     /**
+     * Checks whether the number of stanzas that the peer acknowledges is not lower than the number of stanzas that were
+     * acknowledged before, or counted as such, so that the stanzas after it can be numbered as the peer counts them.
+     *
+     * @param h The number of stanzas that the peer acknowledges it has received from us.
+     * @return true if the number is not lower than the number of stanzas that were acknowledged before.
+     */
+    synchronized boolean isOutboundAcknowledgementNotLowerThanBefore(long h) {
+        return unacknowledgedOutboundStanzas.isNotLowerThanAcknowledged(h);
+    }
+
+    /**
      * Describes the last stanza that the peer has not acknowledged, for use in error messages.
      *
      * @return a description of the last unacknowledged stanza.

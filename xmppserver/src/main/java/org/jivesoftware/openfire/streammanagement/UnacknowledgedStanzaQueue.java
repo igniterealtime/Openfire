@@ -254,6 +254,18 @@ class UnacknowledgedStanzaQueue
     }
 
     /**
+     * Checks whether a value of 'h' is not lower than the number of stanzas that were acknowledged before: it is from
+     * that number up to and including the number of the last stanza sent.
+     *
+     * @param h The number of stanzas that the peer acknowledges it has received.
+     * @return true if the value is not lower than the number of stanzas that were acknowledged before.
+     */
+    synchronized boolean isNotLowerThanAcknowledged(final long h)
+    {
+        return isInRange(h, acknowledged, getLastSentNumber());
+    }
+
+    /**
      * Checks a value of 'h' against the stanzas that were sent, on a stream on which the acknowledged count has not
      * rolled over.
      *

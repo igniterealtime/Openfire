@@ -34,6 +34,7 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.AdminConsolePlugin;
 import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.csi.CsiModule;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
@@ -45,7 +46,6 @@ import org.jivesoftware.openfire.handler.*;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
-import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.net.MulticastDNSService;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
@@ -704,6 +704,7 @@ public class XMPPServer {
 
             if (!setupMode) {
                 scanForSystemPropertyClasses();
+                warnIfRemovedMediaProxyIsEnabled();
             }
         }
         catch (Exception e) {
@@ -712,6 +713,29 @@ public class XMPPServer {
             System.out.println(LocaleUtils.getLocalizedString("startup.error"));
             shutdownServer();
         }
+    }
+
+    /**
+     * Logs a warning when the configuration enables the Media Proxy, which is no longer part of Openfire, while the
+     * plugin that provides it is not installed. The check is performed after plugins have been loaded.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3408">OF-3408</a>
+     */
+    private void warnIfRemovedMediaProxyIsEnabled() {
+        if (!JiveGlobals.getBooleanProperty("mediaproxy.enabled", false)) {
+            return;
+        }
+        pluginManager.addPluginManagerListener(new PluginManagerListener() {
+            @Override
+            public void pluginsMonitored() {
+                pluginManager.removePluginManagerListener(this);
+                if (pluginManager.getPluginByCanonicalName("rtpbridge").isEmpty()) {
+                    final String message = "Property 'mediaproxy.enabled' enables the RTP Bridge (formerly known as the Media Proxy), but that is no longer part of Openfire. To continue using it, install the 'RTP Bridge' plugin. Otherwise, remove the property to stop this warning.";
+                    logger.warn(message);
+                    System.out.println(message);
+                }
+            }
+        });
     }
 
     // A SystemProperty class will not appear in the System Properties screen until it is referenced. This method
@@ -795,7 +819,6 @@ public class XMPPServer {
         loadModule(IQPrivacyHandler.class.getName());
         loadModule(DefaultFileTransferManager.class.getName());
         loadModule(FileTransferProxy.class.getName());
-        loadModule(MediaProxyService.class.getName());
         loadModule(PubSubModule.class.getName());
         loadModule(IQDiscoInfoHandler.class.getName());
         loadModule(IQDiscoItemsHandler.class.getName());
@@ -1688,17 +1711,6 @@ public class XMPPServer {
      */
     public FileTransferManager getFileTransferManager() {
         return (FileTransferManager) modules.get(DefaultFileTransferManager.class);
-    }
-
-    /**
-     * Returns the <code>MediaProxyService</code> registered with this server. The
-     * <code>MediaProxyService</code> was registered with the server as a module while starting up
-     * the server.
-     *
-     * @return the <code>MediaProxyService</code> registered with this server.
-     */
-    public MediaProxyService getMediaProxyService() {
-        return (MediaProxyService) modules.get(MediaProxyService.class);
     }
 
     /**

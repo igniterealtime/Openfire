@@ -1,7 +1,8 @@
 # This stage extracts all the pom.xml files.
 # It'll get rebuilt with any source change, but that's OK.
 # It doesn't matter what image we're using, really, so we may as well use one of the same images as elsewhere.
-FROM eclipse-temurin:17-jre AS poms
+ARG JAVA_VERSION=21
+FROM eclipse-temurin:${JAVA_VERSION}-jre AS poms
 WORKDIR /usr/src
 COPY . .
 # Wipe any files not called pom.xml or *.jar
@@ -10,7 +11,7 @@ RUN find . -type f -and \! -name pom.xml -and \! -name '*.jar' -delete
 RUN find . -type d -empty -delete
 
 # Now we build:
-FROM eclipse-temurin:17 AS build
+FROM eclipse-temurin:${JAVA_VERSION} AS build
 WORKDIR /tmp/
 WORKDIR /usr/src
 COPY mvnw ./
@@ -42,7 +43,7 @@ RUN sed -i 's/\r//g' /usr/src/distribution/target/distribution-base/bin/openfire
 
 # Might as well create the user in a different stage if only to eliminate
 # the ugly && chaining and increase parallelization
-FROM eclipse-temurin:17-jre AS skeleton-runtime
+FROM eclipse-temurin:${JAVA_VERSION}-jre AS skeleton-runtime
 
 ENV OPENFIRE_USER=openfire \
     OPENFIRE_DIR=/usr/local/openfire \
@@ -54,7 +55,7 @@ RUN apt-get install -yyq adduser
 RUN adduser --disabled-password --quiet --system --home $OPENFIRE_DATA_DIR --gecos "Openfire XMPP server" --group $OPENFIRE_USER
 
 # Final stage, build the runtime container:
-FROM eclipse-temurin:17-jre AS runtime
+FROM eclipse-temurin:${JAVA_VERSION}-jre AS runtime
 
 ENV OPENFIRE_USER=openfire \
     OPENFIRE_DIR=/usr/local/openfire \

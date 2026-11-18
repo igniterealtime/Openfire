@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (C) 2018 Ignite Realtime Foundation. All rights reserved.
+  ~ Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -16,12 +16,18 @@
 <jsp:root xmlns:c="http://java.sun.com/jsp/jstl/core"
           xmlns:jsp="http://java.sun.com/JSP/Page"
           xmlns:fmt="http://java.sun.com/jsp/jstl/fmt"
+          xmlns:fn="http://java.sun.com/jsp/jstl/functions"
           xmlns:admin="admin"
           version="2.0">
     <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
     <jsp:directive.attribute name="connectionType" required="true" type="org.jivesoftware.openfire.spi.ConnectionType"/>
+    <!-- The location to show in the File box instead of the current one, such as the one submitted in a save that failed. -->
+    <jsp:directive.attribute name="location" required="false" type="java.lang.String"/>
 
+    <c:set var="displayedLocation" value="${empty location ? webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).file : location}"/>
+
+    <!-- Store passwords are never sent to the browser: see storePasswordConfig.tagx. -->
     <c:choose>
         <c:when test="${connectionType eq 'SOCKET_C2S' or connectionType.fallback eq 'SOCKET_C2S'}">
 
@@ -31,24 +37,16 @@
                 <admin:infobox type="warning"><fmt:message key="ssl.certificates.store-management.error.cannot-access"/></admin:infobox>
             </c:if>
 
-            <c:set var="pwdTrustC2S" value=""/>
-            <c:forEach items="${webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).password}" var="c">
-                <c:set var="pwdTrustC2S" value="${pwdTrustC2S}${c}"/>
-            </c:forEach>
-
             <table>
                 <tbody>
                 <tr>
                     <td><label for="loc-trust-c2s"><fmt:message key="ssl.certificates.store-management.file_label"/>:</label></td>
-                    <td><input id="loc-trust-c2s" name="loc-trust-c2s" type="text" size="80" value="${webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).file}"/></td>
+                    <td><input id="loc-trust-c2s" name="loc-trust-c2s" type="text" size="80" value="${fn:escapeXml(displayedLocation)}"/></td>
                 </tr>
-                <tr>
-                    <td><label for="pwd-trust-c2s"><fmt:message key="ssl.certificates.store-management.password_label"/>:</label></td>
-                    <td><input id="pwd-trust-c2s" name="pwd-trust-c2s" type="password" size="30" value="${pwdTrustC2S}"/></td>
-                </tr>
+                <admin:storePasswordConfig fieldName="pwd-trust-c2s" fieldId="pwd-trust-c2s-${connectionType}" passwordSet="${admin:isStorePasswordSet(webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).password)}"/>
                 <tr>
                     <td>&#160;</td>
-                    <td><a href="security-truststore.jsp?connectionType=${connectionType}"><fmt:message key="ssl.certificates.store-management.manage"/></a></td>
+                    <td><a href="security-truststore.jsp?connectionType=${fn:escapeXml(connectionType)}"><fmt:message key="ssl.certificates.store-management.manage"/></a></td>
                 </tr>
                 </tbody>
             </table>
@@ -61,24 +59,16 @@
                 <admin:infobox type="warning"><fmt:message key="ssl.certificates.store-management.error.cannot-access"/></admin:infobox>
             </c:if>
 
-            <c:set var="pwdTrustS2S" value=""/>
-            <c:forEach items="${webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).password}" var="c">
-                <c:set var="pwdTrustS2S" value="${pwdTrustS2S}${c}"/>
-            </c:forEach>
-
             <table>
                 <tbody>
                 <tr>
                     <td><label for="loc-trust-s2s"><fmt:message key="ssl.certificates.store-management.file_label"/>:</label></td>
-                    <td><input id="loc-trust-s2s" name="loc-trust-s2s" type="text" size="80" value="${webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).file}"/></td>
+                    <td><input id="loc-trust-s2s" name="loc-trust-s2s" type="text" size="80" value="${fn:escapeXml(displayedLocation)}"/></td>
                 </tr>
-                <tr>
-                    <td><label for="pwd-trust-s2s"><fmt:message key="ssl.certificates.store-management.password_label"/>:</label></td>
-                    <td><input id="pwd-trust-s2s" name="pwd-trust-s2s" type="password" size="30" value="${pwdTrustS2S}"/></td>
-                </tr>
+                <admin:storePasswordConfig fieldName="pwd-trust-s2s" fieldId="pwd-trust-s2s-${connectionType}" passwordSet="${admin:isStorePasswordSet(webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).password)}"/>
                 <tr>
                     <td>&#160;</td>
-                    <td><a href="security-truststore.jsp?connectionType=${connectionType}"><fmt:message key="ssl.certificates.store-management.manage"/></a></td>
+                    <td><a href="security-truststore.jsp?connectionType=${fn:escapeXml(connectionType)}"><fmt:message key="ssl.certificates.store-management.manage"/></a></td>
                 </tr>
                 </tbody>
             </table>

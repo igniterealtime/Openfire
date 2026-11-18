@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfiguration" %>
 <%@ page import="java.io.File" %>
+<%@ page import="org.jivesoftware.admin.CertificateStorePasswordField" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
@@ -39,6 +40,13 @@
 
     final Map<String, String> errors = new HashMap<>();
     pageContext.setAttribute( "errors", errors );
+    // Store files that could not be opened with the password the administrator entered.
+    final Set<String> wrongPasswordFiles = new LinkedHashSet<>();
+    pageContext.setAttribute( "wrongPasswordFiles", wrongPasswordFiles );
+    // Store files that could not be opened with the current password, when no new password was entered (typically
+    // after a change of location to a file with a different password).
+    final Set<String> currentPasswordFailedFiles = new LinkedHashSet<>();
+    pageContext.setAttribute( "currentPasswordFailedFiles", currentPasswordFailedFiles );
 
     boolean showAll = certificateStoreManager.usesDistinctConfigurationForEachType();
     if ( !showAll )
@@ -95,11 +103,11 @@
         final String locTrustC2S = request.getParameter( "loc-trust-c2s" );
         final String pwdTrustC2S = request.getParameter( "pwd-trust-c2s" );
 
+        // The page never sends a store's current password to the browser. A password field is submitted only when the
+        // administrator revealed it with its "Update password" link, so a missing or empty field keeps the current
+        // password of each store (see CertificateStorePasswordField). Only the locations are mandatory.
         if ( locKey == null || locKey.isEmpty() ) {
             errors.put( "locKey", "Identity Store location must be defined." );
-        }
-        if ( pwdKey == null || pwdKey.isEmpty() ) {
-            errors.put( "pwdKey", "Identity Store password must be defined." );
         }
 
         for ( final ConnectionType connectionType : toUpdate )
@@ -110,10 +118,6 @@
                 {
                     errors.put( "locTrustC2S", "Trust Store (C2S) location must be defined." );
                 }
-                if ( pwdTrustC2S == null || pwdTrustC2S.isEmpty() )
-                {
-                    errors.put( "pwdTrustC2S", "Trust Store (C2S) password must be defined." );
-                }
             }
             else
             {
@@ -121,49 +125,100 @@
                 {
                     errors.put( "locTrustS2S", "Trust Store (S2S) location must be defined." );
                 }
-                if ( pwdTrustS2S == null || pwdTrustS2S.isEmpty() )
-                {
-                    errors.put( "pwdTrustS2S", "Trust Store (S2S) password must be defined." );
-                }
             }
         }
 
         if ( errors.isEmpty() ) {
+            // The identity store and the trust store are replaced independently, so that one failing does not stop the
+            // other from being saved. A store that fails to load leaves the manager unchanged for that store.
+            boolean anySaved = false;
             for ( final ConnectionType connectionType : toUpdate )
             {
+                final String locTrust;
+                final String pwdTrust;
+                if ( connectionType.isClientOriented() )
+                {
+                    locTrust = locTrustC2S;
+                    pwdTrust = pwdTrustC2S;
+                }
+                else
+                {
+                    locTrust = locTrustS2S;
+                    pwdTrust = pwdTrustS2S;
+                }
+
                 try
                 {
-                    final String locTrust;
-                    final String pwdTrust;
-                    if ( connectionType.isClientOriented() )
-                    {
-                        locTrust = locTrustC2S;
-                        pwdTrust = pwdTrustC2S;
-                    }
-                    else
-                    {
-                        locTrust = locTrustS2S;
-                        pwdTrust = pwdTrustS2S;
-                    }
-
+                    final char[] keyPassword = CertificateStorePasswordField.passwordToSave( pwdKey, certificateStoreManager.getIdentityStoreConfiguration( connectionType ).getPassword() );
                     final File backupKey = new File( CertificateStoreManager.getIdentityStoreBackupDirectory( connectionType ) );
-                    final File backupTrust = new File( CertificateStoreManager.getTrustStoreBackupDirectory( connectionType ) );
-
-                    final CertificateStoreConfiguration configKey = new CertificateStoreConfiguration( CertificateStoreManager.getIdentityStoreType(connectionType), new File( locKey ), pwdKey.toCharArray(), backupKey );
-                    final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( CertificateStoreManager.getTrustStoreType(connectionType), new File( locTrust ), pwdTrust.toCharArray(), backupTrust );
+                    final CertificateStoreConfiguration configKey = new CertificateStoreConfiguration( CertificateStoreManager.getIdentityStoreType(connectionType), new File( locKey ), keyPassword, backupKey );
                     certificateStoreManager.replaceIdentityStore( connectionType, configKey, false );
-                    certificateStoreManager.replaceTrustStore( connectionType, configTrust, false );
+                    anySaved = true;
                 }
                 catch ( Exception ex )
                 {
-                    errors.put( "update", ex.getMessage() );
+                    reportSaveFailure( locKey, pwdKey, ex, wrongPasswordFiles, currentPasswordFailedFiles, errors );
+                }
+
+                try
+                {
+                    final char[] trustPassword = CertificateStorePasswordField.passwordToSave( pwdTrust, certificateStoreManager.getTrustStoreConfiguration( connectionType ).getPassword() );
+                    final File backupTrust = new File( CertificateStoreManager.getTrustStoreBackupDirectory( connectionType ) );
+                    final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( CertificateStoreManager.getTrustStoreType(connectionType), new File( locTrust ), trustPassword, backupTrust );
+                    certificateStoreManager.replaceTrustStore( connectionType, configTrust, false );
+                    anySaved = true;
+                }
+                catch ( Exception ex )
+                {
+                    reportSaveFailure( locTrust, pwdTrust, ex, wrongPasswordFiles, currentPasswordFailedFiles, errors );
                 }
             }
 
-            // Log the event
-            webManager.logEvent("Updated certificate store configuration", Arrays.toString( toUpdate.toArray() ) );
-            response.sendRedirect("security-certificate-store-management.jsp?updated=true&showAll=" + showAll );
-            return;
+            // Log the event only when a store was saved, so that the audit log does not record a change that did not happen.
+            if ( anySaved ) {
+                webManager.logEvent("Updated certificate store configuration", Arrays.toString( toUpdate.toArray() ) );
+            }
+
+            // Redirect only on success: a store that fails to load (for example a wrong password) must be reported,
+            // not followed by a success message.
+            if ( errors.isEmpty() && wrongPasswordFiles.isEmpty() && currentPasswordFailedFiles.isEmpty() ) {
+                response.sendRedirect("security-certificate-store-management.jsp?updated=true&showAll=" + showAll );
+                return;
+            }
+
+            // A partial failure can leave the connection types with different stores, so decide the view again from
+            // the configuration as it is now.
+            showAll = showAll || certificateStoreManager.usesDistinctConfigurationForEachType();
+            pageContext.setAttribute( "showAll", showAll );
+        }
+
+        // The save did not succeed, so show the locations the administrator submitted in the form they submitted,
+        // rather than the current configuration, so that they need not be typed again. Passwords are never echoed.
+        pageContext.setAttribute( "keepSubmitted", true );
+        pageContext.setAttribute( "submittedConnectionType", cType );
+        pageContext.setAttribute( "submittedLocKey", locKey );
+        pageContext.setAttribute( "submittedLocTrustS2S", locTrustS2S );
+        pageContext.setAttribute( "submittedLocTrustC2S", locTrustC2S );
+    }
+%>
+<%!
+    // Records why replacing a store failed, under the message that fits the reason (see
+    // CertificateStorePasswordField.classifyFailure).
+    private static void reportSaveFailure( final String location, final String submittedPassword, final Exception failure, final Set<String> wrongPasswordFiles, final Set<String> currentPasswordFailedFiles, final Map<String, String> errors )
+    {
+        switch ( CertificateStorePasswordField.classifyFailure( submittedPassword, failure ) )
+        {
+            case WRONG_PASSWORD_ENTERED:
+                wrongPasswordFiles.add( location );
+                break;
+            case CURRENT_PASSWORD_DOES_NOT_OPEN_FILE:
+                currentPasswordFailedFiles.add( location );
+                break;
+            default:
+                // Keep each distinct message, so that a save in which several stores fail names each of them. A null
+                // message is kept as an empty one, as merge does not accept null.
+                errors.merge( "update", java.util.Objects.toString( failure.getMessage(), "" ), ( earlier, later ) -> earlier.contains( later ) ? earlier : earlier + " " + later );
+                break;
         }
     }
 %>
@@ -171,6 +226,13 @@
 <head>
     <title><fmt:message key="ssl.certificates.store-management.title"/></title>
     <meta name="pageID" content="security-certificate-store-management"/>
+    <style>
+        /* The console aligns table labels to text-bottom, which lifts "Password:" above the link beside it, and
+           centres cells, which drops it below the field once the hint adds a line. Align both on the first line. */
+        .jive-contentBox table td.store-password-label label { vertical-align: baseline; }
+        .jive-contentBox table td.store-password-label, .jive-contentBox table td.store-password { vertical-align: baseline; }
+        .store-password-hint { display: block; color: #666; }
+    </style>
 </head>
 <body>
 
@@ -190,8 +252,24 @@
     </admin:infobox>
 </c:forEach>
 
+<c:forEach var="wrongPasswordFile" items="${wrongPasswordFiles}">
+    <admin:infobox type="error">
+        <fmt:message key="ssl.certificates.store-management.password_wrong">
+            <fmt:param><c:out value="${wrongPasswordFile}"/></fmt:param>
+        </fmt:message>
+    </admin:infobox>
+</c:forEach>
+
+<c:forEach var="currentPasswordFailedFile" items="${currentPasswordFailedFiles}">
+    <admin:infobox type="error">
+        <fmt:message key="ssl.certificates.store-management.password_current_wrong">
+            <fmt:param><c:out value="${currentPasswordFailedFile}"/></fmt:param>
+        </fmt:message>
+    </admin:infobox>
+</c:forEach>
+
 <!-- Display success report, but only if there were no errors. -->
-<c:if test="${param.updated and empty errors}">
+<c:if test="${param.updated and empty errors and empty wrongPasswordFiles and empty currentPasswordFailedFiles}">
     <admin:infoBox type="success">
         <fmt:message key="ssl.certificates.store-management.saved_successfully"/>
     </admin:infoBox>
@@ -245,11 +323,16 @@
                         <c:out value="${description}"/>
                     </p>
 
-                    <admin:identityStoreConfig connectionType="${connectionType}"/>
+                    <%-- After a failed save, show the submitted locations in the form that was submitted. When the
+                         combined form was submitted and the save left the types with different stores, every form shows
+                         them, as the save applied them to every type. --%>
+                    <c:set var="formSubmitted" value="${keepSubmitted and (submittedConnectionType eq 'all' or submittedConnectionType eq connectionType.name())}"/>
+
+                    <admin:identityStoreConfig connectionType="${connectionType}" location="${formSubmitted ? submittedLocKey : ''}"/>
 
                     <br/>
 
-                    <admin:trustStoreConfig connectionType="${connectionType}"/>
+                    <admin:trustStoreConfig connectionType="${connectionType}" location="${formSubmitted ? (connectionType.clientOriented ? submittedLocTrustC2S : submittedLocTrustS2S) : ''}"/>
 
                     <br/>
 
@@ -281,18 +364,21 @@
                     <c:out value="${description}"/>
                 </p>
 
+                <%-- After a failed save, show the submitted locations only when this form was the one submitted. --%>
+                <c:set var="formSubmitted" value="${keepSubmitted and submittedConnectionType eq 'all'}"/>
+
                 <c:set var="connectionType" value="SOCKET_S2S"/>
-                <admin:identityStoreConfig connectionType="${connectionType}"/>
+                <admin:identityStoreConfig connectionType="${connectionType}" location="${formSubmitted ? submittedLocKey : ''}"/>
 
                 <br/>
 
                 <c:set var="connectionType" value="SOCKET_S2S"/>
-                <admin:trustStoreConfig connectionType="${connectionType}"/>
+                <admin:trustStoreConfig connectionType="${connectionType}" location="${formSubmitted ? submittedLocTrustS2S : ''}"/>
 
                 <br/>
 
                 <c:set var="connectionType" value="SOCKET_C2S"/>
-                <admin:trustStoreConfig connectionType="${connectionType}"/>
+                <admin:trustStoreConfig connectionType="${connectionType}" location="${formSubmitted ? submittedLocTrustC2S : ''}"/>
 
                 <br/>
 
@@ -303,5 +389,41 @@
         </form>
     </c:otherwise>
 </c:choose>
+
+<script>
+    // Each store's new-password field starts hidden and disabled, so it is not submitted and the current password is
+    // kept. "Update password" reveals and enables it; "Cancel" clears, disables and hides it again. Each password cell is
+    // handled on its own, finding its elements within the cell, so that every store's links act on that store's field.
+    document.querySelectorAll( 'td.store-password' ).forEach( function ( cell ) {
+        const status = cell.querySelector( '.store-password-status' );
+        const edit = cell.querySelector( '.store-password-edit' );
+        const field = edit.querySelector( 'input[type="password"]' );
+        const change = status.querySelector( '.store-password-change' );
+        const cancel = edit.querySelector( '.store-password-cancel' );
+
+        const show = function ( editing ) {
+            field.value = '';
+            field.disabled = !editing;
+            status.hidden = editing;
+            edit.hidden = !editing;
+            change.setAttribute( 'aria-expanded', editing ? 'true' : 'false' );
+            ( editing ? field : change ).focus();
+        };
+
+        // These links act as buttons: Enter activates a link natively, Space needs handling.
+        [ [ change, true ], [ cancel, false ] ].forEach( function ( pair ) {
+            pair[0].addEventListener( 'click', function ( event ) {
+                event.preventDefault();
+                show( pair[1] );
+            } );
+            pair[0].addEventListener( 'keydown', function ( event ) {
+                if ( event.key === ' ' ) {
+                    event.preventDefault();
+                    show( pair[1] );
+                }
+            } );
+        } );
+    } );
+</script>
 </body>
 </html>

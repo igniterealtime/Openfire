@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
+import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.handler.timeout.IdleStateEvent;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -23,6 +25,9 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.nio.NettyConnection;
+import org.jivesoftware.openfire.nio.NettyConnectionHandler;
+import org.jivesoftware.openfire.nio.NettyIdleStateKeepAliveHandler;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -1067,6 +1072,81 @@ public class RequestingStreamManagerTest
         // Verify result.
         assertTrue(sm.isEnabled(), "Stream Management must be enabled.");
         assertFalse(sm.getResume(), "The stream must not be resumable, as resumption was not requested.");
+    }
+
+    /**
+     * Verifies that an acknowledgement is requested for a connection that has gone quiet when stanzas are unacknowledged,
+     * so that the peer can acknowledge the last stanzas that were sent, which no request covered.
+     */
+    @Test
+    public void acknowledgementIsRequestedWhenStanzasAreUnacknowledged() throws Exception
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = enabledStreamManager();
+        sm.sentStanza(message("last"));
+        clearInvocations(sm.session);
+
+        // Execute system under test.
+        final boolean result = sm.requestAcknowledgementOfUnacknowledgedStanzas();
+
+        // Verify result.
+        assertTrue(result, "An acknowledgement must be requested when stanzas are unacknowledged.");
+        assertEquals(QName.get("r", StreamManager.NAMESPACE_V3), lastDelivered(sm).getQName(), "The request must be an 'r' element in the version of Stream Management of the stream.");
+    }
+
+    /**
+     * Verifies that no acknowledgement is requested for a connection that has gone quiet when no stanzas are
+     * unacknowledged, or when Stream Management is not enabled.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void acknowledgementIsNotRequestedWithoutUnacknowledgedStanzas(final boolean enabled)
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = enabled ? enabledStreamManager() : newStreamManager();
+        clearInvocations(sm.session);
+
+        // Execute system under test.
+        final boolean result = sm.requestAcknowledgementOfUnacknowledgedStanzas();
+
+        // Verify result.
+        assertFalse(result, "No acknowledgement must be requested (Stream Management enabled: " + enabled + ").");
+        verify(sm.session, never().description("Nothing must be sent (Stream Management enabled: " + enabled + ").")).deliverRawText(anyString());
+    }
+
+    /**
+     * Verifies that a stanza that is sent on an outgoing server connection after it went quiet, when nothing was
+     * unacknowledged and no acknowledgement was requested, is covered by a request for an acknowledgement before the
+     * connection is closed for being idle, instead of being sent again on a new connection although it arrived.
+     */
+    @Test
+    public void stanzaSentAfterConnectionWentQuietIsCoveredByRequestBeforeIdleClose() throws Exception
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = enabledStreamManager();
+        doReturn(sm).when((LocalOutgoingServerSession) sm.session).getStreamManager();
+        final NettyConnection connection = mock(NettyConnection.class);
+        doReturn(sm.session).when(connection).getSession();
+        final EmbeddedChannel channel = new EmbeddedChannel(new NettyIdleStateKeepAliveHandler(false));
+        channel.attr(NettyConnectionHandler.CONNECTION).set(connection);
+        try {
+            sm.sentStanza(message("1"));
+            sm.process(DocumentHelper.createElement(QName.get("a", StreamManager.NAMESPACE_V3)).addAttribute("h", "1"));
+            clearInvocations(sm.session);
+            channel.pipeline().fireUserEventTriggered(IdleStateEvent.FIRST_READER_IDLE_STATE_EVENT);
+            verify(sm.session, never().description("Test fixture expects that nothing is unacknowledged, and no acknowledgement is requested, when the connection goes quiet.")).deliverRawText(any());
+            sm.sentStanza(message("2"));
+            clearInvocations(sm.session);
+
+            // Execute system under test.
+            channel.pipeline().fireUserEventTriggered(IdleStateEvent.READER_IDLE_STATE_EVENT);
+
+            // Verify result.
+            assertEquals(QName.get("r", StreamManager.NAMESPACE_V3), lastDelivered(sm).getQName(), "An acknowledgement must be requested for the stanza that was sent after the connection went quiet.");
+            verify(connection, never().description("The connection must not be closed before the remote server could acknowledge that stanza.")).close(any(StreamError.class));
+        } finally {
+            channel.finishAndReleaseAll();
+        }
     }
 
     /**

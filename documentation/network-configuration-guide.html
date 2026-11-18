@@ -422,7 +422,11 @@ _xmpps-server._tcp.conference.example.org. 86400 IN SRV 0 5 5270 xmpp.example.or
             connection are covered. When the remote server does not answer within the time set by
             <code>xmpp.server.session.stream-management-negotiation-timeout</code>, Openfire uses the connection anyway.
             Stanzas that it sends before the answer arrives are not covered: Openfire cannot send them again or return
-            them when the connection breaks.
+            them when the connection breaks. When a connection that Openfire opened goes quiet, or is about to be closed
+            for being idle, while stanzas on it are not confirmed yet, Openfire asks the remote server to confirm them.
+            An answer keeps the connection open. Before Openfire closes a connection that another server opened to it
+            for being idle, it reports how many stanzas it handled. Both keep stanzas that arrived from being sent again
+            or returned when the connection is closed.
         </p>
 
         <section id="s2s-stream-management-broken">

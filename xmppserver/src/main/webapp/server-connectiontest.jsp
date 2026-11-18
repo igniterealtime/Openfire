@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
-  ~ Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  ~ Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -99,27 +99,7 @@
 <head>
     <title><fmt:message key="server2server.settings.testing.title"/></title>
     <meta name="pageID" content="server-connectiontest"/>
-    <script>
-        function startSpinner() {
-            document.getElementById('spinner').style.display = "inline-block";
-            return true;
-        }
-    </script>
-    <style>
-        #spinner {
-            border: 0.5rem solid #f3f3f3;
-            border-top: 0.5rem solid #D76C0D;
-            border-radius: 50%;
-            width: 1rem;
-            height: 1rem;
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="style/server-connectiontest.css">
 </head>
 <body>
 
@@ -143,35 +123,35 @@
     <!-- BEGIN 'S2S Testing' -->
     <fmt:message key="server2server.settings.testing.boxtitle" var="s2sTitle"/>
     <admin:contentBox title="${s2sTitle}">
-        <form action="server-connectiontest.jsp" method="post" onsubmit="return startSpinner();">
+        <form action="server-connectiontest.jsp" method="post" id="s2s-test-form">
             <table>
                 <tr>
-                    <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-domain"><fmt:message key="server2server.settings.testing.domain"/></label></td>
+                    <td class="s2s-label"><label for="server2server-testing-domain"><fmt:message key="server2server.settings.testing.domain"/></label></td>
                     <td>
                         <input type="hidden" name="csrf" value="${csrf}"/>
                         <input type="text" name="server2server-testing-domain" id="server2server-testing-domain" value="${s2sDomain}">
                         <input type="submit" name="s2s-test" id="s2s-test" value="<fmt:message key="global.test" />">
-                        <div id="spinner" style="display: none; vertical-align: middle;"></div>
+                        <div id="spinner"></div>
                     </td>
                 </tr>
 
                 <c:if test="${s2sTest}">
                     <tr>
-                        <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-stanzas"><fmt:message key="server2server.settings.testing.xmpp"/></label></td>
+                        <td class="s2s-label"><label for="server2server-testing-stanzas"><fmt:message key="server2server.settings.testing.xmpp"/></label></td>
                         <td>
-                            <textarea name="server2server-testing-stanzas" id="server2server-testing-stanzas" style="width: 100%" rows="12" readonly><c:out value="${stanzas}" /></textarea>
+                            <textarea name="server2server-testing-stanzas" id="server2server-testing-stanzas" class="s2s-output" rows="12" readonly><c:out value="${stanzas}" /></textarea>
                         </td>
                     </tr>
                     <tr>
-                        <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-certs"><fmt:message key="server2server.settings.testing.certificates"/></label></td>
+                        <td class="s2s-label"><label for="server2server-testing-certs"><fmt:message key="server2server.settings.testing.certificates"/></label></td>
                         <td>
-                            <textarea name="server2server-testing-certs" id="server2server-testing-certs" style="width: 100%" rows="12" readonly><c:out value="${certs}" /></textarea>
+                            <textarea name="server2server-testing-certs" id="server2server-testing-certs" class="s2s-output" rows="12" readonly><c:out value="${certs}" /></textarea>
                         </td>
                     </tr>
                     <tr>
-                        <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-logs"><fmt:message key="server2server.settings.testing.logs"/></label></td>
+                        <td class="s2s-label"><label for="server2server-testing-logs"><fmt:message key="server2server.settings.testing.logs"/></label></td>
                         <td>
-                            <textarea name="server2server-testing-logs" id="server2server-testing-logs" style="width: 100%" rows="12" readonly><c:out value="${logs}" /></textarea>
+                            <textarea name="server2server-testing-logs" id="server2server-testing-logs" class="s2s-output" rows="12" readonly><c:out value="${logs}" /></textarea>
                         </td>
                     </tr>
                 </c:if>
@@ -180,6 +160,7 @@
         </form>
     </admin:contentBox>
 
+    <script src="js/server-connectiontest.js"></script>
 </body>
 </html>
 

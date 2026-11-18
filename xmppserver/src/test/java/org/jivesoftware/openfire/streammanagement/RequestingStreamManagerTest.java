@@ -1070,6 +1070,28 @@ public class RequestingStreamManagerTest
     }
 
     /**
+     * Verifies that an answer that makes the stream resumable, and that is processed after resumption was disabled for
+     * good, as when the session is closed on purpose while the answer was still buffered, does not make the stream
+     * resumable again.
+     */
+    @Test
+    public void resumableEnabledAfterFormalCloseDoesNotMakeStreamResumable()
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        final RequestingStreamManager sm = newStreamManager();
+        sm.requestEnable(StreamManager.NAMESPACE_V3);
+        sm.formalClose();
+
+        // Execute system under test.
+        sm.process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)).addAttribute("resume", "true").addAttribute("id", "some-sm-id"));
+
+        // Verify result.
+        assertTrue(sm.isEnabled(), "Test fixture expects Stream Management to be enabled by the answer.");
+        assertFalse(sm.getResume(), "The stream must not be made resumable after resumption was disabled for good.");
+    }
+
+    /**
      * Verifies that a stanza is not queued while the connection of the session is open, so that it is sent.
      */
     @Test

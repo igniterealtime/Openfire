@@ -39,6 +39,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
+import javax.annotation.Nonnull;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.*;
@@ -157,9 +158,10 @@ public class ServerDialback {
      * {@link #createIncomingSession(org.dom4j.io.XMPPPacketReader)} for creating a new server
      * session used for receiving packets from the remote server. Use
      * {@link #validateRemoteDomain(org.dom4j.Element, org.jivesoftware.openfire.StreamID)} for
-     * validating subsequent domains and use
+     * validating the domain that the remote server requests and use
      * {@link #authenticateDomain(OutgoingServerSocketReader, String)} for
-     * registering new domains that are allowed to send packets to the remote server.<p>
+     * authenticating the local domain with the remote server when establishing an outgoing connection. A connection is
+     * authenticated for one domain of the remote server: each further domain uses a connection of its own.<p>
      *
      * For validating domains a new TCP connection will be established to the Authoritative Server.
      * The Authoritative Server may be the same Originating Server or some other machine in the
@@ -379,11 +381,9 @@ public class ServerDialback {
 
     /**
      * Returns a new {@link IncomingServerSession} with a domain validated by the Authoritative
-     * Server. New domains may be added to the returned IncomingServerSession after they have
-     * been validated. See
-     * {@link LocalIncomingServerSession#validateSubsequentDomain(org.dom4j.Element)}. The remote
-     * server will be able to send packets through this session whose domains were previously
-     * validated.<p>
+     * Server. The remote server will be able to send packets from that domain through this session. A dialback request
+     * for another sending domain on the session is refused; see
+     * {@link LocalIncomingServerSession#validateSubsequentDomain(org.dom4j.Element)}.<p>
      *
      * When acting as an Authoritative Server this method will verify the requested key
      * and will return null since the underlying TCP connection will be closed after sending the
@@ -501,6 +501,42 @@ public class ServerDialback {
     }
 
     /**
+     * Checks a dialback request that the remote server sent against the configuration of this server, without verifying
+     * its key: the request must name its sending and its target domain, dialback must be allowed on the connection, the
+     * sending domain must be allowed to connect, and the target domain must be hosted here.
+     *
+     * @param doc the dialback request (a 'db:result' element).
+     * @return the target domain of the request, normalised to the form in which the local XMPP service knows it.
+     * @throws StreamErrorException when the request does not name its sending or its target domain, or the configuration of this server does not allow the request.
+     * @throws ServerDialbackErrorException when the target domain is not hosted here.
+     */
+    public String checkRequest(@Nonnull final Element doc) throws StreamErrorException, ServerDialbackErrorException
+    {
+        final String recipient = doc.attributeValue("to");
+        final String remoteDomain = doc.attributeValue("from");
+
+        if (remoteDomain == null || remoteDomain.isEmpty() || recipient == null || recipient.isEmpty()) {
+            throw new StreamErrorException(new StreamError(StreamError.Condition.improper_addressing, "The dialback request must name its sending and its target domain."));
+        }
+
+        if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
+            throw new StreamErrorException(new StreamError(StreamError.Condition.policy_violation, "Dialback has been disabled by configuration."));
+        }
+
+        if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !connection.isEncrypted()) {
+            throw new StreamErrorException(new StreamError(StreamError.Condition.policy_violation, "Local server configuration dictates that Server Dialback can be negotiated only after the connection has been encrypted."));
+        }
+
+        if (!RemoteServerManager.canAccess(remoteDomain)) {
+            throw new StreamErrorException(new StreamError(StreamError.Condition.policy_violation, "Remote domain is not allowed to establish a connection to this server."));
+        }
+        if (isHostUnknown(recipient)) {
+            throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.item_not_found, PacketError.Type.cancel, "Service not hosted here"));
+        }
+        return JID.domainprep(recipient);
+    }
+
+    /**
      * Validates the domain requested by the remote server with the Authoritative Server, and returns that domain in
      * normalised form. To validate the domain a new TCP connection will be established to the
      * Authoritative Server. The Authoritative Server may be the same Originating Server or
@@ -524,125 +560,109 @@ public class ServerDialback {
 
         log.debug( "Validating domain...");
 
-        if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
-            throw new StreamErrorException(new StreamError(StreamError.Condition.policy_violation, "Dialback has been disabled by configuration."));
-        }
+        // The domain is serviced. Continue with, and return, its normalised form, so that the session is created
+        // for, and the result is reported from, the domain as the local XMPP service knows it.
+        recipient = checkRequest(doc);
 
-        if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !connection.isEncrypted()) {
-            throw new StreamErrorException(new StreamError(StreamError.Condition.policy_violation, "Local server configuration dictates that Server Dialback can be negotiated only after the connection has been encrypted."));
+        log.debug( "Check if the remote domain already has a connection to the target domain/subdomain" );
+        boolean alreadyExists = false;
+        for (IncomingServerSession session : sessionManager.getIncomingServerSessions(remoteDomain)) {
+            if (recipient.equals(session.getLocalDomain())) {
+                alreadyExists = true;
+            }
         }
-
-        if (!RemoteServerManager.canAccess(remoteDomain)) {
-            throw new StreamErrorException(new StreamError(StreamError.Condition.policy_violation, "Remote domain is not allowed to establish a connection to this server."));
-        }
-        else if (isHostUnknown(recipient)) {
-            throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.item_not_found, PacketError.Type.cancel, "Service not hosted here"));
+        if (alreadyExists && !sessionManager.isMultipleServerConnectionsAllowed()) {
+            throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.resource_constraint, PacketError.Type.cancel, "Incoming session already exists"));
         }
         else {
-            // The domain is serviced. Continue with, and return, its normalised form, so that the session is created
-            // for, and the result is reported from, the domain as the local XMPP service knows it.
-            recipient = JID.domainprep(recipient);
-
-            log.debug( "Check if the remote domain already has a connection to the target domain/subdomain" );
-            boolean alreadyExists = false;
-            for (IncomingServerSession session : sessionManager.getIncomingServerSessions(remoteDomain)) {
-                if (recipient.equals(session.getLocalDomain())) {
-                    alreadyExists = true;
-                }
+            log.debug( "Checking to see if the remote server provides stronger authentication based on SASL. If that's the case, dialback-based authentication can be skipped." );
+            if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), remoteDomain, true)) {
+                log.debug( "Host authenticated based on SASL. Weaker dialback-based authentication is skipped." );
+                log.debug( "Domain validated successfully!" );
+                return recipient;
             }
-            if (alreadyExists && !sessionManager.isMultipleServerConnectionsAllowed()) {
-                throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.resource_constraint, PacketError.Type.cancel, "Incoming session already exists"));
+
+            log.debug( "Unable to authenticate host based on stronger SASL. Proceeding with dialback..." );
+
+            String key = doc.getTextTrim();
+
+            final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain( remoteDomain, RemoteServerManager.getPortForServer(remoteDomain) );
+
+            if ( socketToXmppDomain == null )
+            {
+                throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.remote_server_not_found, PacketError.Type.cancel, "No server available for verifying key of remote server."));
             }
-            else {
-                log.debug( "Checking to see if the remote server provides stronger authentication based on SASL. If that's the case, dialback-based authentication can be skipped." );
-                if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), remoteDomain, true)) {
-                    log.debug( "Host authenticated based on SASL. Weaker dialback-based authentication is skipped." );
-                    log.debug( "Domain validated successfully!" );
-                    return recipient;
-                }
 
-                log.debug( "Unable to authenticate host based on stronger SASL. Proceeding with dialback..." );
+            Socket socket = socketToXmppDomain.getKey();
+            boolean directTLS = socketToXmppDomain.getValue();
 
-                String key = doc.getTextTrim();
-
-                final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain( remoteDomain, RemoteServerManager.getPortForServer(remoteDomain) );
-
-                if ( socketToXmppDomain == null )
-                {
-                    throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.remote_server_not_found, PacketError.Type.cancel, "No server available for verifying key of remote server."));
-                }
-
-                Socket socket = socketToXmppDomain.getKey();
-                boolean directTLS = socketToXmppDomain.getValue();
-
-                VerifyResult result;
+            VerifyResult result;
+            try {
+                log.debug( "Verifying dialback key..." );
+                final SocketAddress socketAddress = socket.getRemoteSocketAddress();
+                log.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
                 try {
-                    log.debug( "Verifying dialback key..." );
-                    final SocketAddress socketAddress = socket.getRemoteSocketAddress();
-                    log.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
-                    try {
-                        result = verifyKey( key, streamID, recipient, remoteDomain, socket, directTLS, directTLS );
-                    }
-                    catch (SSLHandshakeException e)
+                    result = verifyKey( key, streamID, recipient, remoteDomain, socket, directTLS, directTLS );
+                }
+                catch (SSLHandshakeException e)
+                {
+                    result = VerifyResult.error;
+                    log.debug( "Verification of dialback key failed due to TLS failure.", e );
+
+                    // The receiving entity is expected to close the socket *without* sending any more data (<failure/> nor </stream>).
+                    // It is probably (see OF-794) best if we, as the initiating entity, therefor don't send any data either.
+                    final SocketAddress oldAddress = socket.getRemoteSocketAddress();
+                    socket.close();
+
+                    if ( !directTLS )
                     {
-                        result = VerifyResult.error;
-                        log.debug( "Verification of dialback key failed due to TLS failure.", e );
+                        log.debug( "Retry without StartTLS... Re-opening socket (with the same remote peer)..." );
 
-                        // The receiving entity is expected to close the socket *without* sending any more data (<failure/> nor </stream>).
-                        // It is probably (see OF-794) best if we, as the initiating entity, therefor don't send any data either.
-                        final SocketAddress oldAddress = socket.getRemoteSocketAddress();
-                        socket.close();
+                        // Retry, without TLS.
+                        socket = new Socket();
+                        socket.connect( oldAddress, RemoteServerManager.getSocketTimeout() );
+                        log.debug( "Successfully re-opened socket! Try to validate dialback key again (without TLS this time)..." );
 
-                        if ( !directTLS )
-                        {
-                            log.debug( "Retry without StartTLS... Re-opening socket (with the same remote peer)..." );
-
-                            // Retry, without TLS.
-                            socket = new Socket();
-                            socket.connect( oldAddress, RemoteServerManager.getSocketTimeout() );
-                            log.debug( "Successfully re-opened socket! Try to validate dialback key again (without TLS this time)..." );
-
-                            result = verifyKey( key, streamID, recipient, remoteDomain, socket, true, directTLS );
-                        }
-                    } catch ( SSLException ex ) {
-                        if ( JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK, true) && ex.getMessage().contains( "plaintext connection?" ) ) {
-                            Log.warn( "Plaintext detected on a new connection that is was started in DirectTLS mode (socket address: {}). Attempting to restart the connection in non-DirectTLS mode.", socketAddress );
-                            try {
-                                // Close old socket
-                                socket.close();
-                            } catch ( Exception e ) {
-                                Log.debug( "An exception occurred (and is ignored) while trying to close a socket that was already in an error state.", e );
-                            }
-                            socket = new Socket();
-                            socket.connect( socketAddress, RemoteServerManager.getSocketTimeout() );
-                            result = verifyKey( key, streamID, recipient, remoteDomain, socket, false, false );
-                            directTLS = false; // No error this time? directTLS apparently is 'false'. Change it's value for future usage (if any)
-                            Log.info( "Re-established connection to {}. Proceeding without directTLS.", socketAddress );
-                        } else {
-                            // Do not retry as non-DirectTLS, rethrow the exception.
-                            throw ex;
-                        }
+                        result = verifyKey( key, streamID, recipient, remoteDomain, socket, true, directTLS );
                     }
-
-                    switch(result) {
-                        case valid:
-                            log.debug( "Successfully validated domain!" );
-                            return recipient;
-
-                        case invalid:
-                            throw new ServerDialbackKeyInvalidException(recipient, remoteDomain);
-
-                        default:
-                            break;
+                } catch ( SSLException ex ) {
+                    if ( JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK, true) && ex.getMessage().contains( "plaintext connection?" ) ) {
+                        Log.warn( "Plaintext detected on a new connection that is was started in DirectTLS mode (socket address: {}). Attempting to restart the connection in non-DirectTLS mode.", socketAddress );
+                        try {
+                            // Close old socket
+                            socket.close();
+                        } catch ( Exception e ) {
+                            Log.debug( "An exception occurred (and is ignored) while trying to close a socket that was already in an error state.", e );
+                        }
+                        socket = new Socket();
+                        socket.connect( socketAddress, RemoteServerManager.getSocketTimeout() );
+                        result = verifyKey( key, streamID, recipient, remoteDomain, socket, false, false );
+                        directTLS = false; // No error this time? directTLS apparently is 'false'. Change it's value for future usage (if any)
+                        Log.info( "Re-established connection to {}. Proceeding without directTLS.", socketAddress );
+                    } else {
+                        // Do not retry as non-DirectTLS, rethrow the exception.
+                        throw ex;
                     }
-                    throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError( PacketError.Condition.remote_server_timeout, PacketError.Type.cancel, "Key verification did not complete (the Authoritative Server likely returned an error or a time out occurred)."));
                 }
-                catch (ServerDialbackKeyInvalidException | ServerDialbackErrorException e) {
-                    throw e;
+
+                switch(result) {
+                    case valid:
+                        log.debug( "Successfully validated domain!" );
+                        return recipient;
+
+                    case invalid:
+                        throw new ServerDialbackKeyInvalidException(recipient, remoteDomain);
+
+                    default:
+                        break;
                 }
-                catch (Exception e) {
-                    throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.remote_server_timeout, PacketError.Type.cancel, "Authoritative server failed"), e);
-                }
+                throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError( PacketError.Condition.remote_server_timeout, PacketError.Type.cancel, "Key verification did not complete (the Authoritative Server likely returned an error or a time out occurred)."));
+            }
+            catch (ServerDialbackKeyInvalidException | ServerDialbackErrorException e) {
+                throw e;
+            }
+            catch (Exception e) {
+                throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.remote_server_timeout, PacketError.Type.cancel, "Authoritative server failed"), e);
             }
         }
     }

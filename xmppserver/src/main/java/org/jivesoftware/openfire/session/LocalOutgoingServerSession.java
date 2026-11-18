@@ -17,8 +17,6 @@
 package org.jivesoftware.openfire.session;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -27,7 +25,6 @@ import org.jivesoftware.openfire.nio.NettySessionInitializer;
 import org.jivesoftware.openfire.nio.NetworkEntityUnreachableException;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerManager;
-import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -77,7 +74,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     private static final Logger Log = LoggerFactory.getLogger(LocalOutgoingServerSession.class);
 
-    private static final Interner<JID> remoteAuthMutex = Interners.newWeakInterner();
 
     /**
      * Controls the S2S outgoing session initialise timeout time in seconds
@@ -101,20 +97,14 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         .setDynamic(true)
         .build();
 
-    private OutgoingServerSocketReader socketReader;
     private final Collection<DomainPair> outgoingDomainPairs = new HashSet<>();
 
     /**
      * Authenticates the local domain to the remote domain. Once authenticated the remote domain can be expected to
      * start accepting data from the local domain.
      *
-     * This implementation will attempt to re-use an existing connection. A connection is deemed re-usable when it is either:
-     * <ul>
-     *     <li>authenticated to the remote domain itself, or:</li>
-     *     <li>authenticated to a sub- or superdomain of the remote domain AND offers dialback.</li>
-     * </ul>
-     *
-     * When no re-usable connection exists, a new connection will be created.
+     * An existing connection is re-used when it is authenticated for the domain pair. Otherwise, a new connection is
+     * created: a connection is not used to authenticate a domain pair other than those it was authenticated for.
      *
      * DNS will be used to find hosts for the remote domain. When DNS records do not specify a port, port 5269 will be
      * used unless this default is overridden by the <b>xmpp.server.socket.remotePort</b> property.
@@ -149,7 +139,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
             log.debug( "Searching for pre-existing outgoing sessions to the remote domain (if one exists, it will be re-used) ..." );
             diagnosticLog.add("DEBUG: Searching for pre-existing outgoing sessions to the remote domain (if one exists, it will be re-used) ...");
-            OutgoingServerSession session;
             SessionManager sessionManager = SessionManager.getInstance();
             if (sessionManager == null) {
                 // Server is shutting down while we are trying to create a new s2s connection
@@ -157,129 +146,56 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 diagnosticLog.add("WARN: Unable to authenticate: a SessionManager instance is not available. This should not occur unless Openfire is starting up or shutting down.");
                 return DomainAuthResult.failure(diagnosticLog);
             }
-            session = sessionManager.getOutgoingServerSession(domainPair);
-            if (session != null && session.checkOutgoingDomainPair(domainPair))
+            final OutgoingServerSession existing = sessionManager.getOutgoingServerSession(domainPair);
+            if (existing != null && existing.checkOutgoingDomainPair(domainPair))
             {
                 // Do nothing since the domain has already been authenticated.
                 log.debug( "Authentication successful (domain was already authenticated in the pre-existing session)." );
                 diagnosticLog.add("DEBUG: Authentication successful (domain was already authenticated in the pre-existing session).");
                 //inform all listeners as well.
-                ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
+                ServerSessionEventDispatcher.dispatchEvent(existing, ServerSessionEventDispatcher.EventType.session_created);
                 return DomainAuthResult.success(diagnosticLog);
             }
-            if (session != null && !session.isUsingServerDialback() )
-            {
-                log.debug( "Dialback was not used for '{}'. This session cannot be re-used.", domainPair );
-                diagnosticLog.add("DEBUG: " + fmt("Dialback was not used for '{}'. This session cannot be re-used.", domainPair));
-                session = null;
-            }
+            // OF-3470: each domain pair gets a connection of its own. An existing connection is not used to authenticate
+            // another domain pair on it (dialback multiplexing, XEP-0220 section 2.6).
+            OutgoingServerSession session = null;
+            try {
+                log.debug("No existing session is authenticated for this domain pair. Creating a new session ...");
+                diagnosticLog.add("DEBUG: No existing session is authenticated for this domain pair. Creating a new session ...");
+                int port = RemoteServerManager.getPortForServer(remoteDomain);
+                session = createOutgoingSession(domainPair, port, diagnosticLog);
+                if (session != null) {
+                    log.debug("Created a new session.");
+                    diagnosticLog.add("DEBUG: Created a new session.");
 
-            if (session == null)
-            {
-                log.debug( "There are no pre-existing outgoing sessions to the remote domain itself. Searching for pre-existing outgoing sessions to super- or subdomains of the remote domain (if one exists, it might be re-usable) ..." );
-                diagnosticLog.add("DEBUG: There are no pre-existing outgoing sessions to the remote domain itself. Searching for pre-existing outgoing sessions to super- or subdomains of the remote domain (if one exists, it might be re-usable) ...");
-
-                for ( IncomingServerSession incomingSession : sessionManager.getIncomingServerSessions( remoteDomain ) )
-                {
-                    // These are the remote domains that are allowed to send data to the local domain - expected to be sub- or superdomains of remoteDomain
-                    for ( String otherRemoteDomain : incomingSession.getValidatedDomains() )
-                    {
-                        // See if there's an outgoing session to any of the (other) domains hosted by the remote domain.
-                        session = sessionManager.getOutgoingServerSession( new DomainPair(localDomain, otherRemoteDomain) );
-                        if (session != null)
-                        {
-                            log.debug( "An outgoing session to a different domain ('{}') hosted on the remote domain was found.", otherRemoteDomain );
-                            diagnosticLog.add("DEBUG: " + fmt("An outgoing session to a different domain ('{}') hosted on the remote domain was found.", otherRemoteDomain));
-
-                            // As this sub/superdomain is different from the original remote domain, we need to check if it supports dialback.
-                            if ( session.isUsingServerDialback() )
-                            {
-                                log.debug( "Dialback was used for '{}'. This session can be re-used.", otherRemoteDomain );
-                                diagnosticLog.add("DEBUG: " + fmt("Dialback was used for '{}'. This session can be re-used.", otherRemoteDomain));
-                                break;
-                            }
-                            else
-                            {
-                                log.debug( "Dialback was not used for '{}'. This session cannot be re-used.", otherRemoteDomain );
-                                diagnosticLog.add("DEBUG: " + fmt("Dialback was not used for '{}'. This session cannot be re-used.", otherRemoteDomain));
-                                session = null;
-                            }
+                    session.addOutgoingDomainPair(domainPair);
+                    try {
+                        sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
+                    } catch (Exception e) {
+                        log.debug("Failed to register close listener for newly created session to '{}'. Rolling back route registration to prevent an orphaned route.", remoteDomain, e);
+                        diagnosticLog.add("DEBUG: " + fmt("Failed to register close listener for newly created session to '{}'. Rolling back route registration to prevent an orphaned route.", remoteDomain) + " - " + e);
+                        // Explicitly remove all routes that were just added, as the close listener that would normally do so may never have been registered.
+                        for (DomainPair pair : session.getOutgoingDomainPairs()) {
+                            XMPPServer.getInstance().getRoutingTable().removeServerRoute(pair);
                         }
+                        throw e;
                     }
-                }
 
-                if (session == null) {
-                    log.debug( "There are no pre-existing session to other domains hosted on the remote domain." );
-                    diagnosticLog.add("DEBUG: There are no pre-existing session to other domains hosted on the remote domain.");
-                }
-            }
-
-            if ( session != null )
-            {
-                log.debug( "A pre-existing session can be re-used. The session was established using server dialback so it is possible to do piggybacking to authenticate more domains." );
-                diagnosticLog.add("DEBUG: A pre-existing session can be re-used. The session was established using server dialback so it is possible to do piggybacking to authenticate more domains.");
-                if ( session.checkOutgoingDomainPair(domainPair) )
-                {
-                    // Do nothing since the domain has already been authenticated.
-                    log.debug( "Authentication successful (domain was already authenticated in the pre-existing session)." );
-                    diagnosticLog.add("DEBUG: Authentication successful (domain was already authenticated in the pre-existing session).");
+                    log.debug("Authentication successful.");
+                    diagnosticLog.add("DEBUG: Authentication successful.");
+                    //inform all listeners as well.
+                    ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
                     return DomainAuthResult.success(diagnosticLog);
-                }
-
-                // A session already exists so authenticate the domain using that session.
-                if ( session.authenticateSubdomain(domainPair) )
-                {
-                    log.debug( "Authentication successful (domain authentication was added using a pre-existing session)." );
-                    diagnosticLog.add("DEBUG: Authentication successful (domain authentication was added using a pre-existing session).");
-                    return DomainAuthResult.success(diagnosticLog);
-                }
-                else
-                {
-                    log.warn( "Unable to authenticate: Unable to add authentication to pre-exising session." );
-                    diagnosticLog.add("WARN: Unable to authenticate: Unable to add authentication to pre-exising session.");
+                } else {
+                    log.warn("Unable to authenticate: Fail to create new session.");
+                    diagnosticLog.add("WARN: Unable to authenticate: Fail to create new session.");
                     return DomainAuthResult.failure(diagnosticLog);
                 }
-            }
-            else
-            {
-                try {
-                    log.debug("Unable to re-use an existing session. Creating a new session ...");
-                    diagnosticLog.add("DEBUG: Unable to re-use an existing session. Creating a new session ...");
-                    int port = RemoteServerManager.getPortForServer(remoteDomain);
-                    session = createOutgoingSession(domainPair, port, diagnosticLog);
-                    if (session != null) {
-                        log.debug("Created a new session.");
-                        diagnosticLog.add("DEBUG: Created a new session.");
-
-                        session.addOutgoingDomainPair(domainPair);
-                        try {
-                            sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
-                        } catch (Exception e) {
-                            log.debug("Failed to register close listener for newly created session to '{}'. Rolling back route registration to prevent an orphaned route.", remoteDomain, e);
-                            diagnosticLog.add("DEBUG: " + fmt("Failed to register close listener for newly created session to '{}'. Rolling back route registration to prevent an orphaned route.", remoteDomain) + " - " + e);
-                            // Explicitly remove all routes that were just added, as the close listener that would normally do so may never have been registered.
-                            for (DomainPair pair : session.getOutgoingDomainPairs()) {
-                                XMPPServer.getInstance().getRoutingTable().removeServerRoute(pair);
-                            }
-                            throw e;
-                        }
-
-                        log.debug("Authentication successful.");
-                        diagnosticLog.add("DEBUG: Authentication successful.");
-                        //inform all listeners as well.
-                        ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
-                        return DomainAuthResult.success(diagnosticLog);
-                    } else {
-                        log.warn("Unable to authenticate: Fail to create new session.");
-                        diagnosticLog.add("WARN: Unable to authenticate: Fail to create new session.");
-                        return DomainAuthResult.failure(diagnosticLog);
-                    }
-                } catch (Exception e) {
-                    if (session != null) {
-                        session.close();
-                    }
-                    throw e;
+            } catch (Exception e) {
+                if (session != null) {
+                    session.close();
                 }
+                throw e;
             }
         }
         catch (Exception e)
@@ -365,7 +281,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     public LocalOutgoingServerSession(String localDomain, Connection connection, OutgoingServerSocketReader socketReader, StreamID streamID) {
         super(localDomain, connection, streamID);
-        this.socketReader = socketReader;
         socketReader.setSession(this);
     }
 
@@ -376,17 +291,13 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     @Override
     boolean canDeliver(@Nonnull final Packet stanza) {
         final DomainPair domainPair = new DomainPair(stanza.getFrom().getDomain(), stanza.getTo().getDomain());
-        boolean processed = true;
-        synchronized (remoteAuthMutex.intern(new JID(null, domainPair.getRemote(), null))) {
-            if (!checkOutgoingDomainPair(domainPair) && !authenticateSubdomain(domainPair)) {
-                // Return error since sender domain was not validated by remote server
-                processed = false;
-            }
-        }
-        if (!processed) {
+        if (!checkOutgoingDomainPair(domainPair)) {
+            // OF-3470: the domain pair is not authenticated on this session, and is not authenticated on it now either.
+            Log.debug("Not sending stanza {} on session {}, which is not authenticated for domain pair {}. Returning an error to the sender.", stanza.getID(), getStreamID(), domainPair);
             returnErrorToSenderAsync(stanza);
+            return false;
         }
-        return processed;
+        return true;
     }
 
     @Override
@@ -438,20 +349,18 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             });
     }
 
+    /**
+     * Does not authenticate the domain pair: a session is not used to authenticate a domain pair other than those it was
+     * authenticated for. A new session is created for it instead, by {@link #authenticateDomain(DomainPair)}.
+     *
+     * @param domainPair the local and remote domain for which authentication was requested.
+     * @return false
+     * @deprecated A session is no longer used to authenticate more domain pairs (dialback multiplexing).
+     */
     @Override
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     public boolean authenticateSubdomain(@Nonnull final DomainPair domainPair) {
-        if (!isUsingServerDialback()) {
-            /*
-             * We cannot do this reliably; but this code should be unreachable.
-             */
-            return false;
-        }
-        ServerDialback method = new ServerDialback(getConnection(), domainPair);
-        if (method.authenticateDomain(socketReader, getStreamID().getID())) {
-            // Add the validated domain as an authenticated domain
-            addOutgoingDomainPair(domainPair);
-            return true;
-        }
+        Log.debug("Not authenticating domain pair {} on session {}: a session is not used to authenticate more domain pairs.", domainPair, getStreamID());
         return false;
     }
 

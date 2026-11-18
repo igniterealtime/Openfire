@@ -56,9 +56,9 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
     }
 
     @Override
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     public boolean authenticateSubdomain(@Nonnull final DomainPair domainPair) {
-        ClusterTask task = new AuthenticateSubdomainTask(domainPair);
-        return (Boolean) doSynchronousClusterTask(task);
+        return false;
     }
 
     @Override
@@ -137,6 +137,10 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
         }
     }
 
+    /**
+     * Kept for cluster nodes that run an older version of Openfire, which may send this task.
+     */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     private static class AuthenticateSubdomainTask extends OutgoingServerSessionTask {
 
         public AuthenticateSubdomainTask() {

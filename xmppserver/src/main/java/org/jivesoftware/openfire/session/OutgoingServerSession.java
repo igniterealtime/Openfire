@@ -26,23 +26,23 @@ import java.util.Collection;
  * be used for sending packets.<p>
  *
  * Once the connection has been established with the remote server and at least a domain has been
- * authenticated then a new route will be added to the routing table for this connection. For
- * optimization reasons the same outgoing connection will be used even if the remote server has
- * several hostnames. However, different routes will be created in the routing table for each
- * hostname of the remote server.
+ * authenticated then a new route will be added to the routing table for this connection. Each pair
+ * of a local and a remote domain gets a connection of its own: a connection is not used to
+ * authenticate more domain pairs.
  *
  * @author Gaston Dombiak
  */
 public interface OutgoingServerSession extends ServerSession {
     /**
-     * Authenticates a subdomain of this server with the specified remote server over an existing
-     * outgoing connection. If the existing session was using server dialback then a new db:result
-     * is going to be sent to the remote server. But if the existing session was TLS+SASL based
-     * then just assume that the subdomain was authenticated by the remote server.
+     * Was used to authenticate a further domain pair over the existing connection of this session (dialback
+     * multiplexing). A session is no longer used to authenticate more domain pairs, so implementations return false.
      *
-     * @param domainPair the local (sub) and remote domain for which authentication is to be established.
-     * @return True if the domain was authenticated by the remote server.
+     * @param domainPair the local (sub) and remote domain for which authentication was requested.
+     * @return false
+     * @deprecated A session is no longer used to authenticate more domain pairs. Use
+     * {@link LocalOutgoingServerSession#authenticateDomain(DomainPair)}, which creates a session for the domain pair.
      */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     boolean authenticateSubdomain(@Nonnull final DomainPair domainPair);
 
     /**

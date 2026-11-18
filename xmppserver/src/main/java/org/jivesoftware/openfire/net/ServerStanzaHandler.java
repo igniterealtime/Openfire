@@ -122,10 +122,10 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     @Override
     boolean processUnknowPacket(Element doc) throws UnauthorizedException {
-        // Handle subsequent db:result packets
+        // Handle db:result packets (dialback requests)
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
             if (!((LocalIncomingServerSession) session).validateSubsequentDomain(doc)) {
-                throw new UnauthorizedException("Failed to validate domain when using piggyback.");
+                throw new UnauthorizedException("Failed to validate domain using dialback.");
             }
             return true;
         }

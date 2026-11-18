@@ -1848,32 +1848,6 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
-     * Verifies that, when the server detach timeout is negative, another attempt to resume a detached session is still
-     * made after many failed attempts, long after the session was detached, at the maximum delay.
-     */
-    @Test
-    public void attemptsToResumeAreMadeWithoutDeadlineWhenDetachTimeoutIsNegative() throws Exception
-    {
-        // Setup test fixture.
-        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
-        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMillis(-1));
-        final LocalOutgoingServerSession resumable = resumableSession();
-        breakConnection(sessionManager, resumable);
-        setDetachedSince(resumable, Instant.now().minus(Duration.ofDays(30)));
-
-        // Execute system under test.
-        for (int i = 0; i < 40; i++) {
-            runResumptionAttempt(null, p -> {});
-        }
-
-        // Verify result.
-        assertEquals(40, retryDelays.size(), "Another attempt must be scheduled after each failed attempt when the server detach timeout is negative.");
-        assertEquals(Duration.ofSeconds(30), retryDelays.get(retryDelays.size() - 1), "An attempt after many failed attempts must be scheduled at the maximum delay.");
-        assertEquals(1, resumptionAttempts.size(), "Another attempt must be scheduled after the last failed attempt.");
-        assertTrue(sessionManager.isDetached(resumable), "A session must stay detached while attempts to resume it are made without a deadline.");
-    }
-
-    /**
      * Verifies that a request to resume the stream that was sent on a new connection that was not authenticated in time
      * is given up before that connection is closed and another attempt is scheduled, so that an answer that arrives on
      * it later does not resume the session.
@@ -2218,14 +2192,11 @@ public class LocalOutgoingServerSessionStreamManagementTest
         final Duration noPeerMaximum = sessionManager.getDetachTimeout(withoutMaximum);
         SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofSeconds(10));
         final Duration serverShorter = sessionManager.getDetachTimeout(withMaximum);
-        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMillis(-1));
-        final Duration serverNegative = sessionManager.getDetachTimeout(withMaximum);
 
         // Verify result.
         assertEquals(Duration.ofSeconds(30), peerShorter, "The preferred maximum resumption time of the remote server must be used when it is shorter than the server detach timeout.");
         assertEquals(Duration.ofMinutes(2), noPeerMaximum, "The server detach timeout must be used when the remote server reported no preferred maximum resumption time.");
         assertEquals(Duration.ofSeconds(10), serverShorter, "The server detach timeout must be used when it is shorter than the preferred maximum resumption time of the remote server.");
-        assertEquals(Duration.ofSeconds(30), serverNegative, "The preferred maximum resumption time of the remote server must be used when the server detach timeout is negative.");
     }
 
     /**

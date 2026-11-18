@@ -127,13 +127,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
     /**
      * How long a detached server session, of which the connection broke while its stream can be resumed (XEP-0198),
-     * is kept before it is ended. A negative value keeps such a session until it is resumed. Detached sessions of
-     * other types use {@link #getSessionDetachTime()}.
+     * is kept before it is ended. Detached sessions of other types use {@link #getSessionDetachTime()}.
      */
     public static final SystemProperty<Duration> SERVER_SESSION_DETACH_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.server.session.detach.timeout")
         .setDefaultValue(Duration.ofMinutes(2))
-        .setMinValue(Duration.ofMillis(-1))
+        .setMinValue(Duration.ZERO)
         .setChronoUnit(ChronoUnit.MILLIS)
         .setDynamic(true)
         .build();
@@ -2402,18 +2401,18 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * For an outgoing server session of which the remote server reported a preferred maximum resumption time (see
      * {@link RequestingStreamManager#getPeerMaximumResumptionTime()}), this is the shorter of that time and the server
-     * timeout, as the remote server need not resume the stream after its maximum (decision 7 of OF-2425). When the
-     * server timeout is negative, it is the preferred maximum resumption time of the remote server.
+     * timeout, as the remote server need not resume the stream after its maximum (decision 7 of OF-2425).
      *
      * @param session the session for which to return the timeout.
-     * @return the time that the session is kept while detached. A negative duration means that it is kept until it is resumed.
+     * @return the time that the session is kept while detached. A negative duration, which only the timeout of client
+     * sessions can be, means that it is kept until it is resumed.
      */
     @Nonnull
     public Duration getDetachTimeout(@Nonnull final LocalSession session) {
         if (session instanceof LocalOutgoingServerSession outgoingSession && outgoingSession.getStreamManager() != null) {
             final Duration serverTimeout = SERVER_SESSION_DETACH_TIMEOUT.getValue();
             final Duration peerMaximum = outgoingSession.getStreamManager().getPeerMaximumResumptionTime();
-            if (peerMaximum != null && (serverTimeout.isNegative() || peerMaximum.compareTo(serverTimeout) < 0)) {
+            if (peerMaximum != null && peerMaximum.compareTo(serverTimeout) < 0) {
                 return peerMaximum;
             }
             return serverTimeout;

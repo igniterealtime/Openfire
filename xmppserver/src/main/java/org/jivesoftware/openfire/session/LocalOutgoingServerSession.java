@@ -645,15 +645,14 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * Returns how much longer this session is kept while it is detached, before it is ended: the time until its detach
      * timeout (see {@link SessionManager#getDetachTimeout(LocalSession)}) has passed since {@link #getDetachedSince()}.
      *
-     * @return the time left, which is zero when that time has passed, or null when there is no such limit, as the detach
-     * timeout is negative or the session was never detached.
+     * @return the time left, which is zero when that time has passed, or null when the session was never detached.
      */
     @Nullable
     public Duration getTimeLeftWhileDetached()
     {
         final Duration timeout = sessionManager.getDetachTimeout(this);
         final Instant since = detachedSince;
-        if (timeout.isNegative() || since == null) {
+        if (since == null) {
             return null;
         }
         final Duration left = Duration.between(Instant.now(), since.plus(timeout));
@@ -794,8 +793,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * start after the session is to be ended: once the detach timeout of this session (see
      * {@link SessionManager#getDetachTimeout(LocalSession)}) has passed since {@link #getDetachedSince()}. The first
      * attempt is made after {@link #RESUMPTION_RETRY_INITIAL_DELAY}, and the delay doubles after each failed attempt, up
-     * to {@link #RESUMPTION_RETRY_MAXIMUM_DELAY}. When the detach timeout is negative, attempts are made until the
-     * session is resumed or ended otherwise.
+     * to {@link #RESUMPTION_RETRY_MAXIMUM_DELAY}.
      *
      * @return true if another attempt is scheduled, false if the caller is to end this session.
      */

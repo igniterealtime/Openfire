@@ -266,6 +266,27 @@ public class RoutingTableImplDetachedServerRouteTest
     }
 
     /**
+     * Verifies that a local route that also exists on another cluster node when the cache content is restored, as when
+     * this node joins a cluster, is ended rather than kept for resumption: its session is made non-resumable before it
+     * is closed, as the connection on the other node replaces it, and a session that is detached already is ended.
+     */
+    @Test
+    public void localRouteThatExistsOnOtherNodeIsEndedWithoutResumptionWhenCacheIsRestored() throws Exception
+    {
+        // Setup test fixture.
+        CacheFactory.createCache(RoutingTableImpl.S2S_CACHE_NAME).put(DOMAIN_PAIR, OTHER_NODE);
+        final Method restoreCacheContent = RoutingTableImpl.class.getDeclaredMethod("restoreCacheContent");
+        restoreCacheContent.setAccessible(true);
+
+        // Execute system under test.
+        restoreCacheContent.invoke(routingTable);
+
+        // Verify result.
+        assertFalse(session.getStreamManager().getResume(), "A local route that also exists on another cluster node must be made non-resumable, so that it is ended rather than kept for resumption.");
+        assertFalse(session.isDetached(), "A detached local route that also exists on another cluster node must be ended, rather than kept until its detach timeout.");
+    }
+
+    /**
      * Creates an authenticated outgoing session on this cluster node that is the route for {@link #DOMAIN_PAIR}, on
      * which the remote server enabled Stream Management with a stream that can be resumed, and detaches it, as when its
      * connection broke.

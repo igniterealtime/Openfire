@@ -34,13 +34,17 @@ import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerStanzaHandler;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
+import org.jivesoftware.util.StreamErrorException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.mockito.MockedConstruction;
@@ -702,6 +706,34 @@ public class LocalIncomingServerSessionResumptionTest
         assertEquals(Set.of(REMOTE_DOMAIN), sendersOfRoutedMessages(resumed.router()), "Stanzas from the domain that was authenticated again must be accepted.");
         assertEquals(Set.of(REMOTE_DOMAIN), Set.copyOf(original.getValidatedDomains()), "Authenticating the domain again must not change the validated domains of the resumed session.");
         assertEquals(List.of(original), sessionManager.getIncomingServerSessions(REMOTE_DOMAIN), "The domain that was authenticated again must remain registered for the resumed session only.");
+    }
+
+    /**
+     * Verifies that a failed dialback for the domain of a resumed session, on the connection on which it was resumed,
+     * ends the session rather than keeping it for resumption again, as it does on a connection without Stream
+     * Management: for an invalid key, and for a request that is refused with a stream error.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"invalid-key", "stream-error"})
+    void failedDialbackAfterResumptionEndsSessionWithoutResumption(final String failure) throws Exception
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession original = keptSession();
+        final ResumedConnection resumed = resumeOnNewConnection(enabledPrevid);
+        assertTrue(original.getStreamManager().getResume(), "Test fixture expects the resumed stream to be resumable.");
+        final Exception thrown = "invalid-key".equals(failure)
+            ? new ServerDialbackKeyInvalidException(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN)
+            : new StreamErrorException(StreamError.Condition.not_authorized);
+
+        try (final MockedConstruction<ServerDialback> ignored = mockConstruction(ServerDialback.class, (mock, context) -> doThrow(thrown).when(mock).validateRemoteDomain(any(), any())))
+        {
+            // Execute system under test.
+            assertThrows(UnauthorizedException.class, () -> resumed.handler().process(dialbackResult(REMOTE_DOMAIN), resumed.reader()), "The stanza handler must report the failed dialback (" + failure + ").");
+        }
+
+        // Verify result.
+        assertFalse(original.getStreamManager().getResume(), "The session must be made non-resumable, so that it is ended rather than kept for resumption (" + failure + ").");
+        verify(resumed.connection(), atLeastOnce().description("The connection must be closed (" + failure + ").")).close();
     }
 
     /**

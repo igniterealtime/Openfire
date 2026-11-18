@@ -328,7 +328,8 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             Log.debug("Unable to validate domain '{}'", requested, e);
             getConnection().deliverRawText(e.getStreamError().toXML());
 
-            // Close the underlying connection
+            // Close the underlying connection. OF-2425: made non-resumable first, so that the session is ended rather than kept for resumption.
+            markNonResumable();
             getConnection().close();
         } catch (ServerDialbackErrorException e) {
             Log.debug("Unable to validate domain '{}' on incoming server session {}, which is authenticated for {}: {}", requested, getStreamID(), validatedDomains, e.getError().getText());
@@ -348,6 +349,8 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             final String send = e.toXML().asXML().replaceAll(ns.asXML(), "").replace("  "," ");
             getConnection().deliverRawText(send);
             Log.debug( "Close the underlying connection as key verification failed." );
+            // OF-2425: made non-resumable first, so that the session is ended rather than kept for resumption.
+            markNonResumable();
             getConnection().close();
         }
         return false;

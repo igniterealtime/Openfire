@@ -456,7 +456,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // OF-2425: read again under the lock, as the session may have been resumed on a new connection meanwhile, which happens under this lock.
             final Connection current = conn;
             final boolean currentOpen = current != null && !current.isClosed();
-            // OF-2425: decided under the lock, so that no stanza is sent once stanzas are queued (decision 7).
+            // OF-2425: decided under the lock, so that no stanza is sent once stanzas are queued (ADR-013).
             if (streamManager.queue(packet, !currentOpen)) {
                 return;
             }
@@ -616,7 +616,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     @Override
     protected void beforeDetached() {
-        // OF-2425: Set before the session is registered as detached, as the cleanup task measures from it (decision 7).
+        // OF-2425: Set before the session is registered as detached, as the cleanup task measures from it (ADR-013).
         if (detachedSince == null || getStreamManager().isAcknowledgedSinceResumption()) {
             detachedSince = Instant.now();
         } else {

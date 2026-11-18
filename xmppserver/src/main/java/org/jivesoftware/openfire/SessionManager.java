@@ -1995,7 +1995,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                     Log.debug("Ignoring stale close notification for outgoing server session with address {} and streamID {}: it already has a different, live connection.", session.getAddress(), session.getStreamID());
                     return CompletableFuture.completedFuture(null);
                 }
-                // OF-2425: A session that can be resumed keeps its routes until terminateDetached() ends it (decision 7).
+                // OF-2425: A session that can be resumed keeps its routes until terminateDetached() ends it (ADR-013).
                 if (localSession.getStreamManager().getResume()) {
                     if (StreamManager.SERVER_RESUME_ENABLED.getValue()) {
                         // OF-2425: Detached only while it still uses the connection that closed, as it can have been resumed since the checks above.
@@ -2401,7 +2401,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * For an outgoing server session of which the remote server reported a preferred maximum resumption time (see
      * {@link RequestingStreamManager#getPeerMaximumResumptionTime()}), this is the shorter of that time and the server
-     * timeout, as the remote server need not resume the stream after its maximum (decision 7 of OF-2425).
+     * timeout, as the remote server need not resume the stream after its maximum (ADR-013).
      *
      * @param session the session for which to return the timeout.
      * @return the time that the session is kept while detached. A negative duration, which only the timeout of client

@@ -639,8 +639,8 @@ public class RequestingStreamManager extends StreamManager
     }
 
     /**
-     * Ends the session after more stanzas were queued than {@link #MAX_QUEUED_WHILE_BROKEN} allows (decision 7 of
-     * OF-2425), as when the session is not resumed in time: the stream is made non-resumable, so that a session that is
+     * Ends the session after more stanzas were queued than {@link #MAX_QUEUED_WHILE_BROKEN} allows (ADR-013),
+     * as when the session is not resumed in time: the stream is made non-resumable, so that a session that is
      * not detached yet is not detached, and a session that is detached is ended. Ending it is done by another thread.
      * A session that is being resumed is no longer detached, and is not ended: its queued stanzas are sent on the resumed
      * stream, which can then not be resumed again.
@@ -970,7 +970,7 @@ public class RequestingStreamManager extends StreamManager
      */
     private void routeQueued(@Nonnull final Collection<Packet> queued, @Nonnull final PacketRouter router)
     {
-        // OF-2425: Queued stanzas were never sent, so they go out over a new connection after the unacknowledged ones (decision 7).
+        // OF-2425: Queued stanzas were never sent, so they go out over a new connection after the unacknowledged ones (ADR-013).
         for ( final Packet packet : queued ) {
             try {
                 router.route( packet );
@@ -1071,7 +1071,7 @@ public class RequestingStreamManager extends StreamManager
      *
      * The stanzas that 'h' acknowledges are removed. The stanzas that remain unacknowledged are sent again, in order,
      * and each is marked as sent again as it is sent: messages and presences get a delay stamp (XEP-0203) with the time
-     * at which they were first sent, if they do not have one. A stanza is sent again at most once (decision 4 of OF-2425): a stanza that was
+     * at which they were first sent, if they do not have one. A stanza is sent again at most once (ADR-009): a stanza that was
      * sent again before is not sent again, but returned to its sender as an error, or dropped, as when the session closes
      * without being resumed (see {@link #onClose(PacketRouter, JID)}). The stanzas that were queued while the connection
      * was broken are sent after that, in order, and are tracked as they are sent. Then queueing stops, and an
@@ -1114,7 +1114,7 @@ public class RequestingStreamManager extends StreamManager
             int sentAgain = 0;
             for ( final UnacknowledgedStanzaQueue.Entry entry : getUnacknowledgedEntries() ) {
                 if ( connection.isClosed() ) {
-                    // OF-2425: The stanzas that are not sent keep their number, and have not used their one retry (decision 4).
+                    // OF-2425: The stanzas that are not sent keep their number, and have not used their one retry (ADR-009).
                     break;
                 }
                 final Packet packet = entry.getPacket();

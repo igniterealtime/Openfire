@@ -117,6 +117,6 @@ Answering a refusal exactly as for an unknown 'previd' follows XEP-0198 § 5, wh
 
 ## References
 
-- **OF-2425**: Stream Management for server-to-server connections (engineering plan: `doc/plan/2026-10-23-stream-management-s2s.md`, decision 1)
+- **OF-2425**: Stream Management for server-to-server connections
 - **XEP-0198**: Stream Management, version 1.6.3, § 5 (Resumption) and § 10 (Security Considerations)
 - **XEP-0220**: Server Dialback

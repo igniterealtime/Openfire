@@ -49,6 +49,9 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -666,6 +669,46 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
         // Verify result.
         assertEquals(List.of("before-negotiation true", "after-skip false"), lockHeld, "A stanza must be sent under the lock of the stream manager until Openfire decided not to ask for Stream Management, and without it after that.");
+    }
+
+    /**
+     * Verifies that a stanza that is delivered while the session is detached, and that obtains the lock of the stream
+     * manager only after the stream was resumed on a new connection, is sent on that connection rather than queued, as
+     * the connection is read again under that lock. Queueing would otherwise start again on a healthy connection.
+     */
+    @Test
+    public void stanzaDeliveredDuringResumptionIsSentOnNewConnection() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession detached = detachedSession(sessionManager);
+        final RequestingStreamManager streamManager = detached.getStreamManager();
+        final Connection newConnection = mock(Connection.class);
+        final Thread deliverer;
+
+        // Execute system under test.
+        synchronized (streamManager) {
+            deliverer = new Thread(() -> {
+                try {
+                    detached.deliver(message("during-resumption"));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            deliverer.start();
+            awaitBlockedOn(deliverer, streamManager);
+            // As a resumption does: LocalSession#reattach sets the connection, then RequestingStreamManager#onResume stops queueing under this lock.
+            detached.conn = newConnection;
+            streamManager.onResume(SERVER_ADDRESS, 0);
+            assertEquals(List.of(), UnacknowledgedStanzas.queuedIds(streamManager), "Test fixture expects nothing to be queued after resumption.");
+            clearInvocations(newConnection);
+        }
+        deliverer.join(TimeUnit.SECONDS.toMillis(10));
+
+        // Verify result.
+        assertFalse(deliverer.isAlive(), "Test fixture expects the delivering thread to have finished.");
+        verify(newConnection, times(1).description("The stanza must be sent on the connection on which the stream was resumed.")).deliver(argThat(packet -> "during-resumption".equals(packet.getID())));
+        assertEquals(List.of(), UnacknowledgedStanzas.queuedIds(streamManager), "The stanza must not be queued once the stream is resumed.");
     }
 
     /**
@@ -2932,6 +2975,25 @@ public class LocalOutgoingServerSessionStreamManagementTest
             final DomainAuthResult result = LocalOutgoingServerSession.authenticateDomain(domainPair);
             initialisers.addAll(constructed.constructed());
             return result;
+        }
+    }
+
+    /**
+     * Waits until a thread waits to obtain the lock of an object, failing when it ends before that, or does not wait
+     * within ten seconds.
+     */
+    private static void awaitBlockedOn(final Thread thread, final Object monitor)
+    {
+        final ThreadMXBean threads = ManagementFactory.getThreadMXBean();
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (true) {
+            final ThreadInfo info = threads.getThreadInfo(thread.getId());
+            if (info != null && info.getThreadState() == Thread.State.BLOCKED && info.getLockInfo() != null && info.getLockInfo().getIdentityHashCode() == System.identityHashCode(monitor)) {
+                return;
+            }
+            assertTrue(thread.isAlive(), "Test fixture expects the thread to wait for the lock, but it ended.");
+            assertTrue(System.nanoTime() < deadline, "Test fixture expects the thread to wait for the lock within ten seconds.");
+            Thread.onSpinWait();
         }
     }
 }

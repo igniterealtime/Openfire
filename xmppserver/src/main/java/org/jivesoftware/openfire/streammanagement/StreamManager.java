@@ -110,6 +110,18 @@ public abstract class StreamManager {
     private volatile boolean resume = false;
 
     /**
+     * Whether resumption was disabled for good (see {@link #formalClose()}), after which the stream cannot be made
+     * resumable again.
+     */
+    private volatile boolean formallyClosed = false;
+
+    /**
+     * Guards changes to {@link #resume} and {@link #formallyClosed}, so that a stream that resumption was disabled for
+     * is never seen as resumable, not even for a moment. Reads take no lock.
+     */
+    private final Object resumeLock = new Object();
+
+    /**
      * An outbound stanza that the peer has not acknowledged yet.
      *
      * @deprecated Stream Management does not use this class, which has no replacement.
@@ -232,12 +244,19 @@ public abstract class StreamManager {
     }
 
     /**
-     * Sets whether the stream can be resumed.
+     * Sets whether the stream can be resumed. Once resumption was disabled for good (see {@link #formalClose()}), the
+     * stream stays non-resumable.
      *
      * @param resume true if the stream can be resumed.
      */
     void setResume(final boolean resume) {
-        this.resume = resume;
+        synchronized (resumeLock) {
+            if (resume && formallyClosed) {
+                Log.debug("Not making the stream of session with address {} and streamID {} resumable, as resumption was disabled for good.", session.getAddress(), session.getStreamID());
+                return;
+            }
+            this.resume = resume;
+        }
     }
 
     /**
@@ -364,7 +383,10 @@ public abstract class StreamManager {
      */
     public void formalClose() {
         Log.debug("formalClose() invoked for session with address {} and streamID {}; resumption is now permanently disabled for this stream.", session.getAddress(), session.getStreamID());
-        this.resume = false;
+        synchronized (resumeLock) {
+            this.formallyClosed = true;
+            this.resume = false;
+        }
     }
 
     /**

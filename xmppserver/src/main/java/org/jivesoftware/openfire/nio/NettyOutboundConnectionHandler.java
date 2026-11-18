@@ -152,7 +152,8 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
                 final NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
                 final boolean certificatesValid = SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true);
                 // A connection that is already closed had its handshake rejected by the remote (see NettyXMPPDecoder),
-                // which was recorded there.
+                // which was recorded there. The rejection can also be recorded while this runs, on another thread, which
+                // the recorder handles.
                 if (recorder != null && !connection.isClosed()) {
                     AttemptRecorder.safely(() -> recordNegotiated(recorder, connection, certificatesValid));
                 }
@@ -276,16 +277,18 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
     }
 
     /**
-     * Records a completed handshake, and the verdict on the remote certificate that the identity check gave.
+     * Records a completed handshake, and the verdict on the remote certificate that the identity check gave. Nothing is
+     * recorded if the remote's rejection of the handshake was recorded first (see {@link AttemptRecorder#negotiated}).
      */
     private void recordNegotiated(final AttemptRecorder recorder, final NettyConnection connection, final boolean certificatesValid) {
-        recorder.tls(AttemptMilestones.Tls.negotiated(connection.getTLSProtocolName().orElse(UNKNOWN), connection.getCipherSuiteName().orElse(UNKNOWN)));
+        final AttemptMilestones.Certificate certificate;
         if (certificatesValid) {
-            recorder.certificate(AttemptMilestones.Certificate.valid());
+            certificate = AttemptMilestones.Certificate.valid();
         } else {
             final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
-            recorder.certificate(CertificateVerdicts.ofRejectedChain(connection.getPeerCertificates(), domainPair.getRemote(), trustStore));
+            certificate = CertificateVerdicts.ofRejectedChain(connection.getPeerCertificates(), domainPair.getRemote(), trustStore);
         }
+        recorder.negotiated(AttemptMilestones.Tls.negotiated(connection.getTLSProtocolName().orElse(UNKNOWN), connection.getCipherSuiteName().orElse(UNKNOWN)), certificate);
     }
 
     /**

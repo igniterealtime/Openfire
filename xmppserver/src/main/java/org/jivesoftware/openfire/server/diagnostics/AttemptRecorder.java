@@ -126,6 +126,8 @@ public final class AttemptRecorder
     private boolean gaveUp;
     private boolean authenticationStarted;
     private boolean externalAccepted;
+    // Whether the TLS handshake failed on the connection recorded last, so that its completion, if recorded later, is ignored.
+    private boolean handshakeFailedOnThisConnection;
 
     /**
      * Starts recording an attempt, now.
@@ -248,6 +250,7 @@ public final class AttemptRecorder
     {
         if (!gaveUp) {
             milestones.tcp(tcp);
+            handshakeFailedOnThisConnection = false;
         }
     }
 
@@ -419,7 +422,27 @@ public final class AttemptRecorder
     {
         if (!gaveUp) {
             milestones.tls(tls);
+            if (tls.outcome() == Tls.Outcome.HANDSHAKE_FAILED || tls.outcome() == Tls.Outcome.CERTIFICATE_REJECTED || tls.outcome() == Tls.Outcome.NOT_TLS) {
+                handshakeFailedOnThisConnection = true;
+            }
         }
+    }
+
+    /**
+     * Records a completed handshake, and the verdict on the remote certificate, unless the handshake already failed on
+     * this connection. Over TLS 1.3, this server can complete its handshake before the remote has checked this server's
+     * certificate; the remote's rejection then arrives as an alert, which another thread can record first.
+     *
+     * @param tls the negotiated TLS.
+     * @param certificate the verdict on the remote certificate.
+     */
+    public synchronized void negotiated(final Tls tls, final Certificate certificate)
+    {
+        if (handshakeFailedOnThisConnection) {
+            return;
+        }
+        tls(tls);
+        certificate(certificate);
     }
 
     public synchronized void certificate(final Certificate certificate)

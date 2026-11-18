@@ -667,6 +667,57 @@ public class AttemptRecorderTest
     }
 
     @Test
+    public void testHandshakeCompletedAfterTheRemoteRejectedItChangesNothing()
+    {
+        // Setup test fixture: over TLS 1.3, the remote's rejection of this server's certificate arrives as an alert,
+        // which can be recorded before the code that handles the completed handshake records it.
+        final AttemptRecorder recorder = new AttemptRecorder("example.com", "remote.example.org");
+        recorder.tcp(AttemptMilestones.Tcp.connected("remote.example.org:5269"));
+        recorder.stream(AttemptMilestones.Stream.opened("remote.example.org"));
+        recorder.tls(Tls.handshakeFailed("Received fatal alert: certificate_expired"));
+
+        // Execute system under test.
+        recorder.negotiated(Tls.negotiated("TLSv1.3", "TLS_AES_256_GCM_SHA384"), AttemptMilestones.Certificate.valid());
+
+        // Verify results.
+        assertEquals(Tls.handshakeFailed("Received fatal alert: certificate_expired"), recorder.snapshot().getTls().orElse(null), "a handshake that the remote rejected must stay recorded as failed when its completion is recorded later");
+        assertTrue(recorder.snapshot().getCertificate().isEmpty(), "the certificate of a handshake that the remote rejected must not be recorded as judged on its completion");
+    }
+
+    @Test
+    public void testHandshakeCompletedOnALaterConnectionIsRecorded()
+    {
+        // Setup test fixture: the handshake failed on the first connection, and the attempt continued on a new one (as
+        // when direct TLS falls back to STARTTLS).
+        final AttemptRecorder recorder = new AttemptRecorder("example.com", "remote.example.org");
+        recorder.tcp(AttemptMilestones.Tcp.connected("remote.example.org:5270"));
+        recorder.tls(Tls.handshakeFailed("Received fatal alert: handshake_failure"));
+        recorder.tcp(AttemptMilestones.Tcp.connected("remote.example.org:5269"));
+
+        // Execute system under test.
+        recorder.negotiated(Tls.negotiated("TLSv1.3", "TLS_AES_256_GCM_SHA384"), AttemptMilestones.Certificate.valid());
+
+        // Verify results.
+        assertEquals(Tls.negotiated("TLSv1.3", "TLS_AES_256_GCM_SHA384"), recorder.snapshot().getTls().orElse(null), "a handshake completed on a new connection must replace the failure on the previous one");
+        assertEquals(AttemptMilestones.Certificate.valid(), recorder.snapshot().getCertificate().orElse(null), "the certificate judged on the new connection must be recorded");
+    }
+
+    @Test
+    public void testHandshakeCompletedBeforeTheRemoteRejectedItIsReplacedByTheFailure()
+    {
+        // Setup test fixture: the completed handshake is recorded before the remote's rejection arrives.
+        final AttemptRecorder recorder = new AttemptRecorder("example.com", "remote.example.org");
+        recorder.tcp(AttemptMilestones.Tcp.connected("remote.example.org:5269"));
+        recorder.negotiated(Tls.negotiated("TLSv1.3", "TLS_AES_256_GCM_SHA384"), AttemptMilestones.Certificate.valid());
+
+        // Execute system under test.
+        recorder.tls(Tls.handshakeFailed("Received fatal alert: certificate_expired"));
+
+        // Verify results.
+        assertEquals(Tls.handshakeFailed("Received fatal alert: certificate_expired"), recorder.snapshot().getTls().orElse(null), "the remote's rejection must replace the handshake completed before it arrived");
+    }
+
+    @Test
     public void testAuthenticationAfterThisServerGaveUpChangesNothing()
     {
         // Setup test fixture: this server gave up while authentication was under way, and it completes afterwards.

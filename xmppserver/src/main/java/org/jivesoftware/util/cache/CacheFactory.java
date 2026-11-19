@@ -18,6 +18,7 @@ package org.jivesoftware.util.cache;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
@@ -119,6 +120,10 @@ public class CacheFactory {
         cacheNames.put("RosterItems", "username2rosterItems");
         cacheNames.put("User", "userCache");
         cacheNames.put("Locked Out Accounts", "lockOutCache");
+        cacheNames.put(UserLoginLimitManager.PAIR_FAILURES_CACHE_NAME, "userLoginFailuresPerPair");
+        cacheNames.put(UserLoginLimitManager.ADDRESS_FAILURES_CACHE_NAME, "userLoginFailuresPerAddress");
+        cacheNames.put(UserLoginLimitManager.USERNAME_FAILURES_CACHE_NAME, "userLoginFailuresPerUsername");
+        cacheNames.put(UserLoginLimitManager.USERNAME_BLOCKS_CACHE_NAME, "userLoginBlocksPerUsername");
         cacheNames.put("VCard", "vcardCache");
         cacheNames.put("File Transfer Cache", "fileTransfer");
         cacheNames.put("File Transfer", "transferProxy");
@@ -169,6 +174,15 @@ public class CacheFactory {
         cacheProps.put(PROPERTY_PREFIX_CACHE + "group" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofMinutes(15).toMillis());
         cacheProps.put(PROPERTY_PREFIX_CACHE + "lockOutCache" + PROPERTY_SUFFIX_SIZE, 10_485_760L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "lockOutCache" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofMinutes(15).toMillis());
+        // UserLoginLimitManager: entries end by their own timestamps; the lifetime (the longest any window or lock may last) only cleans up.
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userLoginFailuresPerPair" + PROPERTY_SUFFIX_SIZE, 5_242_880L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userLoginFailuresPerPair" + PROPERTY_SUFFIX_MAX_LIFE_TIME, UserLoginLimitManager.MAX_DURATION_MILLIS);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userLoginFailuresPerAddress" + PROPERTY_SUFFIX_SIZE, 5_242_880L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userLoginFailuresPerAddress" + PROPERTY_SUFFIX_MAX_LIFE_TIME, UserLoginLimitManager.MAX_DURATION_MILLIS);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userLoginFailuresPerUsername" + PROPERTY_SUFFIX_SIZE, 20_971_520L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userLoginFailuresPerUsername" + PROPERTY_SUFFIX_MAX_LIFE_TIME, UserLoginLimitManager.MAX_DURATION_MILLIS);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userLoginBlocksPerUsername" + PROPERTY_SUFFIX_SIZE, 20_971_520L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userLoginBlocksPerUsername" + PROPERTY_SUFFIX_MAX_LIFE_TIME, UserLoginLimitManager.MAX_DURATION_MILLIS);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "groupMeta" + PROPERTY_SUFFIX_SIZE, 5_242_880L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "groupMeta" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofMinutes(15).toMillis());
         cacheProps.put(PROPERTY_PREFIX_CACHE + "groupSharingMeta" + PROPERTY_SUFFIX_SIZE, 5_242_880L);

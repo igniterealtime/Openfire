@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
+import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterMonitor;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -644,6 +645,8 @@ public class XMPPServer {
                     initModules();
                     // Start all the modules
                     startModules();
+                    // As in start(): the user login limits manager must listen for account unlocks from the outset (OF-2279).
+                    UserLoginLimitManager.getInstance();
                     scanForSystemPropertyClasses();
                 }
                 catch (Exception e) {
@@ -678,6 +681,9 @@ public class XMPPServer {
                 initModules();
                 // Start all the modules
                 startModules();
+                // Create the user login limits manager now rather than on first use: it clears its counts when an
+                // administrator unlocks an account, which it can only do on a node where it is listening (OF-2279).
+                UserLoginLimitManager.getInstance();
             }
             // Initialize statistics
             ServerTrafficCounter.initStatistics();

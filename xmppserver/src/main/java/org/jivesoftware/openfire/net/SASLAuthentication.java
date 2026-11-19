@@ -23,6 +23,7 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.fast.FastRequest;
 import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
@@ -55,6 +56,7 @@ import javax.annotation.Nullable;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -199,6 +201,17 @@ public class SASLAuthentication {
      * @see <a href="https://igniterealtime.atlassian.net/jira/software/c/projects/OF/issues/OF-2514">OF-2514: Differentiate between missing and empty initial SASL response</a>
      */
     public static final String SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY = "Sasl.last-response-was-provided-but-empty";
+
+    /**
+     * Session Data property name used to store the password authentication attempt in progress: the
+     * {@link UserLoginLimitManager.Reservation} of the attempt, set by a password mechanism (through
+     * {@link #admitPasswordAttempt(LocalSession, String)}) once it knows the username and the attempt is admitted by the
+     * user login limits. A success uses it to give the attempt back. It is cleared at the start of every attempt, on
+     * every failure and on success, so an attempt cannot inherit the reservation of an earlier one.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2279">OF-2279: Login limits for user accounts</a>
+     */
+    public static final String SASL_LOGIN_ATTEMPT = "Sasl.login-attempt";
 
     /**
      * Session Data property name used to store which SASL mechanisms were advertised by the server to the peer as being
@@ -609,7 +622,7 @@ public class SASLAuthentication {
                     props.put(Sasl.POLICY_NOANONYMOUS, Boolean.toString(!AnonymousSaslServer.ENABLED.getValue()));
                     props.put( "com.sun.security.sasl.digest.realm", serverInfo.getXMPPDomain() );
 
-                    saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
+                    saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler(session) );
                     if ( saslServer == null )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "There is no provider that can provide a SASL server for the desired mechanism and properties." );
@@ -634,6 +647,8 @@ public class SASLAuthentication {
                         if (data != null) data = null;
                     }
 
+                    // Clear the reservation of any earlier password attempt, so that this attempt cannot inherit it.
+                    session.removeSessionData(SASL_LOGIN_ATTEMPT);
                     // Clear any unexecuted bind2-request
                     session.removeSessionData("bind2-request");
                     session.removeSessionData("user-agent-info");
@@ -721,12 +736,23 @@ public class SASLAuthentication {
                         return Status.needResponse;
                     }
 
-                    if (saslServer.getAuthorizationID() != null && LockOutManager.getInstance().isAccountDisabled(saslServer.getAuthorizationID())) {
+                    // Password mechanisms check the lock when the username becomes known; that check is reused here
+                    // rather than repeated, as LockOutManager does not cache that an account is not locked (OF-2279).
+                    // Other mechanisms, and an authorization identity other than the username, are checked here.
+                    if (saslServer.getAuthorizationID() != null && !isKnownNotLocked(session, saslServer.getAuthorizationID())
+                        && LockOutManager.getInstance().isAccountDisabled(saslServer.getAuthorizationID())) {
                         // Interception!  This person is locked out, fail instead!
                         Log.info("SASL authentication for account '{}' succeeded, but the account is locked out. Failing the authentication attempt for session '{}'.", saslServer.getAuthorizationID(), session);
                         LockOutManager.getInstance().recordFailedLogin(saslServer.getAuthorizationID());
-                        throw new SaslFailureException(Failure.ACCOUNT_DISABLED);
+                        // A password mechanism that found the lock when the username became known has refused already,
+                        // with account-disabled, before checking the password. Reaching this point after a password
+                        // exchange (the early check could not be completed, the lock was set during the exchange, or the
+                        // authorization identity is another account) means the password was right, so the answer must
+                        // be the same as for a wrong one. With no password exchange (EXTERNAL), it reveals nothing.
+                        throw new SaslFailureException(session.getSessionData(SASL_LOGIN_ATTEMPT) instanceof UserLoginLimitManager.Reservation
+                            ? Failure.NOT_AUTHORIZED : Failure.ACCOUNT_DISABLED);
                     }
+                    recordSuccessfulPasswordAttempt(session);
 
                     // The SASL exchange itself has succeeded. Record its outcome on the session before any
                     // post-authentication task runs: tasks are allowed to inspect the mechanism and channel binding.
@@ -777,16 +803,10 @@ public class SASLAuthentication {
         catch ( SaslException ex )
         {
             Log.debug( "SASL negotiation failed for session: {}", session, ex );
-            final Failure failure;
-            if ( ex instanceof SaslFailureException && ((SaslFailureException) ex).getFailure() != null )
-            {
-                failure = ((SaslFailureException) ex).getFailure();
-            }
-            else
-            {
-                failure = Failure.NOT_AUTHORIZED;
-            }
+            final Failure failure = failureOf( ex );
 
+            // The attempt was counted when it was admitted, so a failure only clears its reservation.
+            session.removeSessionData(SASL_LOGIN_ATTEMPT);
             if (usingSASL2) {
                 abortSasl2(session, failure);
             } else {
@@ -798,6 +818,7 @@ public class SASLAuthentication {
         catch( Exception ex )
         {
             Log.warn( "An unexpected exception occurred during SASL negotiation. Affected session: {}", session, ex );
+            session.removeSessionData(SASL_LOGIN_ATTEMPT);
             if (usingSASL2) {
                 abortSasl2(session, Failure.NOT_AUTHORIZED);
             } else {
@@ -805,6 +826,129 @@ public class SASLAuthentication {
                 session.removeSessionData("SaslServer");
             }
             return Status.failed;
+        }
+    }
+
+    /**
+     * Returns the failure to answer a SASL exception with: that of the exception, or of the first exception in its
+     * causes that carries one (a mechanism wraps an exception thrown by its callback handler, such as the refusal of
+     * {@link #admitPasswordAttempt(LocalSession, String)}); or not-authorized if none does.
+     */
+    @Nonnull
+    public static Failure failureOf(@Nonnull final SaslException ex)
+    {
+        // Bounded, so that a cycle in the causes cannot loop forever.
+        Throwable cause = ex;
+        for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
+            if (cause instanceof SaslFailureException failureException && failureException.getFailure() != null) {
+                return failureException.getFailure();
+            }
+        }
+        return Failure.NOT_AUTHORIZED;
+    }
+
+    /**
+     * Returns the failure to refuse an attempt with, once the user login limits have refused it: account-disabled when
+     * the username is locked out from every IP address (its account is locked, or the per-username limit has blocked
+     * it), and otherwise not-authorized, the same answer as for a wrong password. Either way the answer does not depend
+     * on the password, which has not been checked.
+     *
+     * @param username the username of the refused attempt.
+     * @return the failure to answer the attempt with.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2279">OF-2279: Login limits for user accounts</a>
+     */
+    @Nonnull
+    public static Failure refusalFailure(@Nonnull final String username)
+    {
+        try {
+            return UserLoginLimitManager.getInstance().isLockedOut(username) ? Failure.ACCOUNT_DISABLED : Failure.NOT_AUTHORIZED;
+        } catch (final RuntimeException e) {
+            Log.debug("Unable to determine whether {} is locked out; answering its refused attempt not-authorized.", UserLoginLimitManager.forLog(username), e);
+            return Failure.NOT_AUTHORIZED;
+        }
+    }
+
+    /**
+     * Applies the user login limits to a password authentication attempt, as soon as its mechanism knows the username
+     * and before the credentials are evaluated. If the account is locked, or a login limit blocks the attempt, the
+     * attempt is refused without its password being checked: with account-disabled if the username is locked out from
+     * every IP address, and otherwise with not-authorized (see {@link #refusalFailure(String)}). Otherwise, with a session, the
+     * attempt is counted against the limits (see {@link UserLoginLimitManager#tryAcquireAttempt(String, String)}) and
+     * its reservation is recorded on the session (see {@link #SASL_LOGIN_ATTEMPT}), so that a success can give the
+     * attempt back; an attempt that does not succeed, for whatever reason, stays counted. Without a session a success
+     * could not give the attempt back, so the attempt is checked but not counted.
+     *
+     * Password mechanisms (PLAIN, DIGEST-MD5, SCRAM) call this; mechanisms whose failures are not counted check
+     * {@link UserLoginLimitManager#isLoginAllowed(String, String)} themselves.
+     *
+     * @param session the session that is authenticating, or null if the mechanism has none (then the attempt is checked
+     *                without an address, and not counted).
+     * @param username the username the peer provided.
+     * @throws SaslFailureException with {@link Failure#ACCOUNT_DISABLED} or {@link Failure#NOT_AUTHORIZED} if the
+     *                              attempt is refused.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2279">OF-2279: Login limits for user accounts</a>
+     */
+    public static void admitPasswordAttempt(@Nullable final LocalSession session, @Nonnull final String username) throws SaslFailureException
+    {
+        final UserLoginLimitManager loginLimits = UserLoginLimitManager.getInstance();
+        if (session == null) {
+            if (!loginLimits.isAttemptAllowed(username, null)) {
+                Log.debug("Refusing the authentication attempt for '{}' before evaluating its credentials, as the account is locked or a login limit applies.", UserLoginLimitManager.forLog(username));
+                throw new SaslFailureException(refusalFailure(username), "The account is locked or a login limit applies.");
+            }
+            return;
+        }
+        session.removeSessionData(SASL_LOGIN_ATTEMPT);
+        final UserLoginLimitManager.Reservation reservation = loginLimits.tryAcquireAttempt(username, getHostAddress(session));
+        if (reservation == null) {
+            Log.debug("Refusing the authentication attempt for '{}' before evaluating its credentials, as the account is locked or a login limit applies. Session: {}", UserLoginLimitManager.forLog(username), session);
+            throw new SaslFailureException(refusalFailure(username), "The account is locked or a login limit applies.");
+        }
+        session.setSessionData(SASL_LOGIN_ATTEMPT, reservation);
+    }
+
+    /**
+     * Returns the address of the peer of a session, for the user login limits, or null when it cannot be determined
+     * (in which case only the per-username limit applies).
+     *
+     * @param session the session, or null.
+     * @return the peer's address, or null.
+     */
+    @Nullable
+    public static String getHostAddress(@Nullable final LocalSession session)
+    {
+        if (session == null) {
+            return null;
+        }
+        try {
+            return session.getHostAddress();
+        } catch (final UnknownHostException | RuntimeException e) {
+            Log.debug("Unable to determine the IP address of session '{}'; only the per-username login limit applies to it.", session, e);
+            return null;
+        }
+    }
+
+    /**
+     * Returns whether this attempt's password mechanism already found, when the username became known, that the
+     * account is not locked (see {@link UserLoginLimitManager#isKnownNotLocked(UserLoginLimitManager.Reservation, String)}),
+     * so that the check after a successful exchange need not look it up again. False when no such check was made in
+     * this attempt (for example for EXTERNAL), or it was for another username.
+     */
+    private static boolean isKnownNotLocked(@Nonnull final LocalSession session, @Nonnull final String username)
+    {
+        return session.getSessionData(SASL_LOGIN_ATTEMPT) instanceof UserLoginLimitManager.Reservation reservation
+            && UserLoginLimitManager.getInstance().isKnownNotLocked(reservation, username);
+    }
+
+    /**
+     * Records a successful password authentication against the user login limits, and clears the attempted username
+     * from the session.
+     */
+    private static void recordSuccessfulPasswordAttempt(@Nonnull final LocalSession session)
+    {
+        final Object reservation = session.removeSessionData(SASL_LOGIN_ATTEMPT);
+        if (reservation instanceof UserLoginLimitManager.Reservation admitted) {
+            UserLoginLimitManager.getInstance().recordSuccessfulLogin(admitted);
         }
     }
 
@@ -1164,6 +1308,7 @@ public class SASLAuthentication {
         // like a completed negotiation - see SASL2_BIND2_PENDING_OR_SUCCEEDED.
         session.removeSessionData(SASL2_BIND2_NEGOTIATION_ACTIVE_OR_DONE);
         session.removeSessionData("SaslServer");
+        session.removeSessionData(SASL_LOGIN_ATTEMPT);
         session.removeSessionData(SASL2_NEGOTIATION_IN_PROGRESS);
         Sasl2TaskManager.getInstance().endNegotiation(session, false);
         FastSessionState.clearAuthenticationAttempt(session);

@@ -89,7 +89,7 @@ public class IdentityStoreIssuerUpdateTest
     public void setUp() throws Exception
     {
         // These tests exercise the store with the read-only setting off, whatever an earlier test may have left behind.
-        JiveGlobals.deleteProperty( CertificateStoreManager.READ_ONLY.getKey() );
+        JiveGlobals.deleteXMLProperty( CertificateStoreManager.READ_ONLY_PROPERTY );
         XMPPServer.setInstance( Fixtures.mockXMPPServer() );
 
         // A store with one self-signed and one CA-signed private key entry, written to disk.
@@ -117,7 +117,7 @@ public class IdentityStoreIssuerUpdateTest
         {
             storeFile.setWritable( true );
         }
-        JiveGlobals.deleteProperty( CertificateStoreManager.READ_ONLY.getKey() );
+        JiveGlobals.deleteXMLProperty( CertificateStoreManager.READ_ONLY_PROPERTY );
         XMPPServer.setInstance( null );
     }
 

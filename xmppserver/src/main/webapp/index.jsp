@@ -139,7 +139,7 @@
         // Reported by the error icon next to the server name.
     }
     pageContext.setAttribute( "missingDomainCertificate", missingDomainCertificate );
-    pageContext.setAttribute( "certificateStoresReadOnly", CertificateStoreManager.READ_ONLY.getValue() );
+    pageContext.setAttribute( "certificateStoresReadOnly", CertificateStoreManager.isReadOnly() );
 %>
 
     <c:if test="${not empty serverUpdate}">

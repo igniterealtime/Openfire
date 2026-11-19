@@ -23,7 +23,7 @@ package org.jivesoftware.openfire.keystore;
  * handles this refusal too.
  *
  * @author Matthew Vivian
- * @see CertificateStoreManager#READ_ONLY
+ * @see CertificateStoreManager#isReadOnly()
  */
 public class CertificateStoreReadOnlyException extends CertificateStoreConfigException
 {

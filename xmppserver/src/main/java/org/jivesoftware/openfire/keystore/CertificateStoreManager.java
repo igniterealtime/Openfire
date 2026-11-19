@@ -23,7 +23,6 @@ import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CollectionUtils;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,18 +48,43 @@ public class CertificateStoreManager extends BasicModule
     private final static Logger Log = LoggerFactory.getLogger( CertificateStoreManager.class );
 
     /**
-     * When true, Openfire does not modify any of the certificate stores (identity stores and trust stores) it uses, for
-     * example because they are also used by other software on the system. Every change to a store is refused with a
-     * {@link CertificateStoreReadOnlyException}. Changes made to the store files by other software are still loaded
-     * while the certificate store watcher ({@link CertificateStoreWatcher#ENABLED}) is enabled.
-     *
-     * Each store reads this setting when it is about to be changed, so a change of the setting takes effect at once.
+     * The name of the openfire.xml property that, when true, stops Openfire from modifying any of the certificate stores
+     * (identity stores and trust stores) it uses. See {@link #isReadOnly()}.
      */
-    public static final SystemProperty<Boolean> READ_ONLY = SystemProperty.Builder.ofType( Boolean.class )
-        .setKey( "cert.stores.readonly" )
-        .setDefaultValue( false )
-        .setDynamic( true )
-        .build();
+    public static final String READ_ONLY_PROPERTY = "cert.stores.readonly";
+
+    /**
+     * Indicates whether Openfire is configured not to modify any of the certificate stores (identity stores and trust
+     * stores) it uses, for example because they are also used by other software on the system. When true, every change
+     * to a store is refused with a {@link CertificateStoreReadOnlyException}. Changes made to the store files by other
+     * software are still loaded while the certificate store watcher ({@link CertificateStoreWatcher#ENABLED}) is
+     * enabled.
+     *
+     * The setting is read from openfire.xml only ({@link #READ_ONLY_PROPERTY}), so that it cannot be changed in the
+     * admin console. openfire.xml is local to each server, as are the certificate stores, so in a cluster it must be set
+     * on every node. Openfire reads openfire.xml at startup, so a change to the file takes effect after a restart.
+     *
+     * @return true when the certificate stores are read-only, otherwise false (the default).
+     */
+    public static boolean isReadOnly()
+    {
+        return JiveGlobals.getXMLProperty( READ_ONLY_PROPERTY, false );
+    }
+
+    /**
+     * Logs a warning when the database has a property with the name of the read-only setting (for example, one added on
+     * the admin console's System Properties page). Openfire reads the setting from openfire.xml only, so such a
+     * property has no effect, and without the warning nothing would say so.
+     */
+    static void warnWhenSetInDatabase()
+    {
+        final String value = JiveGlobals.getProperty( READ_ONLY_PROPERTY );
+        if ( value != null )
+        {
+            Log.warn( "The System Property '{}' (value '{}') has no effect: Openfire reads this setting from openfire.xml only. The certificate stores are {}.",
+                READ_ONLY_PROPERTY, value, isReadOnly() ? "read-only" : "not read-only" );
+        }
+    }
 
     private final ConcurrentMap<ConnectionType, CertificateStoreConfiguration> typeToTrustStore    = new ConcurrentHashMap<>();
     private final ConcurrentMap<ConnectionType, CertificateStoreConfiguration> typeToIdentityStore = new ConcurrentHashMap<>();
@@ -86,6 +110,7 @@ public class CertificateStoreManager extends BasicModule
     public synchronized void initialize( XMPPServer server )
     {
         super.initialize( server );
+        warnWhenSetInDatabase();
 
         storeWatcher = disableWatcher ? null : new CertificateStoreWatcher();
 

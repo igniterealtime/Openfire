@@ -29,18 +29,20 @@ Openfire ships with its own certificate stores, but can be configured to use oth
 
 OF-1878 asks for "a feature that prevents Openfire from making modifications to the certificate stores that it uses", for stores that "are also used by other software components on the system".
 
-Read-only is a safety guard, not an access control. An administrator can turn it off, as they can point Openfire at a different file; it prevents unintended modification, and does not protect a store from someone with admin console access.
+Read-only is a safety guard, not an access control. The setting is made in `openfire.xml`, so it cannot be turned off in the admin console, but an administrator who can change Openfire in other ways (pointing it at a different file, installing a plugin) can still change a store. File-system permissions remain the control over who can modify a store file.
 
 ## Design Decisions
 
 ### 1. One setting for all stores: `cert.stores.readonly`
-- A registered `SystemProperty<Boolean>`, default false and dynamic, defined in `CertificateStoreManager`, with a `system_property.cert.stores.readonly` description. The name follows the existing global certificate settings (`cert.storewatcher.enabled`, `cert.validity-days`).
+- An `openfire.xml` property, default false, read by `CertificateStoreManager.isReadOnly()`. The name follows the existing global certificate settings (`cert.storewatcher.enabled`, `cert.validity-days`).
+- It is read from `openfire.xml` only, so that it cannot be changed in the admin console, and it is in `XMPPServer.XML_ONLY_PROPERTIES`, so setup does not copy it into the database. A database property (System Property) of the same name has no effect; `CertificateStoreManager` logs a warning at startup when one exists, so that a value set there does not go unnoticed.
+- `openfire.xml` is local to each server, as are the certificate stores: nothing in Openfire synchronises store changes across a cluster, and a change made in the admin console changes the store files of the node that serves it. In a cluster the setting is made on every node.
 - When it is on, Openfire modifies none of the identity stores and trust stores it uses, for any connection type.
 - Rationale: the ticket asks for Openfire not to modify the stores it uses, and does not ask for finer control; one setting is the simplest to configure, explain and test.
 - Alternatives considered: a setting per store, resolved per file across the connection types that share it (much more complex, in the code and for administrators, and not asked for); one setting for identity stores and one for trust stores (a clean separation that matches the store classes and properties, and can be added later with this setting keeping its meaning of "all stores").
 
 ### 2. Stores read the setting when they are written
-- Each store-changing method reads the property at the moment it is called. A change takes effect at once, with no state to recompute, and stores created outside `CertificateStoreManager` (for example by a plugin) are covered as well.
+- Each store-changing method reads the property at the moment it is called, so there is no state to recompute, and stores created outside `CertificateStoreManager` (for example by a plugin) are covered as well. Openfire reads `openfire.xml` at startup, so a change to the file takes effect after a restart.
 - The setting is not part of `CertificateStoreConfiguration`, and `CertificateStoreManager.replaceIdentityStore` and `replaceTrustStore` are unchanged.
 
 ### 3. Refuse in the store classes, before anything changes
@@ -49,9 +51,8 @@ Read-only is a safety guard, not an access control. An administrator can turn it
 - The constructor does not create a missing store file when the setting is on.
 - Rationale: the admin console is not the only writer. Plugins call these methods, and the setup wizard calls `ensureDomainCertificate`.
 
-### 4. The admin console shows the setting; the stores enforce it
-- A Read-only Certificate Stores page ("Read-only Stores" in the TLS Certificates menu, next to Backup and Expiry Check) holds one checkbox and a Save button. Saving sets the property to what the checkbox shows. The setting has a page of its own because it will be used far less than the store settings, so it should not sit above them.
-- Pages that change a store's contents show a notice and hide the actions that would fail. A request that reaches a write action anyway (an old link, a direct URL) gets the refusal from the store class, shown as an error.
+### 4. The admin console shows the stores as read-only; the stores enforce it
+- The admin console does not offer the setting. Pages that change a store's contents show a notice naming the setting and `openfire.xml`, and hide the actions that would fail. A request that reaches a write action anyway (an old link, a direct URL) gets the refusal from the store class, shown as an error.
 - Changing a store's location or password stays allowed: that changes Openfire's configuration, not the store.
 
 ### 5. Signing-request issuer update moves into `IdentityStore`
@@ -91,20 +92,20 @@ Plugins in other repositories (for example ones that install certificates automa
 
 | Screen | Today | With the setting on |
 |---|---|---|
-| `security-certificate-stores-read-only.jsp` (new, served by `CertificateStoresReadOnlyServlet`) | Does not exist | The read-only checkbox and a Save button, whether the setting is on or off |
 | `security-keystore.jsp` (identity store contents) | Generate self-signed, import, delete, import a signed-certificate reply, link to the signing-request page; a "no certificate for this domain" message offering generate or import | Notice that the stores are read-only; those actions hidden; the missing-certificate message says the store must be updated outside Openfire. Listing, details and creating a signing request to copy stay |
 | `security-truststore.jsp` (trust store contents) | Import link, delete per certificate | Notice; import and delete hidden |
 | `import-keystore-certificate.jsp`, `import-truststore-certificate.jsp` | Import form | Notice instead of the form; a POST is refused by the store |
 | `security-keystore-signing-request.jsp` | Issuer details form that re-signs self-signed certificates | Notice instead of the form; a POST is refused by the store |
 | `security-certificate-details.jsp`, `security-certificate-store-backup.jsp` | Read-only view; backs up store files | Unchanged |
 | `index.jsp` (front page) | A small warning icon next to the server name when the client connections identity store has no certificate for the domain | A warning box, shown whether the setting is on or off, linking to that identity store; with the setting on, it says that Openfire does not generate a certificate and that one must be added outside Openfire |
-| Server → System Properties | Lists registered properties | `cert.stores.readonly`, listed whether set or not, with its description |
+| Server → System Properties | Lists registered properties | Unchanged: the setting is not a System Property |
 | Setup wizard | Generates a self-signed certificate at the end | Skipped, with a warning in the log |
 
 ### Other permutations
 
-- **Setting changed at runtime:** takes effect at the next write; no restart.
-- **Cluster:** the property is cluster-wide and each node applies it to its own store files.
+- **Setting changed in `openfire.xml`:** takes effect after a restart.
+- **Cluster:** each node reads its own `openfire.xml` and applies the setting to its own store files, so it is set on every node.
+- **System Property of the same name:** no effect; a warning is logged at startup.
 - **Store file missing:** unchanged (the store is not loaded, with a warning); the setting only stops Openfire creating it.
 - **File not writable at the operating-system level, with the setting off:** unchanged (writes fail with the existing error). With the setting on, Openfire no longer attempts them.
 
@@ -146,9 +147,8 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 - `i18n/src/main/resources/openfire_i18n.properties`
 
 **Tasks:**
-1. Write tests: for each method in the write-paths table (apart from the issuer update and `ensureDomainCertificate`, which session 3 covers), with the setting on the method throws `CertificateStoreReadOnlyException`, the file's bytes are unchanged, and the in-memory store still matches the file; with the setting off, each method still works. Include the constructor with `createIfAbsent` on a missing file, `persist()` after a change made through `getStore()` (refused, and reloaded only when memory differs from the file), the default (off), and a change of the setting taking effect without recreating the store.
-2. Add the exception, the `SystemProperty<Boolean>` in `CertificateStoreManager` (decision 1), and a check in `CertificateStore` that every write method calls first; add the check and reload in `persist`.
-3. Add the `system_property.cert.stores.readonly` description, using the OF-1878 wording.
+1. Write tests: for each method in the write-paths table (apart from the issuer update and `ensureDomainCertificate`, which session 3 covers), with the setting on the method throws `CertificateStoreReadOnlyException`, the file's bytes are unchanged, and the in-memory store still matches the file; with the setting off, each method still works. Include the constructor with `createIfAbsent` on a missing file, `persist()` after a change made through `getStore()` (refused, and reloaded only when memory differs from the file), the default (off), a change of the setting taking effect without recreating the store, a database property of the same name having no effect, and the warning about it.
+2. Add the exception, `CertificateStoreManager.isReadOnly()` reading the `openfire.xml` property (decision 1), the startup warning, the entry in `XMPPServer.XML_ONLY_PROPERTIES`, and a check in `CertificateStore` that every write method calls first; add the check and reload in `persist`.
 
 **Exit:** New tests pass; `./mvnw test -pl i18n,xmppserver` passes.
 
@@ -172,17 +172,15 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 
 ### Session 4: Admin console
 
-**Goal:** An administrator can see and change the setting on the Read-only Certificate Stores page, and the pages that change a store's contents show the stores as read-only and offer no actions that would fail.
+**Goal:** The pages that change a store's contents show the stores as read-only and offer no actions that would fail.
 
 **Files:**
-- `xmppserver/src/main/java/org/jivesoftware/admin/servlet/CertificateStoresReadOnlyServlet.java`, `xmppserver/src/main/webapp/security-certificate-stores-read-only-page.jsp`, `xmppserver/src/main/resources/admin-sidebar.xml`
 - `xmppserver/src/main/webapp/security-keystore.jsp`, `security-truststore.jsp`, `import-keystore-certificate.jsp`, `import-truststore-certificate.jsp`, `security-keystore-signing-request.jsp`
 - `i18n/src/main/resources/openfire_i18n.properties`
 
 **Tasks:**
-1. Add a Read-only Certificate Stores page, linked in the TLS Certificates menu next to Backup and Expiry Check, with the read-only checkbox (showing the property's value), a short explanation and a Save button with CSRF protection. Saving sets the property to what the checkbox shows, logs an admin event when the value changes, and shows the page's success or error message.
-2. On each content page in the screens table, show a notice (an `admin:infobox`) and hide the actions listed there; replace the missing-domain-certificate message on `security-keystore.jsp` with the setting on.
-3. On a running server: the checkbox on the Read-only Certificate Stores page, turning the setting on and off, without a restart; for each content page, with the setting on, the actions are hidden, a direct POST is refused with a readable error and the store file's checksum is unchanged; with it off, each action still works.
+1. On each content page in the screens table, show a notice (an `admin:infobox`) and hide the actions listed there; replace the missing-domain-certificate message on `security-keystore.jsp` with the setting on.
+2. On a running server, with the setting on and off in `openfire.xml`: for each content page, with the setting on, the actions are hidden, a direct POST is refused with a readable error and the store file's checksum is unchanged; with it off, each action still works.
 
 **Exit:** Every row of the screens table checked on a running server, with the setting on and off; the test suite passes.
 
@@ -196,7 +194,7 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 - `documentation/ssl-guide.html`
 
 **Tasks:**
-1. Add a section on read-only stores to `ssl-guide.html`: what the setting does, where to set it (the Read-only Certificate Stores page or the `cert.stores.readonly` System Property), that it applies to every store, that it is a safety guard and not an access control, that changes made by other software are reloaded while the certificate store watcher is on, and that setup does not generate a self-signed certificate with it on.
+1. Add a section on read-only stores to `ssl-guide.html`: what the setting does, where to set it (`openfire.xml` only, on every node of a cluster, taking effect after a restart; a System Property of the same name has no effect), that it applies to every store, that it is a safety guard and not an access control, that changes made by other software are reloaded while the certificate store watcher is on, and that setup does not generate a self-signed certificate with it on.
 2. Measure coverage of the changed and added code with JaCoCo; add tests where it is short.
 
 **Exit:** Documentation reviewed; coverage recorded.
@@ -210,9 +208,8 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 | Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/keystore/CertificateStore.java` | Base store: `persist`, `delete`, constructor creating a file; the read-only check |
 | Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/keystore/IdentityStore.java` | Certificate install, CSR reply, self-signed generation, issuer update |
 | Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/keystore/TrustStore.java` | Trusted certificate install |
-| Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/keystore/CertificateStoreManager.java` | Defines `cert.stores.readonly` |
-| Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/XMPPServer.java` | `finalSetupSteps` calls `ensureDomainCertificate` |
-| Openfire | `xmppserver/src/main/java/org/jivesoftware/admin/servlet/CertificateStoresReadOnlyServlet.java`, `security-certificate-stores-read-only-page.jsp` | Read-only Certificate Stores page, with the read-only setting |
+| Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/keystore/CertificateStoreManager.java` | Reads `cert.stores.readonly` from `openfire.xml`; warns about a System Property of that name |
+| Openfire | `xmppserver/src/main/java/org/jivesoftware/openfire/XMPPServer.java` | `finalSetupSteps` calls `ensureDomainCertificate`; `XML_ONLY_PROPERTIES` keeps the setting out of the database |
 | Openfire | `xmppserver/src/main/webapp/security-keystore.jsp`, `security-truststore.jsp`, the two import pages, `security-keystore-signing-request.jsp` | Pages that change store contents |
 
 ---
@@ -221,18 +218,17 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 
 ### Core (Sessions 1-3)
 - [x] Every row of the write-paths table refuses with the setting on, file and in-memory store unchanged
-- [x] Changes to the setting apply without a restart
+- [x] The setting is read from `openfire.xml` only; a System Property of the same name has no effect and is reported with a warning
 - [x] Setup wizard skips self-signed generation with the setting on, with a warning
 - [x] Full `xmppserver` test suite passes
 
 ### Admin console (Session 4)
-- [x] The read-only setting on the Read-only Certificate Stores page
 - [x] Every row of the screens table checked with the setting on and off
 - [x] Direct POSTs to write actions refused with a readable error
 
 ### Delivery (Session 5)
 - [x] `ssl-guide.html` updated
-- [x] Coverage of changed and added code measured: JaCoCo (`-Pcoverage`) covers every changed executable line (72 of 72) and branch (12 of 12)
+- [x] Coverage of changed and added code measured with JaCoCo (`-Pcoverage`)
 
 ---
 

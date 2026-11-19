@@ -61,7 +61,7 @@
 
     // When the certificate stores are read-only, the actions that change the store are not offered. A request for one
     // is still passed to the store, which refuses it.
-    final boolean readOnly = CertificateStoreManager.READ_ONLY.getValue();
+    final boolean readOnly = CertificateStoreManager.isReadOnly();
     pageContext.setAttribute( "readOnly", readOnly );
 
     ConnectionType connectionType = null;
@@ -168,10 +168,7 @@
 
         <c:if test="${readOnly}">
             <admin:infobox type="info">
-                <fmt:message key="ssl.certificates.read-only.notice">
-                    <fmt:param value="<a href='security-certificate-stores-read-only.jsp'>"/>
-                    <fmt:param value="</a>"/>
-                </fmt:message>
+                <fmt:message key="ssl.certificates.read-only.notice"/>
             </admin:infobox>
         </c:if>
 

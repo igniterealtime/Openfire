@@ -419,7 +419,7 @@ public class IdentityStore extends CertificateStore
     /**
      * Adds a self-signed certificate for the domain of this XMPP service when no certificate for the domain was found.
      *
-     * When Openfire is configured not to modify its certificate stores ({@link CertificateStoreManager#READ_ONLY}), no
+     * When Openfire is configured not to modify its certificate stores ({@link CertificateStoreManager#isReadOnly()}), no
      * certificate is generated: a warning naming the store file and the XMPP domain is logged instead, and this method
      * returns normally, so that setup carries on and the store can be given a certificate by the software that maintains
      * it.
@@ -431,10 +431,10 @@ public class IdentityStore extends CertificateStore
         Log.debug( "Verifying that a domain certificate is available in this store." );
         if ( !containsDomainCertificate() )
         {
-            if ( CertificateStoreManager.READ_ONLY.getValue() )
+            if ( CertificateStoreManager.isReadOnly() )
             {
-                Log.warn( "The identity store in '{}' does not contain a certificate for the XMPP domain '{}'. Openfire is configured not to modify the certificate stores it uses ({}), so it does not generate a self-signed certificate: add a certificate for this domain to the store outside Openfire, or turn the setting off.",
-                    configuration.getFile(), XMPPServer.getInstance().getServerInfo().getXMPPDomain(), CertificateStoreManager.READ_ONLY.getKey() );
+                Log.warn( "The identity store in '{}' does not contain a certificate for the XMPP domain '{}'. Openfire is configured not to modify the certificate stores it uses ({} in openfire.xml), so it does not generate a self-signed certificate: add a certificate for this domain to the store outside Openfire, or set {} to false in openfire.xml.",
+                    configuration.getFile(), XMPPServer.getInstance().getServerInfo().getXMPPDomain(), CertificateStoreManager.READ_ONLY_PROPERTY, CertificateStoreManager.READ_ONLY_PROPERTY );
                 return;
             }
             Log.debug( "Store does not contain a domain certificate. A self-signed certificate will be generated." );

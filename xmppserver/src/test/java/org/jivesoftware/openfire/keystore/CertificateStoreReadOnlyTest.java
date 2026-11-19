@@ -56,7 +56,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Verifies that, with the cert.stores.readonly setting on, every change to a certificate store is refused before
  * anything is changed in memory or on disk, and that with the setting off the same changes are still made.
  *
- * The setting is read at the moment of each change, so these tests change it on stores that already exist.
+ * The setting is read from openfire.xml at the moment of each change, so these tests change it on stores that already
+ * exist.
  *
  * @author Matthew Vivian
  */
@@ -130,7 +131,7 @@ public class CertificateStoreReadOnlyTest
     @AfterEach
     public void tearDown()
     {
-        JiveGlobals.deleteProperty( CertificateStoreManager.READ_ONLY.getKey() );
+        JiveGlobals.deleteXMLProperty( CertificateStoreManager.READ_ONLY_PROPERTY );
         XMPPServer.setInstance( null );
     }
 
@@ -139,15 +140,72 @@ public class CertificateStoreReadOnlyTest
     // -------------------------------------------------------------------------
 
     /**
-     * Verifies that the setting is named cert.stores.readonly, is off by default, and can be changed without a restart.
+     * Verifies that the setting is named cert.stores.readonly, is off when openfire.xml does not set it, and is read
+     * from openfire.xml.
      */
     @Test
-    public void testSettingIsOffByDefaultAndDynamic()
+    public void testSettingIsReadFromOpenfireXmlAndOffByDefault()
     {
-        assertEquals( "cert.stores.readonly", CertificateStoreManager.READ_ONLY.getKey(), "the setting must be named cert.stores.readonly" );
-        assertFalse( CertificateStoreManager.READ_ONLY.getDefaultValue(), "the stores must be writable by default" );
-        assertFalse( CertificateStoreManager.READ_ONLY.getValue(), "the stores must be writable when the setting has not been set" );
-        assertTrue( CertificateStoreManager.READ_ONLY.isDynamic(), "a change to the setting must take effect without a restart" );
+        assertEquals( "cert.stores.readonly", CertificateStoreManager.READ_ONLY_PROPERTY, "the setting must be named cert.stores.readonly" );
+        assertFalse( CertificateStoreManager.isReadOnly(), "the stores must be writable when openfire.xml does not set the setting" );
+
+        JiveGlobals.setXMLProperty( CertificateStoreManager.READ_ONLY_PROPERTY, "true" );
+        assertTrue( CertificateStoreManager.isReadOnly(), "the stores must be read-only when openfire.xml sets the setting to true" );
+
+        JiveGlobals.setXMLProperty( CertificateStoreManager.READ_ONLY_PROPERTY, "false" );
+        assertFalse( CertificateStoreManager.isReadOnly(), "the stores must be writable when openfire.xml sets the setting to false" );
+    }
+
+    /**
+     * Verifies that a database property (a System Property, which administrators can change in the admin console) with
+     * the name of the setting has no effect, in either direction.
+     */
+    @Test
+    public void testSettingIgnoresDatabaseProperty()
+    {
+        JiveGlobals.setProperty( CertificateStoreManager.READ_ONLY_PROPERTY, "true" );
+        assertFalse( CertificateStoreManager.isReadOnly(), "a database property must not make the stores read-only" );
+
+        JiveGlobals.setXMLProperty( CertificateStoreManager.READ_ONLY_PROPERTY, "true" );
+        JiveGlobals.setProperty( CertificateStoreManager.READ_ONLY_PROPERTY, "false" );
+        assertTrue( CertificateStoreManager.isReadOnly(), "a database property must not make read-only stores writable" );
+    }
+
+    /**
+     * Verifies that, when the database has a property with the name of the setting (for example, added on the admin
+     * console's System Properties page), a warning says that it has no effect and that the setting belongs in
+     * openfire.xml.
+     */
+    @Test
+    public void testDatabasePropertyIsReportedAsIgnored()
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty( CertificateStoreManager.READ_ONLY_PROPERTY, "true" );
+
+        // Execute system under test.
+        final List<LogEvent> warnings = captureWarnings( CertificateStoreManager.class, CertificateStoreManager::warnWhenSetInDatabase );
+
+        // Verify result.
+        assertEquals( 1, warnings.size(), "exactly one warning must be logged about the database property" );
+        final String warning = warnings.get( 0 ).getMessage().getFormattedMessage();
+        assertTrue( warning.contains( CertificateStoreManager.READ_ONLY_PROPERTY ), "the warning must name the setting, but was: " + warning );
+        assertTrue( warning.contains( "openfire.xml" ), "the warning must say where the setting belongs, but was: " + warning );
+    }
+
+    /**
+     * Verifies that no warning is logged when the database has no property with the name of the setting.
+     */
+    @Test
+    public void testNoWarningWithoutDatabaseProperty()
+    {
+        // Setup test fixture.
+        JiveGlobals.setXMLProperty( CertificateStoreManager.READ_ONLY_PROPERTY, "true" );
+
+        // Execute system under test.
+        final List<LogEvent> warnings = captureWarnings( CertificateStoreManager.class, CertificateStoreManager::warnWhenSetInDatabase );
+
+        // Verify result.
+        assertTrue( warnings.isEmpty(), "no warning must be logged when only openfire.xml sets the setting, but was: " + warnings );
     }
 
     /**
@@ -975,7 +1033,7 @@ public class CertificateStoreReadOnlyTest
         final String warning = warnings.get( 0 ).getMessage().getFormattedMessage();
         assertTrue( warning.contains( identityStoreFile.toString() ), "the warning must name the store file, but was: " + warning );
         assertTrue( warning.contains( Fixtures.XMPP_DOMAIN ), "the warning must name the XMPP domain, but was: " + warning );
-        assertTrue( warning.contains( CertificateStoreManager.READ_ONLY.getKey() ), "the warning must name the setting that prevents generation, but was: " + warning );
+        assertTrue( warning.contains( CertificateStoreManager.READ_ONLY_PROPERTY ), "the warning must name the setting that prevents generation, but was: " + warning );
     }
 
     /**
@@ -1076,7 +1134,7 @@ public class CertificateStoreReadOnlyTest
 
     private static void setReadOnly( final boolean readOnly )
     {
-        CertificateStoreManager.READ_ONLY.setValue( readOnly );
+        JiveGlobals.setXMLProperty( CertificateStoreManager.READ_ONLY_PROPERTY, String.valueOf( readOnly ) );
     }
 
     /**
@@ -1181,7 +1239,12 @@ public class CertificateStoreReadOnlyTest
      */
     private static List<LogEvent> captureWarnings( final Runnable action )
     {
-        final org.apache.logging.log4j.core.Logger logger = (org.apache.logging.log4j.core.Logger) LogManager.getLogger( IdentityStore.class );
+        return captureWarnings( IdentityStore.class, action );
+    }
+
+    private static List<LogEvent> captureWarnings( final Class<?> source, final Runnable action )
+    {
+        final org.apache.logging.log4j.core.Logger logger = (org.apache.logging.log4j.core.Logger) LogManager.getLogger( source );
         final CapturingAppender appender = new CapturingAppender();
         appender.start();
         logger.addAppender( appender );

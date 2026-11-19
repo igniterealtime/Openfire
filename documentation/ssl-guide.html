@@ -373,9 +373,19 @@
 
         <h3>Configuring read-only certificate stores</h3>
 
-        <p>To set it in the admin console, navigate to "Server / TLS Certificates / Read-only Stores", tick "Prevent Openfire from modifying its certificate stores" and click Save Settings. Alternatively, set the System Property <code>cert.stores.readonly</code> to <code>true</code> on the "Server / Server Manager / System Properties" page (the default is <code>false</code>). Like other System Properties, the setting is stored in the database. The change takes effect immediately; no restart is needed.</p>
+        <p>The setting is made in <code>openfire.xml</code> only, so that it cannot be changed in the admin console. Add the following inside the root element of <code>conf/openfire.xml</code> and restart Openfire (the default is <code>false</code>):</p>
 
-        <p>To have it in effect when Openfire is first set up (so that setup does not generate a self-signed certificate), set it in <code>openfire.xml</code> before setup: <code>&lt;cert&gt;&lt;stores&gt;&lt;readonly&gt;true&lt;/readonly&gt;&lt;/stores&gt;&lt;/cert&gt;</code>. Setup copies it into the database.</p>
+        <pre><code>&lt;cert&gt;
+    &lt;stores&gt;
+        &lt;readonly&gt;true&lt;/readonly&gt;
+    &lt;/stores&gt;
+&lt;/cert&gt;</code></pre>
+
+        <p>Openfire reads <code>openfire.xml</code> at startup, so a change takes effect after a restart. Set it before setup to stop setup from generating a self-signed certificate.</p>
+
+        <p>A System Property named <code>cert.stores.readonly</code> (for example, one added on the "Server / Server Manager / System Properties" page) has no effect; Openfire logs a warning at startup when one exists.</p>
+
+        <p>In a cluster, set it on every node. Each node has its own <code>openfire.xml</code> and its own certificate stores: a change made to a store in the admin console changes the store files of the node that serves that admin console only.</p>
 
         <h3>What Openfire does with read-only certificate stores</h3>
 
@@ -390,7 +400,7 @@
         <h3>Limitations</h3>
 
         <ul>
-            <li>The read-only setting guards against unintended changes by Openfire, and not against administrators: any administrator can turn it off, on the Read-only Certificate Stores page or in System Properties. It does not change the permissions of the store files. File-system permissions remain the control over who can modify a store file.</li>
+            <li>The read-only setting guards against unintended changes by Openfire. It cannot be turned off in the admin console, but it does not stop administrators who can change Openfire in other ways (for example, by installing a plugin), and it does not change the permissions of the store files. File-system permissions remain the control over who can modify a store file.</li>
             <li>The setting stops Openfire's own code, and plugins that use Openfire's certificate store classes, from changing the store files. A plugin that changes the contents of a store in memory directly (through <code>getStore()</code>) without saving them is not prevented, but such a change is never written to the file.</li>
         </ul>
 

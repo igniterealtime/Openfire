@@ -65,7 +65,7 @@ public abstract class CertificateStore
     /**
      * Loads a store from its file, creating the file first if requested and it does not exist.
      *
-     * When Openfire is configured not to modify its certificate stores ({@link CertificateStoreManager#READ_ONLY}), a
+     * When Openfire is configured not to modify its certificate stores ({@link CertificateStoreManager#isReadOnly()}), a
      * missing file is not created: a {@link CertificateStoreReadOnlyException} is thrown instead.
      *
      * @param configuration the configuration of the store (cannot be null).
@@ -133,7 +133,7 @@ public abstract class CertificateStore
      * Saves the current state of the store to disk. Useful when certificates have been added or removed from the
      * store.
      *
-     * When Openfire is configured not to modify its certificate stores ({@link CertificateStoreManager#READ_ONLY}),
+     * When Openfire is configured not to modify its certificate stores ({@link CertificateStoreManager#isReadOnly()}),
      * nothing is saved: when the store in memory differs from the file, it is reloaded from disk, discarding the change
      * made in memory (a store that matches its file is not reloaded, so it is not reported as changed), and a
      * {@link CertificateStoreReadOnlyException} is thrown. The methods of this class that change the store refuse before
@@ -144,7 +144,7 @@ public abstract class CertificateStore
      */
     public void persist() throws CertificateStoreConfigException
     {
-        if ( CertificateStoreManager.READ_ONLY.getValue() )
+        if ( CertificateStoreManager.isReadOnly() )
         {
             final CertificateStoreReadOnlyException refusal = readOnlyRefusal();
             try
@@ -280,14 +280,14 @@ public abstract class CertificateStore
 
     /**
      * Refuses a change to this store when Openfire is configured not to modify its certificate stores
-     * ({@link CertificateStoreManager#READ_ONLY}). Methods that change the store call this before changing anything, in
-     * memory or on disk. The setting is read on every call, so a change of the setting takes effect at once.
+     * ({@link CertificateStoreManager#isReadOnly()}). Methods that change the store call this before changing anything, in
+     * memory or on disk.
      *
      * @throws CertificateStoreReadOnlyException if the stores are read-only
      */
     protected final void checkWritable() throws CertificateStoreReadOnlyException
     {
-        if ( CertificateStoreManager.READ_ONLY.getValue() )
+        if ( CertificateStoreManager.isReadOnly() )
         {
             throw readOnlyRefusal();
         }
@@ -350,6 +350,6 @@ public abstract class CertificateStore
 
     private CertificateStoreReadOnlyException readOnlyRefusal()
     {
-        return new CertificateStoreReadOnlyException( "The store in '" + configuration.getFile() + "' is read-only: Openfire is configured not to modify the certificate stores it uses (" + CertificateStoreManager.READ_ONLY.getKey() + ")." );
+        return new CertificateStoreReadOnlyException( "The store in '" + configuration.getFile() + "' is read-only: Openfire is configured not to modify the certificate stores it uses (" + CertificateStoreManager.READ_ONLY_PROPERTY + " in openfire.xml)." );
     }
 }

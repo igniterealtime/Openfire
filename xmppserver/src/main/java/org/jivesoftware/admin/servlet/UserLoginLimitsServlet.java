@@ -270,8 +270,8 @@ public class UserLoginLimitsServlet extends HttpServlet
 
     /**
      * Builds the rows of the blocks table. A tier 3 row is marked when its account is locked through LockOutManager,
-     * so that the page can say that clearing the row does not lift the lock. A shortened username is not looked up,
-     * as the lookup could find another account.
+     * so that the page links to its lockout page instead of offering to clear the row. A shortened username is not
+     * looked up, as the lookup could find another account.
      *
      * @param blocks the blocks to show.
      * @param accountLocked tells whether an account is locked.
@@ -388,6 +388,14 @@ public class UserLoginLimitsServlet extends HttpServlet
          * @return whether this is a tier 3 block for an account that is also locked through LockOutManager.
          */
         public boolean isAccountLocked() { return accountLocked; }
+
+        /**
+         * A row for a locked account offers no Clear button: clearing its block would not unlock the account, so the
+         * account would stay refused. The account is unlocked on its lockout page, which also clears the block.
+         *
+         * @return whether the page offers to clear this block.
+         */
+        public boolean isClearable() { return !accountLocked; }
 
         /**
          * @return the username to link to the account's lockout page with: the username as listed, unescaped.

@@ -464,6 +464,30 @@ public class UserLoginLimitsServletTest
     }
 
     /**
+     * Verifies that a row for a locked account offers no Clear button, as clearing its block would not unlock the
+     * account, and that every other row does.
+     */
+    @Test
+    public void testRowsForLockedAccountsCannotBeCleared()
+    {
+        // Setup test fixture.
+        final List<ActiveBlock> blocks = List.of(
+            new ActiveBlock(Tier.USERNAME, "alice", false, null, 50, ENDS_AT, "a"),
+            new ActiveBlock(Tier.USERNAME, "bob", false, null, 50, ENDS_AT, "b"),
+            new ActiveBlock(Tier.USERNAME_FROM_ADDRESS, "alice", false, ADDRESS, 10, ENDS_AT, "c"),
+            new ActiveBlock(Tier.ADDRESS, null, false, ADDRESS, 20, ENDS_AT, "d"));
+
+        // Execute system under test.
+        final List<UserLoginLimitsServlet.BlockRow> rows = UserLoginLimitsServlet.toRows(blocks, "alice"::equals);
+
+        // Verify result.
+        assertFalse(rows.get(0).isClearable(), "a row for a locked account must not be clearable");
+        assertTrue(rows.get(1).isClearable(), "a tier 3 row for an account that is not locked must be clearable");
+        assertTrue(rows.get(2).isClearable(), "a tier 1 row must be clearable");
+        assertTrue(rows.get(3).isClearable(), "a tier 2 row must be clearable");
+    }
+
+    /**
      * Verifies that a shortened username is not looked up, as the lookup could find another account, and that a
      * username of 64 characters that was not shortened is looked up as any other.
      */

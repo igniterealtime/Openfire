@@ -292,12 +292,14 @@
                             </c:choose>
                         </td>
                         <td>
-                            <form action="user-login-limits.jsp" method="post" style="margin: 0">
-                                <input type="hidden" name="csrf" value="${fn:escapeXml(csrf)}">
-                                <input type="hidden" name="action" value="clear">
-                                <input type="hidden" name="block" value="${fn:escapeXml(row.token)}">
-                                <input type="submit" value="<fmt:message key="user.login.limits.blocks.clear"/>">
-                            </form>
+                            <c:if test="${row.clearable}">
+                                <form action="user-login-limits.jsp" method="post" style="margin: 0">
+                                    <input type="hidden" name="csrf" value="${fn:escapeXml(csrf)}">
+                                    <input type="hidden" name="action" value="clear">
+                                    <input type="hidden" name="block" value="${fn:escapeXml(row.token)}">
+                                    <input type="submit" value="<fmt:message key="user.login.limits.blocks.clear"/>">
+                                </form>
+                            </c:if>
                         </td>
                     </tr>
                 </c:forEach>

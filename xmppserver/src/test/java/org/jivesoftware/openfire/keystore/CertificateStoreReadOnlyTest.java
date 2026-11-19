@@ -209,6 +209,36 @@ public class CertificateStoreReadOnlyTest
     }
 
     /**
+     * Verifies that starting the certificate store manager reports a database property with the name of the setting,
+     * so that the warning is given on every start.
+     */
+    @Test
+    public void testStartupReportsDatabaseProperty()
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty( CertificateStoreManager.READ_ONLY_PROPERTY, "true" );
+        final CertificateStoreManager manager = new CertificateStoreManager( true );
+
+        // Execute system under test.
+        final List<LogEvent> warnings = captureWarnings( CertificateStoreManager.class, () -> manager.initialize( XMPPServer.getInstance() ) );
+
+        // Verify result.
+        assertTrue( warnings.stream().anyMatch( event -> event.getMessage().getFormattedMessage().contains( "has no effect" ) ),
+            "starting the manager must log the warning about the database property, but logged: " + warnings );
+    }
+
+    /**
+     * Verifies that the setting is not registered as a System Property: registering one would move the value from
+     * openfire.xml into the database on startup, and so make the stores writable.
+     */
+    @Test
+    public void testSettingIsNotASystemProperty()
+    {
+        assertTrue( org.jivesoftware.util.SystemProperty.getProperty( CertificateStoreManager.READ_ONLY_PROPERTY ).isEmpty(),
+            "cert.stores.readonly must not be registered as a System Property" );
+    }
+
+    /**
      * Verifies that a store accepts a change when the setting has never been set.
      */
     @Test
@@ -226,7 +256,8 @@ public class CertificateStoreReadOnlyTest
 
     /**
      * Verifies that turning the setting on applies to a store that already exists, and that turning it off again
-     * allows the same store to be changed.
+     * allows the same store to be changed. Stores read the setting each time they are changed; changing the value in
+     * openfire.xml here stands in for editing the file and restarting Openfire.
      */
     @Test
     public void testChangeOfSettingAppliesToExistingStore() throws Exception

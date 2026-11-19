@@ -50,6 +50,10 @@ public class CertificateStoreManager extends BasicModule
     /**
      * The name of the openfire.xml property that, when true, stops Openfire from modifying any of the certificate stores
      * (identity stores and trust stores) it uses. See {@link #isReadOnly()}.
+     *
+     * This must stay an openfire.xml property, and must not be registered as a {@link org.jivesoftware.util.SystemProperty}:
+     * registering a SystemProperty moves a value of the same name from openfire.xml into the database, which would
+     * remove the setting from openfire.xml and so make the stores writable.
      */
     public static final String READ_ONLY_PROPERTY = "cert.stores.readonly";
 
@@ -78,11 +82,11 @@ public class CertificateStoreManager extends BasicModule
      */
     static void warnWhenSetInDatabase()
     {
-        final String value = JiveGlobals.getProperty( READ_ONLY_PROPERTY );
-        if ( value != null )
+        final String databaseValue = JiveGlobals.getProperty( READ_ONLY_PROPERTY );
+        if ( databaseValue != null )
         {
-            Log.warn( "The System Property '{}' (value '{}') has no effect: Openfire reads this setting from openfire.xml only. The certificate stores are {}.",
-                READ_ONLY_PROPERTY, value, isReadOnly() ? "read-only" : "not read-only" );
+            Log.warn( "The System Property '{}' (value '{}') has no effect: Openfire reads this setting from openfire.xml only, at startup. The certificate stores are {}.",
+                READ_ONLY_PROPERTY, databaseValue, isReadOnly() ? "read-only" : "not read-only" );
         }
     }
 

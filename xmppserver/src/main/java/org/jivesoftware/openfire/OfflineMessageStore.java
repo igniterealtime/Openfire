@@ -64,7 +64,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         "INSERT INTO ofOffline (username, messageID, creationDate, messageSize, stanza) " +
         "VALUES (?, ?, ?, ?, ?)";
     private static final String LOAD_OFFLINE =
-        "SELECT stanza, creationDate FROM ofOffline WHERE username=? ORDER BY creationDate ASC";
+        "SELECT stanza, creationDate, messageID FROM ofOffline WHERE username=? ORDER BY creationDate ASC";
     private static final String LOAD_OFFLINE_MESSAGE =
         "SELECT stanza FROM ofOffline WHERE username=? AND creationDate=?";
     private static final String SELECT_COUNT_OFFLINE =
@@ -77,6 +77,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         "DELETE FROM ofOffline WHERE username=?";
     private static final String DELETE_OFFLINE_MESSAGE =
         "DELETE FROM ofOffline WHERE username=? AND creationDate=?";
+    private static final String DELETE_OFFLINE_MESSAGE_BY_ID =
+        "DELETE FROM ofOffline WHERE username=? AND messageID=?";
     private static final String DELETE_OFFLINE_MESSAGE_BEFORE =
         "DELETE FROM ofOffline WHERE creationDate < ?";
     private static final String SELECT_SIZE_OFFLINE_ALL_USERS =
@@ -218,12 +220,17 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      * Messages may be deleted after being selected from the database depending on
      * the delete param.
      *
+     * Stored messages that cannot be parsed can never be delivered. They are not returned, and are always deleted
+     * (regardless of the delete param), as they would otherwise count towards the storage quota of the user
+     * indefinitely.
+     *
      * @param username the username of the user who's messages you'd like to receive.
      * @param delete true if the offline messages should be deleted.
      * @return An iterator of packets containing all offline messages.
      */
     public Collection<OfflineMessage> getMessages(String username, boolean delete) {
         List<OfflineMessage> messages = new ArrayList<>();
+        List<Long> unparsableMessageIDs = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -248,6 +255,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                         message = new OfflineMessage(creationDate, SAXReaderUtil.readRootElement(msgXML));
                     } catch (ExecutionException de) {
                         Log.error("Failed to route packet (offline message): " + msgXML, de);
+                        unparsableMessageIDs.add(rs.getLong(3));
                         continue; // skip and process remaining offline messages
                     } catch (InterruptedException de) {
                         Thread.currentThread().interrupt();
@@ -273,7 +281,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             }
             // Check if the offline messages loaded should be deleted, and that there are
             // messages to delete.
-            if (delete && !messages.isEmpty()) {
+            if (delete && (!messages.isEmpty() || !unparsableMessageIDs.isEmpty())) {
                 PreparedStatement pstmt2 = null;
                 try {
                     pstmt2 = con.prepareStatement(DELETE_OFFLINE);
@@ -287,6 +295,26 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 finally {
                     DbConnectionManager.closeStatement(pstmt2);
                 } 
+            }
+            else if (!unparsableMessageIDs.isEmpty()) {
+                // The caller wants the messages to be kept, but the ones that could not be parsed are of no use to
+                // anyone: remove just those, so that they stop counting towards the storage quota of the user.
+                PreparedStatement pstmt2 = null;
+                try {
+                    pstmt2 = con.prepareStatement(DELETE_OFFLINE_MESSAGE_BY_ID);
+                    pstmt2.setString(1, username);
+                    for (Long messageID : unparsableMessageIDs) {
+                        pstmt2.setLong(2, messageID);
+                        pstmt2.executeUpdate();
+                    }
+                    removeUsernameFromSizeCache(username);
+                }
+                catch (Exception e) {
+                    Log.error("Error deleting unparsable offline messages of username: " + username, e);
+                }
+                finally {
+                    DbConnectionManager.closeStatement(pstmt2);
+                }
             }
         }
         catch (Exception e) {

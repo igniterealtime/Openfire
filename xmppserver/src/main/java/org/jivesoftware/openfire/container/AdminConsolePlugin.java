@@ -78,9 +78,9 @@ public class AdminConsolePlugin implements Plugin {
      */
     public static final SystemProperty<Boolean> ADMIN_CONSOLE_FORWARDED = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("adminConsole.forwarded.enabled")
-        .setDynamic(false)
+        .setDynamic(true)
         .setDefaultValue(false)
-        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(AdminConsolePlugin::reconfigureForwardedCustomizer)
         .build();
 
     /**
@@ -88,9 +88,9 @@ public class AdminConsolePlugin implements Plugin {
      */
     public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_HEADER = SystemProperty.Builder.ofType(String.class)
         .setKey("adminConsole.forwarded.header")
-        .setDynamic(false)
+        .setDynamic(true)
         .setDefaultValue(HttpHeader.FORWARDED.toString())
-        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(AdminConsolePlugin::reconfigureForwardedCustomizer)
         .build();
 
     /**
@@ -98,9 +98,9 @@ public class AdminConsolePlugin implements Plugin {
      */
     public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_FOR = SystemProperty.Builder.ofType(String.class)
         .setKey("adminConsole.forwarded.for.header")
-        .setDynamic(false)
+        .setDynamic(true)
         .setDefaultValue(HttpHeader.X_FORWARDED_FOR.toString())
-        .addListener(header -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(AdminConsolePlugin::reconfigureForwardedCustomizer)
         .build();
 
     /**
@@ -108,9 +108,9 @@ public class AdminConsolePlugin implements Plugin {
      */
     public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_SERVER = SystemProperty.Builder.ofType(String.class)
         .setKey("adminConsole.forwarded.server.header")
-        .setDynamic(false)
+        .setDynamic(true)
         .setDefaultValue(HttpHeader.X_FORWARDED_SERVER.toString())
-        .addListener(header -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(AdminConsolePlugin::reconfigureForwardedCustomizer)
         .build();
 
     /**
@@ -118,9 +118,9 @@ public class AdminConsolePlugin implements Plugin {
      */
     public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_HOST = SystemProperty.Builder.ofType(String.class)
         .setKey("adminConsole.forwarded.host.header")
-        .setDynamic(false)
+        .setDynamic(true)
         .setDefaultValue(HttpHeader.X_FORWARDED_HOST.toString())
-        .addListener(header -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(AdminConsolePlugin::reconfigureForwardedCustomizer)
         .build();
 
     /**
@@ -128,9 +128,9 @@ public class AdminConsolePlugin implements Plugin {
      */
     public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_HOST_NAME = SystemProperty.Builder.ofType(String.class)
         .setKey("adminConsole.forwarded.host.name")
-        .setDynamic(false)
+        .setDynamic(true)
         .setDefaultValue(null)
-        .addListener(name -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(AdminConsolePlugin::reconfigureForwardedCustomizer)
         .build();
 
     /**
@@ -149,10 +149,10 @@ public class AdminConsolePlugin implements Plugin {
      */
     public static final SystemProperty<Set<String>> ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES = SystemProperty.Builder.ofType(Set.class)
         .setKey("adminConsole.forwarded.trusted.proxies")
-        .setDynamic(false)
+        .setDynamic(true)
         .setDefaultValue(new HashSet<>())
         .setSorted(true)
-        .addListener(proxies -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(AdminConsolePlugin::reconfigureForwardedCustomizer)
         .buildSet(String.class);
 
     /**
@@ -188,6 +188,12 @@ public class AdminConsolePlugin implements Plugin {
     private boolean autoRestartEnabled = true;
     private TimerTask reenableTask = null;
     private boolean sslEnabled = false;
+
+    /**
+     * Processes the 'Forwarded' and 'X-Forwarded-*' HTTP headers of requests to the admin console, as configured by the
+     * adminConsole.forwarded.* properties. Null when that functionality is disabled.
+     */
+    private volatile HttpConfiguration.Customizer forwardedCustomizer;
 
     private File pluginDir;
 
@@ -228,6 +234,8 @@ public class AdminConsolePlugin implements Plugin {
 
         final Duration stopTimeout = ADMIN_CONSOLE_STOP_TIMEOUT.getValue();
         adminServer.setStopTimeout(stopTimeout == null || stopTimeout.isNegative() ? 0 : stopTimeout.toMillis());
+
+        configureForwardedCustomizer();
 
         // Create connector for http traffic if it's enabled.
         if (adminPort > 0) {
@@ -441,6 +449,27 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     private void configureProxiedConnector(HttpConfiguration httpConfig) {
+        // The customizer is looked up for every request, so that changes to the adminConsole.forwarded.* properties
+        // are applied to connectors that are already running (rather than only after a restart of the admin console).
+        httpConfig.addCustomizer((request, responseHeaders) -> {
+            final HttpConfiguration.Customizer customizer = forwardedCustomizer;
+            return customizer == null ? request : customizer.customize(request, responseHeaders);
+        });
+    }
+
+    /**
+     * Static reference for {@link #configureForwardedCustomizer()} that can be used as a listener of a {@link SystemProperty}.
+     * The provided argument is ignored.
+     */
+    private static void reconfigureForwardedCustomizer(Object ignored) {
+        XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).configureForwardedCustomizer());
+    }
+
+    /**
+     * Replaces the customizer that processes 'Forwarded' and 'X-Forwarded-*' HTTP headers (used by all connectors of the
+     * admin console) with one that reflects the current values of the adminConsole.forwarded.* properties.
+     */
+    private synchronized void configureForwardedCustomizer() {
         // Check to see if we are deployed behind a proxy
         // Refer to http://eclipse.org/jetty/documentation/current/configuring-connectors.html
         if (ADMIN_CONSOLE_FORWARDED.getValue()) {
@@ -478,7 +507,9 @@ public class AdminConsolePlugin implements Plugin {
             } else {
                 possiblyWrappedCustomizer = customizer;
             }
-            httpConfig.addCustomizer(possiblyWrappedCustomizer);
+            forwardedCustomizer = possiblyWrappedCustomizer;
+        } else {
+            forwardedCustomizer = null;
         }
     }
 

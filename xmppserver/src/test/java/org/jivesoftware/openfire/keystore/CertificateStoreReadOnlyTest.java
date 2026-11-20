@@ -281,6 +281,26 @@ public class CertificateStoreReadOnlyTest
         assertFalse( load( trustStoreFile ).containsAlias( EXISTING_ALIAS ), "a change must be saved once the setting is off again" );
     }
 
+    /**
+     * Verifies that a refused change is logged at debug level, naming the store file, so that a refusal is visible in
+     * Openfire's log even when the caller (for example a plugin) does not report the exception.
+     */
+    @Test
+    public void testRefusalIsLoggedWithStoreFile() throws Exception
+    {
+        // Setup test fixture.
+        final TrustStore store = new TrustStore( configuration( trustStoreFile ), false );
+        setReadOnly( true );
+
+        // Execute system under test.
+        final List<LogEvent> events = captureLogEvents( CertificateStore.class, Level.DEBUG,
+            () -> assertThrows( CertificateStoreReadOnlyException.class, () -> store.delete( EXISTING_ALIAS ) ) );
+
+        // Verify result.
+        assertTrue( events.stream().anyMatch( event -> event.getMessage().getFormattedMessage().contains( trustStoreFile.toString() ) ),
+            "the refusal must be logged at debug level, naming the store file" );
+    }
+
     // -------------------------------------------------------------------------
     // CertificateStore constructor
     // -------------------------------------------------------------------------
@@ -1275,21 +1295,33 @@ public class CertificateStoreReadOnlyTest
 
     private static List<LogEvent> captureWarnings( final Class<?> source, final Runnable action )
     {
+        return captureLogEvents( source, Level.WARN, action );
+    }
+
+    /**
+     * Runs the action and returns the events of exactly the given level that the class logged while it ran. The
+     * class's logger is set to log that level for the duration of the action.
+     */
+    private static List<LogEvent> captureLogEvents( final Class<?> source, final Level level, final Runnable action )
+    {
         final org.apache.logging.log4j.core.Logger logger = (org.apache.logging.log4j.core.Logger) LogManager.getLogger( source );
+        final Level originalLevel = logger.getLevel();
         final CapturingAppender appender = new CapturingAppender();
         appender.start();
         logger.addAppender( appender );
+        logger.setLevel( level );
         try
         {
             action.run();
         }
         finally
         {
+            logger.setLevel( originalLevel );
             logger.removeAppender( appender );
             appender.stop();
         }
         return appender.events.stream()
-            .filter( event -> event.getLevel() == Level.WARN )
+            .filter( event -> event.getLevel() == level )
             .collect( Collectors.toList() );
     }
 

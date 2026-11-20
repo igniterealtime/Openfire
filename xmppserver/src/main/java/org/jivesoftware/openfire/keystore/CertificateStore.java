@@ -350,6 +350,8 @@ public abstract class CertificateStore
 
     private CertificateStoreReadOnlyException readOnlyRefusal()
     {
+        // Logged here as well as reported to the caller, as code outside Openfire (such as a plugin) may not report it.
+        Log.debug( "Refusing to change the store in '{}': the certificate stores are read-only ({} in openfire.xml).", configuration.getFile(), CertificateStoreManager.READ_ONLY_PROPERTY );
         return new CertificateStoreReadOnlyException( "The store in '" + configuration.getFile() + "' is read-only: Openfire is configured not to modify the certificate stores it uses (" + CertificateStoreManager.READ_ONLY_PROPERTY + " in openfire.xml)." );
     }
 }

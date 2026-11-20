@@ -104,8 +104,11 @@
                     // When updating certificates through the admin console, do not cause changes to restart the website, as
                     // that is very likely to log out the administrator that is performing the changes. As the keystore change
                     // event is async, this line disables restarting the plugin for a few minutes.
-                    XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin")
-                        .ifPresent(plugin -> ((AdminConsolePlugin) plugin).pauseAutoRestartEnabled(Duration.ofMinutes(5)));
+                    // A read-only store refuses the change, so do not pause: that would delay a restart needed for an update made outside Openfire.
+                    if (!readOnly) {
+                        XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin")
+                            .ifPresent(plugin -> ((AdminConsolePlugin) plugin).pauseAutoRestartEnabled(Duration.ofMinutes(5)));
+                    }
 
                     trustStore.delete( alias );
 

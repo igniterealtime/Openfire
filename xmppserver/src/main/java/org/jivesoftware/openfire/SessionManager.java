@@ -2291,22 +2291,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         // Remove client sessions hosted in node that left the cluster
         final Set<String> removedSessionInfo = sessionInfoKeysByClusterNode.remove(nodeIDOfLostNode);
-        if (removedSessionInfo != null) {
-            removedSessionInfo.forEach(fullJID -> {
-                final JID offlineJID = new JID(fullJID);
-                boolean sessionIsAnonymous = false;
-                final ClientSessionInfo clientSessionInfoAboutToBeRemoved = sessionInfoCache.remove(fullJID);
-                if (clientSessionInfoAboutToBeRemoved != null) {
-                    sessionIsAnonymous = clientSessionInfoAboutToBeRemoved.isAnonymous();
-                } else {
-                    // Apparently there is an inconsistency between sessionInfoKeysByClusterNode and sessionInfoCache.
-                    // That's troublesome, so log a warning. For the session removal we can't do more than just assume
-                    // the session was not anonymous (which has the highest probability for most use cases).
-                    Log.warn("Session information for {} is not available from sessionInfoCache, while it was still expected to be there", fullJID);
-                }
-                removeSession(null, offlineJID, sessionIsAnonymous, true);
-            });
-        }
+        final Set<String> departedSessionJids = removedSessionInfo == null ? new HashSet<>() : new HashSet<>(removedSessionInfo);
 
         // In some cache implementations, the entry-set is unmodifiable. To guard against potential
         // future changes of this implementation (that would make the implementation incompatible with
@@ -2316,9 +2301,50 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         final Set<Map.Entry<String, ClientSessionInfo>> entries = Collections.unmodifiableSet(sessionInfoCache.entrySet() );
         for ( final Map.Entry<String, ClientSessionInfo> entry : entries )
         {
-            if (entry.getValue().getNodeID().equals( NodeID.getInstance(nodeID) )) {
-                sessionInfoCache.remove(entry.getKey());
+            if (nodeIDOfLostNode.equals(entry.getValue().getNodeID())) {
+                departedSessionJids.add(entry.getKey());
             }
+        }
+        departedSessionJids.forEach(fullJID -> removeDepartedClientSession(new JID(fullJID), nodeIDOfLostNode));
+    }
+
+    private void removeDepartedClientSession(final JID fullJID, final NodeID departedNode)
+    {
+        if (serverName == null) {
+            return;
+        }
+
+        final Lock lock = routingTable.getClientRouteLock(fullJID);
+        lock.lock();
+        try {
+            final String key = fullJID.toString();
+            final ClientSessionInfo cached = sessionInfoCache.get(key);
+            final boolean ownsCachedInfo = cached != null && departedNode.equals(cached.getNodeID());
+            if (cached == null) {
+                Log.warn("Session information for {} is not available from sessionInfoCache, while it was still expected to be there", fullJID);
+            }
+
+            final boolean removedRoute = routingTable.removeClientRoute(fullJID, departedNode);
+            final boolean removedInfo = ownsCachedInfo && (removedRoute || routingTable.getClientRoute(fullJID) == null);
+            if (removedInfo) {
+                sessionInfoCache.remove(key);
+            }
+
+            // Never resolve this JID to a replacement session when notifying listeners about the departed owner.
+            final ClientSession departedSession = new RemoteClientSession(departedNode.toByteArray(), fullJID);
+            SessionEventDispatcher.dispatchEvent(departedSession,
+                ownsCachedInfo && cached.isAnonymous() ? SessionEventDispatcher.EventType.anonymous_session_destroyed : SessionEventDispatcher.EventType.session_destroyed
+            );
+
+            // A listener can bind a replacement reentrantly, so check again before marking the JID unavailable.
+            if ((removedRoute || removedInfo) && routingTable.getClientRoute(fullJID) == null) {
+                final Presence offline = new Presence(Presence.Type.unavailable);
+                offline.setFrom(fullJID);
+                offline.setTo(new JID(null, serverName, null, true));
+                router.route(offline);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 

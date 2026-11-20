@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.nio.NettyConnection;
 import org.jivesoftware.openfire.nio.NettyConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyIdleStateKeepAliveHandler;
@@ -38,9 +39,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
 
 import java.net.InetAddress;
@@ -1098,6 +1102,44 @@ public class RequestingStreamManagerTest
         // Verify result.
         assertFalse(closedAtMaximum, "The session must not be closed while no more stanzas than the maximum for server connections are unacknowledged, also when that is more than the maximum for clients.");
         verify(connection, times(1).description("The session must be closed once more stanzas than the maximum for server connections are unacknowledged.")).close(argThat((StreamError error) -> error != null && error.getCondition() == StreamError.Condition.policy_violation));
+    }
+
+    /**
+     * Verifies that the unacknowledged stanzas of a session that was closed because more stanzas were unacknowledged
+     * than the maximum allows are not routed again when the session closes, but handled as stanzas that were sent again
+     * before: a message and an IQ request are returned to their sender as a 'service-unavailable' error, and an IQ
+     * result, a presence and a stanza of type 'error' are dropped. Routed again in one go, they would exceed the
+     * maximum on the next connection too.
+     */
+    @Test
+    public void unacknowledgedStanzasAreReturnedRatherThanRoutedAgainAfterMaximumIsExceeded()
+    {
+        // Setup test fixture.
+        RequestingStreamManager.MAX_UNACKNOWLEDGED.setValue(4);
+        final RequestingStreamManager sm = enabledStreamManager();
+        final IQ request = new IQ(IQ.Type.get);
+        request.setID("iq-request");
+        final IQ result = new IQ(IQ.Type.result);
+        result.setID("iq-result");
+        final Presence presence = new Presence();
+        presence.setID("presence");
+        final Message error = message("error");
+        error.setType(Message.Type.error);
+        final List<Packet> sent = List.of(addressed(message("message")), addressed(request), addressed(result), addressed(presence), addressed(error));
+        sent.forEach(sm::sentStanza);
+        final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, "remote.example.org");
+        final List<DomainPair> routesRemoved = new ArrayList<>();
+        final PacketRouter router = useServerWithRouter();
+
+        // Execute system under test.
+        sm.onClose(router, SERVER_ADDRESS, List.of(domainPair), routesRemoved::add);
+
+        // Verify result.
+        final List<Packet> routed = routed(router);
+        assertEquals(List.of(domainPair), routesRemoved, "The route of the domain pair of the stanzas must be removed.");
+        assertEquals(List.of("message", "iq-request"), routed.stream().map(Packet::getID).toList(), "Only the message and the IQ request must be routed, as errors: the IQ result, the presence and the stanza of type 'error' must be dropped.");
+        assertTrue(routed.stream().allMatch(packet -> packet.getError() != null && packet.getError().getCondition() == PacketError.Condition.service_unavailable), "No unacknowledged stanza must be routed again: each that is routed must be a 'service-unavailable' error.");
+        assertTrue(routed.stream().allMatch(packet -> sent.get(0).getFrom().equals(packet.getTo())), "Each error must be returned to the sender of the stanza.");
     }
 
     /**

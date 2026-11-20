@@ -711,7 +711,8 @@ public abstract class StreamManager {
      *
      * XEP-0198 defines no such maximum, and no way to stop tracking stanzas on an open stream. Instead, the stream is
      * closed with a stream error, and resumption is disabled. The session then closes, which handles its unacknowledged
-     * stanzas as for any other session that closes without being resumed (XEP-0198 § 4). This also applies to a detached
+     * stanzas as for any other session that closes without being resumed (XEP-0198 § 4), except that on a connection
+     * that Openfire opened to another server, none of them are sent again. This also applies to a detached
      * session that is resumed before it could be ended.
      *
      * @param size The number of unacknowledged stanzas.

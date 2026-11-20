@@ -92,7 +92,9 @@ public class RequestingStreamManager extends StreamManager
 {
     /**
      * The maximum number of stanzas that the peer has not acknowledged, on a connection that Openfire opened to another
-     * server. When more are unacknowledged, the session is closed. This is separate from the maximum for clients
+     * server. When more are unacknowledged, the session is closed, and its unacknowledged stanzas are returned to their
+     * senders as errors, or dropped where no error may be returned, rather than sent again. This is separate from the
+     * maximum for clients
      * ({@code stream.management.max-unacked}), as another server decides when it acknowledges stanzas.
      */
     public static final SystemProperty<Integer> MAX_UNACKNOWLEDGED = SystemProperty.Builder.ofType( Integer.class )
@@ -739,7 +741,11 @@ public class RequestingStreamManager extends StreamManager
      *
      * A stanza is sent again at most once, so that a stanza that makes the peer close the connection does not do so on
      * every new connection. A stanza that was sent again, and is unacknowledged when this session closes, is returned to
-     * its sender as a 'service-unavailable' error. No error is returned for a stanza of type 'error' (RFC 6120 § 8.3.1),
+     * its sender as a 'service-unavailable' error. When the session was closed because more stanzas went unacknowledged
+     * than {@link #MAX_UNACKNOWLEDGED} allows, no stanza is sent again: each is handled as one that was sent again
+     * before. Openfire cannot tell whether the peer received them, and sent again in one go, they would exceed the
+     * maximum on the new connection before the peer could acknowledge them. No error is returned for a stanza of type
+     * 'error' (RFC 6120 § 8.3.1),
      * an IQ result (RFC 6120 § 8.2.3), or a presence, of any type (RFC 6121 § 8.5.3.2.2): those are dropped. A stanza
      * that is routed again keeps a marker in memory, with which the session that sends it next tracks it as sent again
      * (see {@link #copyRoutedAgainMarker(Packet, Packet)}).
@@ -796,7 +802,10 @@ public class RequestingStreamManager extends StreamManager
     {
         final List<UnacknowledgedStanzaQueue.Entry> unacknowledged = new ArrayList<>();
         final boolean handleStanzas;
+        final boolean exceededMaximum;
         synchronized ( this ) {
+            // OF-2425: Sent again in one go, more stanzas than the maximum would exceed it on the new connection too, before the peer could acknowledge them.
+            exceededMaximum = hasExceededMaximumUnacknowledgedStanzas();
             // OF-2425: Stays enabled until all domain pairs are done, so that stanzas that are queued meanwhile are handled below.
             handleStanzas = isEnabled() && !closing;
             if ( handleStanzas ) {
@@ -825,7 +834,7 @@ public class RequestingStreamManager extends StreamManager
                 synchronized ( this ) {
                     queued = takeOf( queuedStanzas, domainPair );
                 }
-                handled = handled.plus( routeAgainOrReturn( takeOf( unacknowledged, domainPair, UnacknowledgedStanzaQueue.Entry::getPacket ), router, serverAddress, errors ) );
+                handled = handled.plus( routeAgainOrReturn( takeOf( unacknowledged, domainPair, UnacknowledgedStanzaQueue.Entry::getPacket ), !exceededMaximum, router, serverAddress, errors ) );
                 routeQueued( queued, router );
                 queuedCount += queued.size();
             }
@@ -841,12 +850,12 @@ public class RequestingStreamManager extends StreamManager
             setNamespace( null );
         }
         // OF-2425: The stanzas are routed without holding the lock, as routing can deliver them to another session.
-        handled = handled.plus( routeAgainOrReturn( unacknowledged, router, serverAddress, errors ) );
+        handled = handled.plus( routeAgainOrReturn( unacknowledged, !exceededMaximum, router, serverAddress, errors ) );
         routeQueued( queued, router );
         queuedCount += queued.size();
         routeErrors( errors, router );
         if ( unacknowledgedCount > 0 || queuedCount > 0 ) {
-            Log.debug( "Session {} closed without being resumed, with {} unacknowledged stanza(s): {} routed again, {} returned to the sender as an error, {} dropped as no error can be returned for them. Queued stanzas that were never sent, routed again: {}. Routes removed first: {}", session, unacknowledgedCount, handled.sentAgain(), handled.returned(), handled.dropped(), queuedCount, domainPairs );
+            Log.debug( "Session {} closed without being resumed, with {} unacknowledged stanza(s): {} routed again, {} returned to the sender as an error, {} dropped as no error can be returned for them. None routed again, as the maximum of unacknowledged stanzas was exceeded: {}. Queued stanzas that were never sent, routed again: {}. Routes removed first: {}", session, unacknowledgedCount, handled.sentAgain(), handled.returned(), handled.dropped(), exceededMaximum, queuedCount, domainPairs );
         }
     }
 
@@ -903,13 +912,14 @@ public class RequestingStreamManager extends StreamManager
      * This must be invoked without holding the lock of this instance.
      *
      * @param unacknowledged The unacknowledged stanzas, in the order in which they were sent.
+     * @param mayRouteAgain whether stanzas may be routed again. When false, each is handled as one that was sent again before.
      * @param router the router used to route the stanzas.
      * @param serverAddress this server's bare-domain address, used to stamp delay information on messages and presences.
      * @param errors the list to which the errors that are to be returned to the senders of stanzas are added.
      * @return how the stanzas were handled.
      */
     @Nonnull
-    private Handled routeAgainOrReturn(@Nonnull final Collection<UnacknowledgedStanzaQueue.Entry> unacknowledged, @Nonnull final PacketRouter router, @Nonnull final JID serverAddress, @Nonnull final List<Packet> errors)
+    private Handled routeAgainOrReturn(@Nonnull final Collection<UnacknowledgedStanzaQueue.Entry> unacknowledged, final boolean mayRouteAgain, @Nonnull final PacketRouter router, @Nonnull final JID serverAddress, @Nonnull final List<Packet> errors)
     {
         int sentAgain = 0;
         int returned = 0;
@@ -917,7 +927,7 @@ public class RequestingStreamManager extends StreamManager
         for ( final UnacknowledgedStanzaQueue.Entry entry : unacknowledged ) {
             final Packet packet = entry.getPacket();
             try {
-                if ( isToBeSentAgain( entry ) ) {
+                if ( mayRouteAgain && isToBeSentAgain( entry ) ) {
                     Log.trace( "Routing unacknowledged '{}' stanza of type '{}' with ID '{}' of session {} again.", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session );
                     final Packet copy = copyForSendingAgain( entry, serverAddress );
                     ROUTED_AGAIN.add( copy );
@@ -926,7 +936,7 @@ public class RequestingStreamManager extends StreamManager
                     continue;
                 }
                 final Packet error = createErrorResponse( packet );
-                Log.trace( "Not routing unacknowledged '{}' stanza of type '{}' with ID '{}' of session {} again (sent again before: {}). Returning it to its sender as an error: {}", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, entry.isSentAgain(), error != null );
+                Log.trace( "Not routing unacknowledged '{}' stanza of type '{}' with ID '{}' of session {} again (sent again before: {}, maximum of unacknowledged stanzas exceeded: {}). Returning it to its sender as an error: {}", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, entry.isSentAgain(), !mayRouteAgain, error != null );
                 if ( error != null ) {
                     errors.add( error );
                     returned++;

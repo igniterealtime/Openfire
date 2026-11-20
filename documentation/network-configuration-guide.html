@@ -535,7 +535,8 @@ _xmpps-server._tcp.conference.example.org. 86400 IN SRV 0 5 5270 xmpp.example.or
                 <dt>stream.management.server.max-unacked</dt>
                 <dd>The maximum number of stanzas that a remote server has not confirmed on a connection that Openfire
                     opened to it. When more are unconfirmed, Openfire closes the connection, and the session is ended:
-                    the unconfirmed stanzas are then handled as when a stream is not resumed. Client connections use
+                    the unconfirmed stanzas are then returned to their senders as errors, or dropped where no error may
+                    be returned, rather than sent again. Client connections use
                     <code>stream.management.max-unacked</code> instead. Defaults to 10000.</dd>
 
                 <dt>stream.management.server.resume.max-queued</dt>

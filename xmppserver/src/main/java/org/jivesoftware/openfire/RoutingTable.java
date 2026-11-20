@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire;
 
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.session.*;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -301,6 +302,16 @@ public interface RoutingTable {
      * @return true if a route of a client session has been successfully removed.
      */
     boolean removeClientRoute(JID route);
+
+    /**
+     * Removes a client route only if it is still owned by the expected cluster node.
+     * The ownership check and removal are performed under the client-route lock.
+     *
+     * @param route the full JID of the route to remove.
+     * @param expectedOwner the cluster node that must still own the route.
+     * @return true if the matching route was removed.
+     */
+    boolean removeClientRoute(JID route, NodeID expectedOwner);
 
     /**
      * Returns true if a route to an outgoing server has been successfully removed. When running

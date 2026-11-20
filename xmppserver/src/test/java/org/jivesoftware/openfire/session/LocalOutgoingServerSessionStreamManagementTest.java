@@ -990,6 +990,33 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies that a session of which the stream can be resumed is not detached when Stream Management on server
+     * connections is disabled by the time its connection breaks, although resumption is still enabled: its stream could
+     * not be resumed, as Openfire does not ask for that on a new connection while Stream Management is disabled, so its
+     * routes are removed and its unacknowledged stanzas are handled, as for a session that cannot be resumed.
+     */
+    @Test
+    public void resumableSessionIsNotDetachedWhenServerStreamManagementIsDisabled() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.deliver(message("unacked"));
+        StreamManager.SERVER_ACTIVE.setValue(false);
+        assertTrue(StreamManager.SERVER_RESUME_ENABLED.getValue(), "Test fixture expects resumption on server connections to stay enabled.");
+        doReturn(true).when(connection).isClosed();
+
+        // Execute system under test.
+        fireOutgoingConnectionClose(sessionManager, resumable);
+
+        // Verify result.
+        assertFalse(sessionManager.isDetached(resumable), "A session must not be detached when Stream Management on server connections is disabled.");
+        verify(routingTable, times(1).description("The route of a session that is not detached must be removed.")).removeServerRoute(DOMAIN_PAIR);
+        assertEquals(List.of("unacked"), routed(packetRouter).stream().map(Packet::getID).toList(), "The unacknowledged stanza must be routed again, as for a session that cannot be resumed.");
+    }
+
+    /**
      * Verifies that a session is not detached when the remote server enabled Stream Management without a stream that
      * can be resumed, although Openfire requested one.
      */

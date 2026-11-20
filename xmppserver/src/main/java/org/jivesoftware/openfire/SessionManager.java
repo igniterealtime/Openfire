@@ -314,7 +314,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     private Duration detachedCleanupPeriod;
 
     /**
-     * Reschedules the task that ends detached sessions when resumption on server connections is enabled or disabled.
+     * Reschedules the task that ends detached sessions when Stream Management or resumption on server connections is
+     * enabled or disabled.
      */
     private final Consumer<Boolean> serverResumeEnabledListener = enabled -> rescheduleDetachedCleanupTask();
 
@@ -1936,7 +1937,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             }
             // OF-2425: A session that can be resumed keeps its validated domains registered until terminateDetached() ends it.
             if (session.getStreamManager().getResume()) {
-                if (StreamManager.SERVER_RESUME_ENABLED.getValue()) {
+                if (StreamManager.isServerResumptionEnabled()) {
                     // OF-2425: Detached only while it still uses the connection that closed, as it can have been resumed since the checks above.
                     if (!session.setDetachedIfConnectionIs(currentConnection)) {
                         Log.debug("Ignoring close notification for incoming server session with address {} and streamID {}: it no longer uses the connection that closed, as its stream was resumed meanwhile.", session.getAddress(), session.getStreamID());
@@ -1945,7 +1946,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                     Log.debug("Closing incoming server session with address {} and streamID {} can be resumed; detached. Its validated domains stay registered: {}", session.getAddress(), session.getStreamID(), session.getValidatedDomains());
                     return CompletableFuture.completedFuture(null);
                 }
-                Log.debug("Closing incoming server session with address {} and streamID {} is not detached, although its stream can be resumed, as resumption on server connections is disabled.", session.getAddress(), session.getStreamID());
+                Log.debug("Closing incoming server session with address {} and streamID {} is not detached, although its stream can be resumed, as the current settings do not allow resumption on server connections (Stream Management enabled: {}, resumption enabled: {}).", session.getAddress(), session.getStreamID(), StreamManager.SERVER_ACTIVE.getValue(), StreamManager.SERVER_RESUME_ENABLED.getValue());
             }
 
             CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing incoming server session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
@@ -1997,7 +1998,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 }
                 // OF-2425: A session that can be resumed keeps its routes until terminateDetached() ends it (ADR-013).
                 if (localSession.getStreamManager().getResume()) {
-                    if (StreamManager.SERVER_RESUME_ENABLED.getValue()) {
+                    if (StreamManager.isServerResumptionEnabled()) {
                         // OF-2425: Detached only while it still uses the connection that closed, as it can have been resumed since the checks above.
                         if (!localSession.setDetachedIfConnectionIs(currentConnection)) {
                             Log.debug("Ignoring close notification for outgoing server session with address {} and streamID {}: it no longer uses the connection that closed, as its stream was resumed meanwhile.", session.getAddress(), session.getStreamID());
@@ -2007,7 +2008,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                         localSession.startResumption();
                         return CompletableFuture.completedFuture(null);
                     }
-                    Log.debug("Closing outgoing server session with address {} and streamID {} is not detached, although its stream can be resumed, as resumption on server connections is disabled.", session.getAddress(), session.getStreamID());
+                    Log.debug("Closing outgoing server session with address {} and streamID {} is not detached, although its stream can be resumed, as the current settings do not allow resumption on server connections (Stream Management enabled: {}, resumption enabled: {}).", session.getAddress(), session.getStreamID(), StreamManager.SERVER_ACTIVE.getValue(), StreamManager.SERVER_RESUME_ENABLED.getValue());
                 }
             }
 
@@ -2191,12 +2192,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
     /**
      * Schedules the task that ends detached sessions, to run often enough for the shortest of the detach timeouts per
-     * session type (see {@link #getDetachedCleanupPeriodForSettings()}), and reschedules it when resumption on server
-     * connections is enabled or disabled, or the detach timeout of server sessions changes.
+     * session type (see {@link #getDetachedCleanupPeriodForSettings()}), and reschedules it when Stream Management or
+     * resumption on server connections is enabled or disabled, or the detach timeout of server sessions changes.
      */
     @VisibleForTesting
     void startDetachedCleanup() {
         // TODO Reschedule the task also when the detach timeout of client sessions changes.
+        StreamManager.SERVER_ACTIVE.addListener(serverResumeEnabledListener);
         StreamManager.SERVER_RESUME_ENABLED.addListener(serverResumeEnabledListener);
         SERVER_SESSION_DETACH_TIMEOUT.addListener(serverDetachTimeoutListener);
         synchronized (detachedCleanupLock) {
@@ -2209,6 +2211,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      */
     @VisibleForTesting
     void stopDetachedCleanup() {
+        StreamManager.SERVER_ACTIVE.removeListener(serverResumeEnabledListener);
         StreamManager.SERVER_RESUME_ENABLED.removeListener(serverResumeEnabledListener);
         SERVER_SESSION_DETACH_TIMEOUT.removeListener(serverDetachTimeoutListener);
         synchronized (detachedCleanupLock) {
@@ -2244,7 +2247,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      */
     private void scheduleDetachedCleanupTask() {
         final Duration period = getDetachedCleanupPeriodForSettings();
-        Log.debug("Checking detached sessions every {}, for a detach timeout of {} for client sessions and {} for server sessions (resumption on server connections enabled: {}).", period, Duration.ofMillis(getSessionDetachTime()), SERVER_SESSION_DETACH_TIMEOUT.getValue(), StreamManager.SERVER_RESUME_ENABLED.getValue());
+        Log.debug("Checking detached sessions every {}, for a detach timeout of {} for client sessions and {} for server sessions (resumption on server connections possible: {}).", period, Duration.ofMillis(getSessionDetachTime()), SERVER_SESSION_DETACH_TIMEOUT.getValue(), StreamManager.isServerResumptionEnabled());
         detachedCleanupTask = new DetachedCleanupTask();
         detachedCleanupPeriod = period;
         TaskEngine.getInstance().scheduleAtFixedRate(detachedCleanupTask, period, period);
@@ -2426,14 +2429,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     /**
      * Returns the time between two runs of the task that ends detached sessions, for the detach timeouts that are
      * configured (see {@link #getDetachedCleanupPeriod(Duration...)}): that of client sessions, and that of server
-     * sessions only when resumption on server connections is enabled, as server sessions are not detached otherwise.
+     * sessions only when streams on server connections can be resumed (see
+     * {@link StreamManager#isServerResumptionEnabled()}), as server sessions are not detached otherwise.
      *
      * @return the time between two runs of the task.
      */
     @VisibleForTesting
     Duration getDetachedCleanupPeriodForSettings() {
         final Duration clientTimeout = Duration.ofMillis(getSessionDetachTime());
-        if (!StreamManager.SERVER_RESUME_ENABLED.getValue()) {
+        if (!StreamManager.isServerResumptionEnabled()) {
             return getDetachedCleanupPeriod(clientTimeout);
         }
         return getDetachedCleanupPeriod(clientTimeout, SERVER_SESSION_DETACH_TIMEOUT.getValue());

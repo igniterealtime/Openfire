@@ -95,6 +95,8 @@ public class SessionManagerDetachedSessionTest
         sessionManager.initialize(server);
         JiveGlobals.setProperty("xmpp.session.detach.timeout", String.valueOf(DETACH_TIMEOUT.toMillis()));
         SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(SERVER_DETACH_TIMEOUT);
+        // Server sessions can be resumed only while Stream Management on server connections is enabled as well; tests set resumption themselves.
+        StreamManager.SERVER_ACTIVE.setValue(true);
     }
 
     @AfterEach
@@ -409,6 +411,29 @@ public class SessionManagerDetachedSessionTest
     }
 
     /**
+     * Verifies that an incoming server session of which the stream can be resumed is not detached when its connection
+     * closes while Stream Management on server connections is disabled, although resumption is enabled, as the remote
+     * server could not resume it: Openfire does not offer Stream Management on a new connection while it is disabled.
+     * Its validated domain is unregistered, as for any other incoming server session.
+     */
+    @Test
+    void resumableIncomingServerSessionIsNotDetachedWhenServerStreamManagementIsDisabled() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        final LocalIncomingServerSession session = incomingServerSession(true);
+        StreamManager.SERVER_ACTIVE.setValue(false);
+
+        // Execute system under test.
+        fireIncomingServerConnectionClose(session);
+
+        // Verify result.
+        assertFalse(sessionManager.isDetached(session), "An incoming server session must not be detached while Stream Management on server connections is disabled.");
+        assertNull(sessionManager.getIncomingServerSession(session.getStreamID()), "An incoming server session that is not detached must be unregistered when its connection closes.");
+        assertTrue(sessionManager.getIncomingServerSessions(REMOTE_DOMAIN.getDomain()).isEmpty(), "The validated domain of an incoming server session that is not detached must be unregistered when its connection closes.");
+    }
+
+    /**
      * Verifies that an incoming server session of which the stream cannot be resumed is not detached when its
      * connection closes, also while resumption on server connections is enabled, and has its validated domain
      * unregistered.
@@ -665,6 +690,25 @@ public class SessionManagerDetachedSessionTest
     }
 
     /**
+     * Verifies that the detach timeout of server sessions does not determine how often the task that ends detached
+     * sessions runs when Stream Management on server connections is disabled, although resumption is enabled, as
+     * server sessions are not detached then.
+     */
+    @Test
+    void cleanupPeriodIgnoresServerTimeoutWhenServerStreamManagementIsDisabled()
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        StreamManager.SERVER_ACTIVE.setValue(false);
+
+        // Execute system under test.
+        final Duration result = sessionManager.getDetachedCleanupPeriodForSettings();
+
+        // Verify result.
+        assertEquals(DETACH_TIMEOUT.dividedBy(10), result, "When Stream Management on server connections is disabled, the cleanup task must run at a tenth of the detach timeout of client sessions, even when that of server sessions is shorter.");
+    }
+
+    /**
      * Verifies that the detach timeout of server sessions determines how often the task that ends detached sessions
      * runs when resumption on server connections is enabled and that timeout is the shortest.
      */
@@ -700,6 +744,31 @@ public class SessionManagerDetachedSessionTest
 
             // Verify result.
             assertEquals(SERVER_DETACH_TIMEOUT.dividedBy(10), sessionManager.getScheduledDetachedCleanupPeriod(), "When resumption on server connections is enabled, the task must be rescheduled to run at a tenth of the detach timeout of server sessions.");
+        } finally {
+            sessionManager.stopDetachedCleanup();
+        }
+    }
+
+    /**
+     * Verifies that the task that ends detached sessions is rescheduled to run at a tenth of the detach timeout of server
+     * sessions when Stream Management on server connections is enabled while the task runs and resumption is enabled
+     * already, as server sessions are then kept for that timeout.
+     */
+    @Test
+    void cleanupTaskIsRescheduledWhenServerStreamManagementIsEnabled()
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        StreamManager.SERVER_ACTIVE.setValue(false);
+        sessionManager.startDetachedCleanup();
+        try {
+            assertEquals(DETACH_TIMEOUT.dividedBy(10), sessionManager.getScheduledDetachedCleanupPeriod(), "Test fixture expects the task to run at a tenth of the detach timeout of client sessions.");
+
+            // Execute system under test.
+            StreamManager.SERVER_ACTIVE.setValue(true);
+
+            // Verify result.
+            assertEquals(SERVER_DETACH_TIMEOUT.dividedBy(10), sessionManager.getScheduledDetachedCleanupPeriod(), "When Stream Management on server connections is enabled, the task must be rescheduled to run at a tenth of the detach timeout of server sessions.");
         } finally {
             sessionManager.stopDetachedCleanup();
         }

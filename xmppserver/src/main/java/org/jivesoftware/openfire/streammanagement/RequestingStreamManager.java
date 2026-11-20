@@ -74,10 +74,10 @@ import java.util.function.Function;
  * sent again at most once: a stanza that was sent again and is unacknowledged when that session closes too, is returned
  * to its sender as an error.
  *
- * When resumption on server connections is enabled ({@link StreamManager#SERVER_RESUME_ENABLED}), Openfire asks the
- * peer for a stream that can be resumed. When the connection of such a stream breaks, its session is kept, and stanzas
- * that are delivered to the session are queued, in order, behind the unacknowledged ones, until the stream is resumed
- * or the session ends. Queued stanzas are not sent, and are therefore not counted or tracked. When the session ends
+ * When streams on server connections can be resumed ({@link StreamManager#isServerResumptionEnabled()}), Openfire asks
+ * the peer for a stream that can be resumed. When the connection of such a stream breaks while that is still so, its
+ * session is kept, and stanzas that are delivered to the session are queued, in order, behind the unacknowledged ones,
+ * until the stream is resumed or the session ends. Queued stanzas are not sent, and are therefore not counted or tracked. When the session ends
  * without being resumed, they are routed again, after the unacknowledged stanzas are handled. When more stanzas are
  * queued than {@link #MAX_QUEUED_WHILE_BROKEN} allows, the session is ended.
  *
@@ -277,8 +277,8 @@ public class RequestingStreamManager extends StreamManager
     }
 
     /**
-     * Asks the peer to enable Stream Management. A stream that can be resumed is requested when
-     * {@link StreamManager#SERVER_RESUME_ENABLED} is set. The answer of the peer is processed by
+     * Asks the peer to enable Stream Management. A stream that can be resumed is requested when streams on server
+     * connections can be resumed (see {@link StreamManager#isServerResumptionEnabled()}). The answer of the peer is processed by
      * {@link #process(Element)}, and its outcome is available from {@link #getEnableRequestStatus()}.
      *
      * Stream management is requested at most once per stream: an invocation after an earlier request, after
@@ -292,7 +292,7 @@ public class RequestingStreamManager extends StreamManager
      */
     public void requestEnable(@Nonnull final String namespace)
     {
-        final boolean resume = StreamManager.SERVER_RESUME_ENABLED.getValue();
+        final boolean resume = StreamManager.isServerResumptionEnabled();
         synchronized ( this ) {
             if ( enableRequestStatus != EnableRequestStatus.NOT_SENT || isEnabled() ) {
                 Log.debug( "Not asking the peer of session {} to enable Stream Management, as that was asked or skipped before (status: {}) or it is enabled (enabled: {}).", session, enableRequestStatus, isEnabled() );
@@ -607,7 +607,7 @@ public class RequestingStreamManager extends StreamManager
                 return false;
             }
             if ( !queueing ) {
-                if ( !connectionBroken || !getResume() || !StreamManager.SERVER_RESUME_ENABLED.getValue() ) {
+                if ( !connectionBroken || !getResume() || !StreamManager.isServerResumptionEnabled() ) {
                     return false;
                 }
                 Log.debug( "Queueing stanzas for session {} from now on, as its connection broke while its stream can be resumed.", session );

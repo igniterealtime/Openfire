@@ -80,6 +80,10 @@ public abstract class StreamManager {
      * Whether Stream Management is used on connections with other servers: offered to servers that connect to
      * Openfire, and enabled on connections that Openfire opens to other servers. This is separate from
      * {@link #ACTIVE}, which applies to clients.
+     *
+     * A change applies to streams that are negotiated after it: a stream keeps the Stream Management that was
+     * negotiated for it for as long as its connection lasts. When its connection breaks, the stream can be resumed only
+     * while this is set, see {@link #isServerResumptionEnabled()}.
      */
     public static SystemProperty<Boolean> SERVER_ACTIVE = SystemProperty.Builder.ofType( Boolean.class )
         .setKey("stream.management.server.active")
@@ -94,13 +98,37 @@ public abstract class StreamManager {
      * requests a stream that can be resumed, and keeps the session, and its routes, when the connection of such a
      * stream breaks. When this is not set, resumption is not offered, requested or accepted, and a server session is
      * ended when its connection breaks, even when its stream was made resumable. Applies only to connections on which
-     * Stream Management is used (see {@link #SERVER_ACTIVE}).
+     * Stream Management is used (see {@link #SERVER_ACTIVE}), and only while that is set, see
+     * {@link #isServerResumptionEnabled()}.
      */
     public static SystemProperty<Boolean> SERVER_RESUME_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
         .setKey("stream.management.server.resume.enabled")
         .setDefaultValue(false)
         .setDynamic(true)
         .build();
+
+    /**
+     * Whether streams on connections with other servers can be resumed with the current settings: Stream Management is
+     * used on such connections ({@link #SERVER_ACTIVE}), and resumption is enabled ({@link #SERVER_RESUME_ENABLED}).
+     *
+     * This is checked at each step of a resumption: when it is offered or requested, when a connection breaks and its
+     * session would be kept, when stanzas start to be queued for that session, when Openfire asks another server to
+     * resume a stream that Openfire opened, and when it processes the request of another server to resume a stream. A
+     * stream that was made resumable is therefore resumed only while both settings are still set when its connection
+     * breaks. A change after that moment does not stop queueing that started, nor refuse an answer to a request to
+     * resume that was sent already: such a session is kept until it is resumed or ended, as before the change.
+     * Resuming takes place on a new connection, which is set up with the settings of that moment: a remote server can
+     * resume a stream only on a connection on which Openfire offers Stream Management, and that offer, made before the
+     * remote server authenticates, cannot depend on which streams that server has. Keeping a session that cannot be
+     * resumed would hold its stanzas until the detach timeout runs out, so such a session is ended instead, as for any
+     * stream that is not resumed.
+     *
+     * @return true if streams on connections with other servers can be resumed.
+     */
+    public static boolean isServerResumptionEnabled()
+    {
+        return SERVER_ACTIVE.getValue() && SERVER_RESUME_ENABLED.getValue();
+    }
 
     final Logger Log;
 

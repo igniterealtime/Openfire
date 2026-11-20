@@ -76,7 +76,7 @@ final class ServerResumption implements Resumption<LocalIncomingServerSession>
     @Override
     public boolean isAllowed()
     {
-        return StreamManager.SERVER_ACTIVE.getValue() && StreamManager.SERVER_RESUME_ENABLED.getValue() && !session.getValidatedDomains().isEmpty();
+        return StreamManager.isServerResumptionEnabled() && !session.getValidatedDomains().isEmpty();
     }
 
     /**

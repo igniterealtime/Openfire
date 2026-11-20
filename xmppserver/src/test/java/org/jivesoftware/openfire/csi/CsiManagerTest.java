@@ -18,6 +18,11 @@ package org.jivesoftware.openfire.csi;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.auth.AuthToken;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -61,11 +67,31 @@ public class CsiManagerTest
 
     private CsiManager csiManager;
 
+    @BeforeAll
+    public static void setUpClass() throws Exception
+    {
+        Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
+    }
+
+    @AfterAll
+    public static void tearDownClass()
+    {
+        Fixtures.clearExistingProperties();
+    }
+
     @BeforeEach
     public void setUp() throws Exception
     {
         csiManager = new CsiManager(mockSession);
         doAnswer(invocation -> null).when(mockSession).pushPackets(any());
+        doReturn(AuthToken.generateUserToken("jane")).when(mockSession).getAuthToken();
+    }
+
+    @AfterEach
+    public void tearDown()
+    {
+        CsiManager.ENABLED.setValue(CsiManager.ENABLED.getDefaultValue());
     }
 
     /**
@@ -111,6 +137,38 @@ public class CsiManagerTest
     }
 
     /**
+     * Verifies that deactivation is ignored when the functionality is disabled by configuration.
+     */
+    @Test
+    public void testDeactivateWhenDisabledIsIgnored()
+    {
+        // Setup test fixture
+        CsiManager.ENABLED.setValue(false);
+
+        // Execute system under test
+        csiManager.deactivate();
+
+        // Verify result
+        assertTrue(csiManager.isActive(), "CsiManager should remain active after calling deactivate() when CSI is disabled");
+    }
+
+    /**
+     * Verifies that deactivation is ignored for a session that has not been authenticated.
+     */
+    @Test
+    public void testDeactivateWhenNotAuthenticatedIsIgnored()
+    {
+        // Setup test fixture
+        doReturn(null).when(mockSession).getAuthToken();
+
+        // Execute system under test
+        csiManager.deactivate();
+
+        // Verify result
+        assertTrue(csiManager.isActive(), "CsiManager should remain active after calling deactivate() on an unauthenticated session");
+    }
+
+    /**
      * Verifies processing of active nonza.
      */
     @Test
@@ -141,6 +199,23 @@ public class CsiManagerTest
 
         // Verify result
         assertFalse(csiManager.isActive(), "CsiManager should be inactive after processing inactive nonza");
+    }
+
+    /**
+     * Verifies that an inactive nonza is ignored when the functionality is disabled by configuration.
+     */
+    @Test
+    public void testProcessInactiveNonzaWhenDisabledIsIgnored() throws Exception
+    {
+        // Setup test fixture
+        CsiManager.ENABLED.setValue(false);
+        final Element inactiveElement = parseElement("<inactive xmlns='urn:xmpp:csi:0'/>");
+
+        // Execute system under test
+        csiManager.process(inactiveElement);
+
+        // Verify result
+        assertTrue(csiManager.isActive(), "CsiManager should remain active after processing inactive nonza when CSI is disabled");
     }
 
     /**
@@ -203,6 +278,26 @@ public class CsiManagerTest
         // Verify result
         assertTrue(result.isEmpty(), "Should queue the message when inactive");
         assertEquals(1, csiManager.getDelayQueueSize(), "Queue should contain the message");
+    }
+
+    /**
+     * Verifies queueOrPush behavior when the functionality gets disabled by configuration while the client is inactive.
+     */
+    @Test
+    public void testQueueOrPushWhenDisabledWhileInactiveFlushes() throws Exception
+    {
+        // Setup test fixture
+        csiManager.deactivate();
+        csiManager.queueOrPush(createDelayableMessage());
+        assertEquals(1, csiManager.getDelayQueueSize(), "First delayable message should be queued");
+        CsiManager.ENABLED.setValue(false);
+
+        // Execute system under test
+        final List<Packet> result = csiManager.queueOrPush(createDelayableMessage());
+
+        // Verify result
+        assertEquals(2, result.size(), "Should return both the queued packet and the new packet when CSI is disabled");
+        assertEquals(0, csiManager.getDelayQueueSize(), "Queue should be empty after flushing");
     }
 
     /**
@@ -841,6 +936,21 @@ public class CsiManagerTest
 
         // Verify result
         assertTrue(result, "Normal messages without body should be delayable");
+    }
+
+    /**
+     * Verifies that the Bind2 inline feature is available only when the functionality is enabled by configuration.
+     */
+    @Test
+    public void testBind2HandlerFollowsConfiguration()
+    {
+        // Setup test fixture
+        final CsiModule.Bind2CSIHandler handler = new CsiModule.Bind2CSIHandler();
+
+        // Execute system under test & verify result
+        assertTrue(handler.isEnabled(), "Bind2 inline feature should be available when CSI is enabled");
+        CsiManager.ENABLED.setValue(false);
+        assertFalse(handler.isEnabled(), "Bind2 inline feature should not be available when CSI is disabled");
     }
 
     /**

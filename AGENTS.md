@@ -7,7 +7,7 @@ Guidance for AI coding agents contributing to Openfire. These are conventions, n
 - Java 17, built with the Maven wrapper.
 - Build the full project with `./mvnw verify`; scope to a module and its dependencies with `-pl <module> -am` (for example `-pl distribution -am`).
 - Run one test class: `./mvnw -pl xmppserver test -Dtest=ClassName`.
-- The runnable server lands in `distribution/target/distribution-base/`; start it with `bin/openfire.sh` (`-demoboot` for test data, `-debug` for a debugger).
+- The runnable server lands in `distribution/target/distribution-base/`; start it with `bin/openfire.sh` (`-demoboot` for test data, `-debug` for a debugger). Unset `OPENFIRE_HOME` first: the script otherwise runs the server home that variable names, and `-demoboot` overwrites that home's `conf/openfire.xml`.
 
 ## Code style
 

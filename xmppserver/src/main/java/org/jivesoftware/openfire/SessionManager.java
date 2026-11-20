@@ -2336,8 +2336,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 ownsCachedInfo && cached.isAnonymous() ? SessionEventDispatcher.EventType.anonymous_session_destroyed : SessionEventDispatcher.EventType.session_destroyed
             );
 
+            // Retained departure evidence is sufficient even if both caches lost the session.
             // A listener can bind a replacement reentrantly, so check again before marking the JID unavailable.
-            if ((removedRoute || removedInfo) && routingTable.getClientRoute(fullJID) == null) {
+            if (routingTable.getClientRoute(fullJID) == null) {
                 final Presence offline = new Presence(Presence.Type.unavailable);
                 offline.setFrom(fullJID);
                 offline.setTo(new JID(null, serverName, null, true));

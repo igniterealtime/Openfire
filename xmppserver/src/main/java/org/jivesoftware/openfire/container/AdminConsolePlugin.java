@@ -30,6 +30,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.jivesoftware.admin.AdminContentSecurityPolicyFilter;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.admin.AuthCheckFilter;
+import org.jivesoftware.admin.ContentTypeOptionsFilter;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStore;
@@ -41,6 +42,8 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.util.jetty.TrustedForwardedRequestCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
 
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -307,7 +310,7 @@ public class AdminConsolePlugin implements Plugin {
             return;
         }
 
-        createWebAppContext();
+        createWebAppContext(pluginDir);
 
         Sequence collection = new Sequence();
         adminServer.setHandler(collection);
@@ -557,7 +560,13 @@ public class AdminConsolePlugin implements Plugin {
         }
     }
 
-    private void createWebAppContext() {
+    /**
+     * Creates the web application context of the admin console, with its filters, in a new {@link #getContexts()}
+     * collection. Nothing is started. Package-private so that tests can inspect the context.
+     *
+     * @param pluginDir the directory of the admin console plugin, which holds the web application.
+     */
+    void createWebAppContext(@Nonnull final File pluginDir) {
 
         contexts = new ContextHandlerCollection();
 
@@ -572,6 +581,9 @@ public class AdminConsolePlugin implements Plugin {
 
         // Add CSP headers for all HTTP responses (errors, etc.)
         context.addFilter(AdminContentSecurityPolicyFilter.class, "/*", null);
+
+        // Forbid content type sniffing for all HTTP responses (pages, static files, servlets, errors).
+        context.addFilter(ContentTypeOptionsFilter.class, "/*", null);
 
         // The index.html includes a redirect to the index.jsp and doesn't bypass
         // the context security when in development mode

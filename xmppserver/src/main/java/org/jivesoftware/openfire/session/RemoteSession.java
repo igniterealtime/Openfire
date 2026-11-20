@@ -231,10 +231,7 @@ public abstract class RemoteSession implements Session {
         ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
         Object result = null;
         if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
-            Session remoteSession = ((RemoteSessionTask)task).getSession();
-            if (remoteSession instanceof ClientSession) {
-                SessionManager.getInstance().removeSession(null, remoteSession.getAddress(), false, false);
-            }
+            cleanupDepartedClientSession();
         } else {
             result = (info == null) ? null : CacheFactory.doSynchronousClusterTask(task, nodeID);
         }
@@ -249,12 +246,15 @@ public abstract class RemoteSession implements Session {
     protected void doClusterTask(ClusterTask task) {
         ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
         if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
-            Session remoteSession = ((RemoteSessionTask)task).getSession();
-            if (remoteSession instanceof ClientSession) {
-                SessionManager.getInstance().removeSession(null, remoteSession.getAddress(), false, false);
-            }
+            cleanupDepartedClientSession();
         } else {
             CacheFactory.doClusterTask(task, nodeID);
+        }
+    }
+
+    private void cleanupDepartedClientSession() {
+        if (this instanceof ClientSession) {
+            SessionManager.getInstance().removeInvalidRemoteSession(getAddress(), nodeID);
         }
     }
 

@@ -1366,7 +1366,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Ownership is verified by comparing StreamID, replacing an earlier implementation that depended on object
         // identity. Object identity would in fact be correct (as paths that use it are local-first even in a cluster,
         // so it returns the very same local instance). The StreamID comparison is defensive hardening.
-        return current != null && Objects.equals(session.getStreamID(), current.getStreamID());
+        final StreamID sessionStreamID = current == null ? null : session.getStreamID();
+        return sessionStreamID != null && sessionStreamID.equals(current.getStreamID());
     }
 
     /**
@@ -1415,7 +1416,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Ownership is captured before removal (the route still exists at this point). Bookkeeping (session_destroyed
         // dispatch) is still performed for stale sessions below, so they are not leaked.
         final ClientSession current = (session == null) ? null : routingTable.getClientRoute(fullJID);
-        final boolean ownsRoute = current != null && Objects.equals(session.getStreamID(), current.getStreamID());
+        final StreamID sessionStreamID = current == null ? null : session.getStreamID();
+        final boolean ownsRoute = sessionStreamID != null && sessionStreamID.equals(current.getStreamID());
         final boolean replacedByOther = current != null && !ownsRoute; // a route exists, owned by a different session
 
         // Remove route to the removed session (anonymous or not), but only when this session owns it.
@@ -1460,6 +1462,64 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             return true;
         }
         return false;
+    }
+
+    /**
+     * Cleans a departed node's client route without invoking methods on its remote session.
+     *
+     * @param fullJID the address of the stale remote session.
+     * @param departedNodeID the node ID captured by the remote session proxy.
+     * @return true if the departed node's route was removed.
+     */
+    public boolean removeInvalidRemoteSession(final JID fullJID, final byte[] departedNodeID)
+    {
+        Objects.requireNonNull(fullJID, "fullJID");
+        Objects.requireNonNull(departedNodeID, "departedNodeID");
+        if (fullJID.getNode() == null || fullJID.getResource() == null) {
+            throw new IllegalArgumentException("Expected a client full JID: " + fullJID);
+        }
+        if (serverName == null) {
+            return false;
+        }
+
+        final NodeID expectedOwner = NodeID.getInstance(departedNodeID);
+        if (expectedOwner.equals(server.getNodeID())) {
+            throw new IllegalArgumentException("Remote cleanup must not target the local node");
+        }
+
+        final Lock lock = routingTable.getClientRouteLock(fullJID);
+        final boolean acquired;
+        try {
+            acquired = lock.tryLock(BIND_CONFLICT_SERVICE_LOCK_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            Log.warn("Interrupted while cleaning remote session {} owned by {}", fullJID, expectedOwner, e);
+            return false;
+        }
+        if (!acquired) {
+            Log.warn("Could not acquire route lock to clean remote session {} owned by {}", fullJID, expectedOwner);
+            return false;
+        }
+
+        try {
+            if (CacheFactory.getClusterNodeInfo(departedNodeID) != null) {
+                Log.debug("Skipping remote cleanup for {}: node {} is present", fullJID, expectedOwner);
+                return false;
+            }
+            if (!routingTable.removeClientRoute(fullJID, expectedOwner)) {
+                return false;
+            }
+
+            final String key = fullJID.toString();
+            final ClientSessionInfo cached = sessionInfoCache.get(key);
+            if (cached != null && expectedOwner.equals(cached.getNodeID())) {
+                sessionInfoCache.remove(key);
+            }
+            Log.info("Removed stale remote session {} owned by departed node {}", fullJID, expectedOwner);
+            return true;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public int getConflictKickLimit() {

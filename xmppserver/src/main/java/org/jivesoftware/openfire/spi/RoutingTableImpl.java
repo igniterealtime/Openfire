@@ -1020,6 +1020,30 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     @Override
+    public boolean removeClientRoute(JID route, NodeID expectedOwner)
+    {
+        Objects.requireNonNull(expectedOwner, "expectedOwner");
+        if (route.getNode() == null || route.getResource() == null) {
+            throw new IllegalArgumentException("Expected a client full JID: " + route);
+        }
+
+        final Lock lock = getClientRouteLock(route);
+        lock.lock();
+        try {
+            final ClientRoute current = usersCache.get(route.toFullJID());
+            if (current == null || !expectedOwner.equals(current.getNodeID())) {
+                Log.debug("Skipping stale route removal for {}: expected owner {}, current route {}", route, expectedOwner, current);
+                return false;
+            }
+
+            // The existing removal uses the same reentrant lock.
+            return removeClientRoute(route);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
     public boolean removeServerRoute(DomainPair route) {
         boolean removed;
         Lock lock = serversCache.getLock(route);

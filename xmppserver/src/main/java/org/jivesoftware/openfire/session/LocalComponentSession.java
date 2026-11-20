@@ -181,6 +181,11 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
     }
 
     @Override
+    public boolean setDetachedIfConnectionIs(@Nonnull final Connection connection) {
+        throw new UnsupportedOperationException("Stream management is not supported for components.");
+    }
+
+    @Override
     public void reattach(LocalSession connectionProvider, long h) {
         throw new UnsupportedOperationException("Stream management is not supported for components.");
     }

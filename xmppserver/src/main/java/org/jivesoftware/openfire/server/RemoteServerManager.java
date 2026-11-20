@@ -101,16 +101,14 @@ public class RemoteServerManager {
         // Check if the remote server was connected and proceed to close the connection
         for (Session session : SessionManager.getInstance().getIncomingServerSessions(domain)) {
             Log.debug( "Closing session for domain '{}' as the domain is being blocked. Affected session: {}", domain, session );
-            session.markNonResumable();
-            session.close();
+            SessionManager.getInstance().closeWithoutResumption(session);
         }
         // Can't just lookup a single remote server anymore, so check them all.
         for (DomainPair domainPair : SessionManager.getInstance().getOutgoingDomainPairs()) {
             if (domainPair.getRemote().equals(domain)) {
                 Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
                 Log.debug( "Closing (domain-pair) session for domain '{}' as the domain is being blocked. Affected session: {}", domain, session );
-                session.markNonResumable();
-                session.close();
+                SessionManager.getInstance().closeWithoutResumption(session);
             }
         }
     }
@@ -372,8 +370,7 @@ public class RemoteServerManager {
             if (!canAccess(hostname)) {
                 for (Session session : SessionManager.getInstance().getIncomingServerSessions(hostname)) {
                     Log.debug( "Closing session for hostname '{}' as a changed permission policy is taken into effect. Affected session: {}", hostname, session );
-                    session.markNonResumable();
-                    session.close();
+                    SessionManager.getInstance().closeWithoutResumption(session);
                 }
             }
         }
@@ -381,8 +378,7 @@ public class RemoteServerManager {
             if (!canAccess(domainPair.getRemote())) {
                 Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
                 Log.debug( "Closing session as a changed permission policy is taken into effect. Affected session: {}", session );
-                session.markNonResumable();
-                session.close();
+                SessionManager.getInstance().closeWithoutResumption(session);
                 // After the session has been close, inform all listeners as well.
                 ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_destroyed);
             }

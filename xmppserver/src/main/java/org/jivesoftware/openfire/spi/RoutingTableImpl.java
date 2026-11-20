@@ -589,9 +589,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 NodeID nodeID = serversCache.get(domainPair);
                 if (nodeID != null) {
                     if (server.getNodeID().equals(nodeID)) {
+                        final LocalOutgoingServerSession route = localServerRoutingTable.getRoute(domainPair);
+                        if (route == null) {
+                            // OF-2425: the route was removed after the cache was read, as a closing session removes it without holding this mutex.
+                            Log.debug("The outgoing session for {} was removed while routing a '{}' stanza with ID '{}' to it. Instantiating a new queue for delivery over a new connection.", domainPair, packet.getElement().getName(), packet.getID());
+                            OutgoingSessionPromise.getInstance().createProcess(domainPair, packet);
+                            return true;
+                        }
                         Log.trace("An outgoing session for {} is available on the local cluster node. Delivering stanza.", domainPair);
                         try {
-                            localServerRoutingTable.getRoute(domainPair).process(packet);
+                            route.process(packet);
                             return true;
                         } catch (Throwable e) {
                             Log.error("Unable to route packet {}", packet.toXML(), e);
@@ -1597,7 +1604,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Terminating the connection should also trigger the OutgoingServerSessionListener#onConnectionClose in SessionManagerImpl.
             // That will result in the s2s connection actually being removed from the LocalRoutingTable.
             try {
-                route.close();
+                // OF-2425: ended rather than kept for resumption, as the connection on the other node replaces it.
+                SessionManager.getInstance().closeWithoutResumption(route);
             } catch (Exception e) {
                 Log.warn("Failed to terminate the local s2s connection for {}.", route, e);
             }
@@ -1635,9 +1643,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             for (OutgoingServerSession session : localServerRoutingTable.getRoutes()) {
                 // Check outgoing server sessions
                 try {
+                    if (session.isDetached()) {
+                        // OF-2425: A detached session has no connection; its detach timeout decides when it is ended.
+                        Log.trace("ServerCleanupTask is not closing outgoing server session {}, as it is detached.", session);
+                        continue;
+                    }
                     if (session.getLastActiveDate().getTime() < deadline) {
                         Log.debug("ServerCleanupTask is closing an outgoing server session that has been idle for a long time. Last active: {}. Session to be closed: {}", session.getLastActiveDate(), session);
-                        session.close();
+                        // OF-2425: Made non-resumable, so that it is ended rather than kept to be resumed.
+                        SessionManager.getInstance().closeWithoutResumption(session);
                     }
                 }
                 catch (Throwable e) {

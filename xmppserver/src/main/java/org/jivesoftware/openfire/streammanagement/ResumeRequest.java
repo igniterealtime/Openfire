@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  *
  * This is used by both variants of stream resumption defined by XEP-0198:
  * <ul>
- *     <li>the traditional flow, in which the client sends a top-level {@code <resume/>} element after having
+ *     <li>the traditional flow, in which the peer sends a top-level {@code <resume/>} element after having
  *         established a stream (see § 5, "Resumption"); and</li>
  *     <li>the inline flow, in which the {@code <resume/>} element is instead nested inside a SASL2 (XEP-0388)
  *         {@code <authenticate/>} element (see § 9.2, "Inline Stream Resumption").</li>
@@ -47,9 +47,9 @@ public final class ResumeRequest
     /**
      * Constructs a request.
      *
-     * @param previd the SM-ID of the former stream that the client wishes to resume (cannot be null).
-     * @param h the sequence number of the last stanza that the client received from the server over the former stream.
-     * @param namespace the Stream Management namespace that the client used for this request (cannot be null).
+     * @param previd the SM-ID of the former stream that the peer wishes to resume (cannot be null).
+     * @param h the sequence number of the last stanza that the peer received from Openfire over the former stream.
+     * @param namespace the Stream Management namespace that the peer used for this request (cannot be null).
      */
     private ResumeRequest(@Nonnull final String previd, final long h, @Nonnull final String namespace)
     {
@@ -119,7 +119,7 @@ public final class ResumeRequest
         }
         if (h < 0 || h > StreamManager.MASK) {
             // XEP-0198 § 4: 'h' is an unsigned 32-bit integer. Out-of-range values are rejected here rather than
-            // later by StreamManager#validateClientAcknowledgement(long), which throws for them.
+            // later by UnacknowledgedStanzaQueue#isValidAcknowledgement(long), which throws for them.
             throw new MalformedResumeRequestException("Stream resumption 'h' attribute must be an unsigned 32-bit integer, but was: " + h);
         }
 
@@ -127,7 +127,7 @@ public final class ResumeRequest
     }
 
     /**
-     * Returns the SM-ID of the former stream that the client wishes to resume.
+     * Returns the SM-ID of the former stream that the peer wishes to resume.
      *
      * @return the (still Base64-encoded) SM-ID.
      */
@@ -138,7 +138,7 @@ public final class ResumeRequest
     }
 
     /**
-     * Returns the sequence number of the last stanza that the client received from the server over the former
+     * Returns the sequence number of the last stanza that the peer received from Openfire over the former
      * stream.
      *
      * @return a non-negative sequence number.
@@ -149,7 +149,7 @@ public final class ResumeRequest
     }
 
     /**
-     * Returns the Stream Management namespace that the client used for this request.
+     * Returns the Stream Management namespace that the peer used for this request.
      *
      * @return a Stream Management namespace.
      */

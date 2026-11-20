@@ -183,6 +183,11 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
     }
 
     @Override
+    public boolean setDetachedIfConnectionIs(@Nonnull final Connection connection) {
+        throw new UnsupportedOperationException("Stream management is not supported for multiplexers.");
+    }
+
+    @Override
     public void reattach(LocalSession connectionProvider, long h) {
         throw new UnsupportedOperationException("Stream management is not supported for multiplexers.");
     }

@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.AnsweringStreamManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -109,7 +110,7 @@ public class StanzaHandlerSupersededConnectionTest
     public void streamManagementDataForDetachedSessionIsNotProcessed() throws Exception
     {
         // Setup test fixture.
-        final StreamManager streamManager = mock(StreamManager.class);
+        final AnsweringStreamManager streamManager = mock(AnsweringStreamManager.class);
         final LocalClientSession session = mock(LocalClientSession.class);
         when(session.getConnection()).thenReturn(null);
         when(session.getStreamManager()).thenReturn(streamManager);

@@ -34,6 +34,7 @@ import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
@@ -53,10 +54,30 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
     private final DomainPair domainPair;
     private final int port;
 
+    /**
+     * The detached session of which the stream is to be resumed on the connection, or null.
+     */
+    @Nullable
+    private final LocalOutgoingServerSession resumeTarget;
+
     public NettyOutboundConnectionHandler(ConnectionConfiguration configuration, DomainPair domainPair, int port) {
+        this(configuration, domainPair, port, null);
+    }
+
+    /**
+     * Creates a handler for a new outgoing connection, which can be used to resume the stream of a detached session.
+     *
+     * @param configuration the configuration of the connection.
+     * @param domainPair the local and remote domain for which the connection is opened.
+     * @param port default port to use to open the connection.
+     * @param resumeTarget the detached session of which the stream is to be resumed on the connection, instead of
+     *                     enabling Stream Management on it, or null when no stream is to be resumed.
+     */
+    public NettyOutboundConnectionHandler(ConnectionConfiguration configuration, DomainPair domainPair, int port, @Nullable LocalOutgoingServerSession resumeTarget) {
         super(configuration);
         this.domainPair = domainPair;
         this.port = port;
+        this.resumeTarget = resumeTarget;
     }
 
     @Override
@@ -72,7 +93,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
 
     @Override
     RespondingServerStanzaHandler createStanzaHandler(NettyConnection connection) {
-        return new RespondingServerStanzaHandler( XMPPServer.getInstance().getPacketRouter(), connection, domainPair );
+        return new RespondingServerStanzaHandler( XMPPServer.getInstance().getPacketRouter(), connection, domainPair, resumeTarget );
     }
 
     private static boolean configRequiresStrictCertificateValidation() {
@@ -164,6 +185,15 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler<Respo
                     }
                     Log.warn("TLS negotiation with '{}' was unsuccessful, {}. Aborting session, as by configuration Openfire is prohibited to set up a connection with a peer that provides an invalid certificate. A full stack trace will be logged on the ‘debug’ level.", domainPair.getRemote(), condition);
 
+                    stanzaHandler.setSession(null);
+                    stanzaHandler.setAttemptedAllAuthenticationMethods();
+                    ctx.channel().close();
+                    return;
+                }
+
+                if (resumeTarget != null) {
+                    // OF-2425: a session that the fallback creates on a separate connection would never ask to resume the stream, and its connection would stay open.
+                    Log.debug("TLS negotiation with '{}' was unsuccessful on a connection that was opened to resume the stream of session {}. Not falling back to Server Dialback over a plain connection; the attempt to resume fails.", domainPair.getRemote(), resumeTarget);
                     stanzaHandler.setSession(null);
                     stanzaHandler.setAttemptedAllAuthenticationMethods();
                     ctx.channel().close();

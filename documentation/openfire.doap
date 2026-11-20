@@ -337,9 +337,9 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0198.html"/>
-                <xmpp:status>partial</xmpp:status>
+                <xmpp:status>complete</xmpp:status>
                 <xmpp:since>4.0.0</xmpp:since>
-                <xmpp:note xml:lang='en'>Supported on client-to-server connections only.</xmpp:note>
+                <xmpp:note xml:lang='en'>Supported on client-to-server connections, and, since Openfire 5.2.0, on server-to-server connections, where it is disabled by default. On server-to-server connections, Openfire deviates in one detail: when it resumes a stream that it opened, a stanza that it already sent again after an earlier break is returned to its sender as an error, or dropped where no error may be returned, instead of being sent again as XEP-0198 requires. This applies only when resumption on server-to-server connections is enabled, which it is not by default.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>

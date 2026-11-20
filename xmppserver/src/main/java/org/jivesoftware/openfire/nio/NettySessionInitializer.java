@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.nio;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.MultiThreadIoEventLoopGroup;
@@ -28,10 +29,12 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import org.dom4j.*;
+import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SocketUtil;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionAcceptor;
 import org.jivesoftware.openfire.spi.ConnectionListener;
@@ -43,9 +46,11 @@ import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -180,13 +185,51 @@ public class NettySessionInitializer {
 
     private final DomainPair domainPair;
     private final int port;
+
+    /**
+     * The detached session of which the stream is to be resumed on the new connection, instead of enabling Stream
+     * Management on it, or null for a connection that is not used to resume a stream.
+     */
+    @Nullable
+    private final LocalOutgoingServerSession resumeTarget;
+
+    /**
+     * The location that the peer named for reconnecting to it to resume a stream (XEP-0198 § 3), which is connected to
+     * before any other host of the remote domain, or null when there is none.
+     */
+    @Nullable
+    private final String location;
     private boolean directTLS = false;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private Channel channel;
 
+    /**
+     * The handler of the connection that was opened most recently, or null when none was opened yet.
+     */
+    @Nullable
+    @VisibleForTesting
+    volatile NettyOutboundConnectionHandler connectionHandler;
+
     public NettySessionInitializer(DomainPair domainPair, int port) {
+        this(domainPair, port, null, null);
+    }
+
+    /**
+     * Creates an initialiser for a new connection, which can be used to resume the stream of a detached session.
+     *
+     * @param domainPair the local and remote domain for which the connection is opened.
+     * @param port default port to use to open the connection.
+     * @param resumeTarget the detached session of which the stream is to be resumed on the new connection, instead of
+     *                     enabling Stream Management on it, or null when no stream is to be resumed.
+     * @param location the location that the peer named for reconnecting to it to resume a stream (XEP-0198 § 3), which
+     *                 is connected to before any other host of the remote domain, or null to connect to the hosts of the
+     *                 remote domain only (see {@link SocketUtil#createSocketToLocation(String, String, int, Duration, java.util.function.Predicate)}).
+     */
+    public NettySessionInitializer(DomainPair domainPair, int port, @Nullable LocalOutgoingServerSession resumeTarget, @Nullable String location) {
         this.domainPair = domainPair;
         this.port = port;
+        this.resumeTarget = resumeTarget;
+        this.location = location;
 
         synchronized (sharedResourceLock) {
             if (ioWorkerGroup == null || ioWorkerGroup.isShuttingDown()) {
@@ -200,7 +243,28 @@ public class NettySessionInitializer {
     public Future<LocalSession> init(ConnectionListener listener) {
         // Connect to remote server using XMPP 1.0 (TLS + SASL EXTERNAL or TLS + server dialback or server dialback)
         Log.debug( "Creating plain socket connection to a host that belongs to the remote XMPP domain." );
-        final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port );
+        Map.Entry<Socket, Boolean> socketToXmppDomain = null;
+        if (location != null) {
+            // OF-2425: XEP-0198 § 3: prefer the location that the peer named. If connecting to it fails, the usual connection algorithm applies.
+            // OF-2425: never loopback, link-local, unspecified or multicast; private only after a private original connection (see SocketUtil#locationAddressFilter).
+            final InetAddress addressOfOriginalConnection = resumeTarget == null ? null : resumeTarget.getStreamManager().getPeerAddress();
+            socketToXmppDomain = SocketUtil.createSocketToLocation(domainPair.getRemote(), location, port, LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue(), SocketUtil.locationAddressFilter(addressOfOriginalConnection));
+            if (socketToXmppDomain == null && Thread.currentThread().isInterrupted()) {
+                throw new NetworkEntityUnreachableException("Interrupted while connecting to location '" + location + "' of the XMPP domain '" + domainPair.getRemote() + "'.");
+            }
+            if (socketToXmppDomain == null) {
+                Log.debug("Unable to connect to location '{}' that the peer named for resuming the stream of session {}. Connecting to the hosts of the remote domain of {} instead.", location, resumeTarget, domainPair);
+            }
+        }
+        if (socketToXmppDomain == null && resumeTarget != null) {
+            // OF-2425: not longer than the detached session is kept, so that a slow attempt does not take the time of the next one.
+            final Duration timeLeft = resumeTarget.getTimeLeftWhileDetached();
+            final Duration timeout = timeLeft == null || timeLeft.compareTo(SocketUtil.RESOLUTION_TIMEOUT.getValue()) > 0 ? SocketUtil.RESOLUTION_TIMEOUT.getValue() : timeLeft;
+            Log.debug("Connecting to the hosts of the remote domain of {} to resume the stream of session {}, for at most {}.", domainPair, resumeTarget, timeout);
+            socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port, timeout);
+        } else if (socketToXmppDomain == null) {
+            socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port);
+        }
 
         if ( socketToXmppDomain == null ) {
             throw new NetworkEntityUnreachableException("Cannot establish connection to any host in the XMPP domain '" + domainPair.getRemote() + "'.");
@@ -229,7 +293,8 @@ public class NettySessionInitializer {
                     // Disable auto-read to prevent incoming data before pipeline is ready (which leads to race-conditions, sometimes preventing data from a new socket from being processed).
                     ch.config().setAutoRead(false);
 
-                    NettyOutboundConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
+                    NettyOutboundConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port, resumeTarget);
+                    connectionHandler = businessLogicHandler;
 
                     // Make the remote domain available for the channel's whole lifetime, independent of pipeline membership, so that
                     // startTLS can obtain it for SNI without racing the removal of the outbound connection handler (OF-3332).
@@ -328,7 +393,9 @@ public class NettySessionInitializer {
 
             return waitForSession(channel);
         } catch (InterruptedException e) {
-            Log.error("Error establishing Netty client session", e);
+            // OF-2425: The interrupt is kept, so that a caller that retries can tell that it should stop.
+            Thread.currentThread().interrupt();
+            Log.debug("Interrupted while establishing Netty client session for {}.", domainPair, e);
             stop();
             throw new RuntimeException(e);
         }
@@ -346,6 +413,26 @@ public class NettySessionInitializer {
             }
             channel.close();
         }
+    }
+
+    /**
+     * Gives up on resuming the stream of the detached session for which the connection was opened, if any, so that an
+     * answer of the remote server to a request to resume it that arrives after this is ignored, and no such request is
+     * sent after this (see {@link RespondingServerStanzaHandler#abandonResume()}).
+     *
+     * @return false if the remote server answered a request to resume the stream already, in which case the processing
+     * of that answer takes care of the detached session; otherwise true.
+     */
+    public boolean abandonResume() {
+        final NettyOutboundConnectionHandler handler = connectionHandler;
+        final CompletableFuture<RespondingServerStanzaHandler> future = handler == null ? null : handler.getStanzaHandlerFuture();
+        final RespondingServerStanzaHandler stanzaHandler = future == null || future.isCompletedExceptionally() ? null : future.getNow(null);
+        if (stanzaHandler == null) {
+            // OF-2425: Without a stanza handler, nothing is read from the connection, so no request was sent.
+            Log.trace("Nothing to give up on resuming the stream of session {} on the connection for {}, as the connection has no stanza handler.", resumeTarget, domainPair);
+            return true;
+        }
+        return stanzaHandler.abandonResume();
     }
 
     /**
@@ -401,6 +488,8 @@ public class NettySessionInitializer {
         return "NettySessionInitializer{" +
             "domainPair=" + domainPair +
             ", port=" + port +
+            ", resumeTarget=" + resumeTarget +
+            ", location=" + location +
             ", directTLS=" + directTLS +
             ", workerGroup=" + ioWorkerGroup +
             ", channel=" + channel +

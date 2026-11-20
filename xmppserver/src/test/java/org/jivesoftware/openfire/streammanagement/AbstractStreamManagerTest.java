@@ -147,6 +147,7 @@ abstract class AbstractStreamManagerTest
             @Override
             void enableResumable(final StreamManager sm, final String namespace)
             {
+                StreamManager.SERVER_ACTIVE.setValue(true);
                 StreamManager.SERVER_RESUME_ENABLED.setValue(true);
                 ((RequestingStreamManager) sm).requestEnable(namespace);
                 sm.process(smElement("enabled", namespace).addAttribute("resume", "true").addAttribute("id", "test-sm-id"));

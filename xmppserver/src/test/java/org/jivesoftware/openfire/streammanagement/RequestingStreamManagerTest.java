@@ -943,6 +943,7 @@ public class RequestingStreamManagerTest
     public void resumptionIsRequestedWhenEnabled() throws Exception
     {
         // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
         StreamManager.SERVER_RESUME_ENABLED.setValue(true);
         final RequestingStreamManager sm = newStreamManager();
 
@@ -976,6 +977,27 @@ public class RequestingStreamManagerTest
     }
 
     /**
+     * Verifies that a stream that can be resumed is not requested when Stream Management on server connections is
+     * disabled by the time the request is made, although resumption is enabled, as such a stream could not be resumed.
+     */
+    @Test
+    public void resumptionIsNotRequestedWhenServerStreamManagementIsDisabled() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        StreamManager.SERVER_ACTIVE.setValue(false);
+        final RequestingStreamManager sm = newStreamManager();
+
+        // Execute system under test.
+        sm.requestEnable(StreamManager.NAMESPACE_V3);
+
+        // Verify result.
+        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(sm.session, times(1).description("One request to enable Stream Management must be sent.")).deliverRawText(captor.capture());
+        assertNull(DocumentHelper.parseText(captor.getValue()).getRootElement().attributeValue("resume"), "The request must not ask for a stream that can be resumed while Stream Management on server connections is disabled, but was: " + captor.getValue());
+    }
+
+    /**
      * Verifies that the stream can be resumed when the peer allows it, with either lexical form of a true boolean
      * (XEP-0198 § 5), and that its SM-ID, preferred maximum resumption time and location are recorded, as is the address
      * to which the connection was made, by which the addresses of that location are filtered.
@@ -985,6 +1007,7 @@ public class RequestingStreamManagerTest
     public void resumableEnabledIsRecorded(final String resume) throws Exception
     {
         // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
         StreamManager.SERVER_RESUME_ENABLED.setValue(true);
         final RequestingStreamManager sm = newStreamManager();
         final Connection connection = sm.session.getConnection();
@@ -1012,6 +1035,7 @@ public class RequestingStreamManagerTest
     public void invalidMaximumResumptionTimeIsIgnored(final String max)
     {
         // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
         StreamManager.SERVER_RESUME_ENABLED.setValue(true);
         final RequestingStreamManager sm = newStreamManager();
         sm.requestEnable(StreamManager.NAMESPACE_V3);
@@ -1037,6 +1061,7 @@ public class RequestingStreamManagerTest
     public void enabledWithoutResumptionIsNotResumable(final String variant)
     {
         // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
         StreamManager.SERVER_RESUME_ENABLED.setValue(true);
         final RequestingStreamManager sm = newStreamManager();
         sm.requestEnable(StreamManager.NAMESPACE_V3);
@@ -1067,6 +1092,7 @@ public class RequestingStreamManagerTest
     public void resumptionThatWasNotRequestedIsNotUsed()
     {
         // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
         final RequestingStreamManager sm = newStreamManager();
         sm.requestEnable(StreamManager.NAMESPACE_V3);
         StreamManager.SERVER_RESUME_ENABLED.setValue(true);
@@ -1226,6 +1252,7 @@ public class RequestingStreamManagerTest
     public void resumableEnabledAfterFormalCloseDoesNotMakeStreamResumable()
     {
         // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
         StreamManager.SERVER_RESUME_ENABLED.setValue(true);
         final RequestingStreamManager sm = newStreamManager();
         sm.requestEnable(StreamManager.NAMESPACE_V3);
@@ -1291,6 +1318,27 @@ public class RequestingStreamManagerTest
 
         // Verify result.
         assertFalse(queued, "A stanza must not be queued for a stream that is not resumed (resumable: " + resumable + ", resumption on server connections enabled: false).");
+        assertEquals(List.of(), UnacknowledgedStanzas.queuedIds(sm), "No stanza must be queued.");
+    }
+
+    /**
+     * Verifies that a stanza is not queued when the connection of a stream that can be resumed is broken while Stream
+     * Management on server connections is disabled, although resumption is enabled, as the stream could then not be
+     * resumed.
+     */
+    @Test
+    public void stanzaIsNotQueuedWhenConnectionIsBrokenWhileServerStreamManagementIsDisabled()
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = resumableStreamManager();
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        StreamManager.SERVER_ACTIVE.setValue(false);
+
+        // Execute system under test.
+        final boolean queued = sm.queue(message("1"), true);
+
+        // Verify result.
+        assertFalse(queued, "A stanza must not be queued while Stream Management on server connections is disabled.");
         assertEquals(List.of(), UnacknowledgedStanzas.queuedIds(sm), "No stanza must be queued.");
     }
 

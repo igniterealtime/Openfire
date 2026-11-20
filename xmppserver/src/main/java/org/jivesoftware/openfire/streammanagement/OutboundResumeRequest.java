@@ -132,7 +132,7 @@ public final class OutboundResumeRequest
         final String targetNamespace = targetStreamManager.getNamespace();
         final String previd = targetStreamManager.getSmId();
         final boolean resumable = targetStreamManager.getResume();
-        final boolean active = StreamManager.SERVER_ACTIVE.getValue() && StreamManager.SERVER_RESUME_ENABLED.getValue();
+        final boolean active = StreamManager.isServerResumptionEnabled();
         final boolean send;
         synchronized ( owner ) {
             if ( status != Status.NOT_SENT || finished.isDone() ) {

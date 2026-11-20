@@ -519,12 +519,16 @@ _xmpps-server._tcp.conference.example.org. 86400 IN SRV 0 5 5270 xmpp.example.or
                 <dt>stream.management.server.active</dt>
                 <dd>Use Stream Management on server-to-server connections: offer it to servers that connect to Openfire,
                     and enable it on connections that Openfire opens to servers that offer it. This is separate from
-                    <code>stream.management.active</code>, which applies to clients. Defaults to <code>false</code>.</dd>
+                    <code>stream.management.active</code>, which applies to clients. A change applies to connections
+                    that are set up after it: a connection keeps the Stream Management that was set up on it. Defaults
+                    to <code>false</code>.</dd>
 
                 <dt>stream.management.server.resume.enabled</dt>
                 <dd>Allow streams on server-to-server connections to be resumed after their connection broke, as
-                    described above. Applies only when <code>stream.management.server.active</code> is enabled. Defaults
-                    to <code>false</code>.</dd>
+                    described above. Applies only when <code>stream.management.server.active</code> is enabled. Both
+                    must still be enabled when a connection breaks: the stream is resumed on a new connection, which is
+                    set up with the settings of that moment, so a session that could not be resumed there is ended
+                    instead of kept. Defaults to <code>false</code>.</dd>
 
                 <dt>xmpp.server.session.detach.timeout</dt>
                 <dd>How long, in milliseconds, a server-to-server session is kept after its connection broke while its

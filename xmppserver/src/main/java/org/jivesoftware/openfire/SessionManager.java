@@ -1616,8 +1616,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             // Re-obtain ClientRoute, now under the lock: The closed session may have just been cleared; a live session
             // may have raced in. Decide based on what the route is NOW, not what it was before the lock.
             final ClientSession oldSession = routingTable.getClientRoute(desiredJid);
-            // A remote isClosed() call can remove a departed owner's route while still returning false.
-            if (oldSession != null && !oldSession.isClosed() && routingTable.getClientRoute(desiredJid) != null) {
+            if (oldSession != null && !oldSession.isClosed()) {
                 // removeDetached for a closed prior session is handled lock-free above, before this lock was acquired:
                 // that task re-enters this same bare-JID lock on another thread and would deadlock if run here. So only
                 // a live conflict remains to resolve.
@@ -1629,28 +1628,25 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 }
 
                 final int conflictCount = oldSession.incrementConflictCount();
-                // The conflict-count RPC can also clean up the route if its owner departed after isClosed().
-                if (routingTable.getClientRoute(desiredJid) != null) {
-                    if (conflictCount <= conflictLimit) {
-                        Log.debug("Conflict resolution for '{}' does not (yet) permit kicking the existing session. Conflict count: {}, limit: {}. Rejecting bind with 'conflict'.", desiredJid, conflictCount, conflictLimit);
-                        return BindResult.CONFLICT;
-                    }
+                if (conflictCount <= conflictLimit) {
+                    Log.debug("Conflict resolution for '{}' does not (yet) permit kicking the existing session. Conflict count: {}, limit: {}. Rejecting bind with 'conflict'.", desiredJid, conflictCount, conflictLimit);
+                    return BindResult.CONFLICT;
+                }
 
-                    // Kick the prior owner. close() may be a bounded synchronous cluster RPC when the old session is remote;
-                    // it runs here (off-worker) and inside the lock. The old session's route removal happens asynchronously
-                    // on its hosting node, but that is fine: we install the new route below under the same lock, and route
-                    // installation is last-write-wins, so our install is authoritative. OF-3318 ensures the (later) teardown
-                    // of the displaced session will not remove our freshly installed route.
-                    Log.debug("Kicking existing session for '{}' (conflict count {} exceeds limit {}).", desiredJid, conflictCount, conflictLimit);
-                    oldSession.close(new StreamError(StreamError.Condition.conflict));
+                // Kick the prior owner. close() may be a bounded synchronous cluster RPC when the old session is remote;
+                // it runs here (off-worker) and inside the lock. The old session's route removal happens asynchronously
+                // on its hosting node, but that is fine: we install the new route below under the same lock, and route
+                // installation is last-write-wins, so our install is authoritative. OF-3318 ensures the (later) teardown
+                // of the displaced session will not remove our freshly installed route.
+                Log.debug("Kicking existing session for '{}' (conflict count {} exceeds limit {}).", desiredJid, conflictCount, conflictLimit);
+                oldSession.close(new StreamError(StreamError.Condition.conflict));
 
-                    // OF-1923: a kicked session must never be resumed.
-                    if (oldSession instanceof LocalClientSession localOldSession && removeDetached(localOldSession)) {
-                        kickedDetachedSession = localOldSession;
-                    }
+                // OF-1923: a kicked session must never be resumed.
+                if (oldSession instanceof LocalClientSession localOldSession && removeDetached(localOldSession)) {
+                    kickedDetachedSession = localOldSession;
                 }
             }
-            // A missing, closed or cleaned-up prior route does not prevent installing the new session's route.
+            // else: oldSession == null (cleared, or never existed) or isClosed (will be gone): safe to install the new session's route..
 
             // Install the new session's route.
             session.setAuthToken(authToken, resource);

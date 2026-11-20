@@ -49,10 +49,11 @@ Read-only is a safety guard, not an access control. The setting is made in `open
 - Every method that changes a store checks the setting first and throws `CertificateStoreReadOnlyException`, a new subclass of `CertificateStoreConfigException`, so existing `catch` blocks in core and in plugins handle it unchanged.
 - The check comes before the in-memory `KeyStore` is changed, not only in `persist()`: otherwise Openfire would serve a modified store from memory while the file is unchanged. `persist()` also checks, as a backstop for changes made directly through `getStore()`: when it refuses and the store in memory differs from the file, it reloads the store from disk. A store that already matches its file is not reloaded, as reloading reports the store as changed and its listeners then reload the connection listeners that use it.
 - The constructor does not create a missing store file when the setting is on.
+- Each refusal is logged at debug level, naming the store file, as a caller outside Openfire (such as a plugin that renews certificates) may not report the exception.
 - Rationale: the admin console is not the only writer. Plugins call these methods, and the setup wizard calls `ensureDomainCertificate`.
 
 ### 4. The admin console shows the stores as read-only; the stores enforce it
-- The admin console does not offer the setting. Pages that change a store's contents show a notice naming the setting and `openfire.xml`, and hide the actions that would fail. A request that reaches a write action anyway (an old link, a direct URL) gets the refusal from the store class, shown as an error.
+- The admin console does not offer the setting. Pages that change a store's contents show a notice naming the setting and `openfire.xml`, and hide the actions that would fail. A request that reaches a write action anyway (an old link, a direct URL) gets the refusal from the store class, shown as an error. Such a request does not pause the admin console's automatic restart, as the pause would only delay the restart needed when software outside Openfire updates the store.
 - Changing a store's location or password stays allowed: that changes Openfire's configuration, not the store.
 
 ### 5. Signing-request issuer update moves into `IdentityStore`
@@ -92,7 +93,7 @@ Plugins in other repositories (for example ones that install certificates automa
 
 | Screen | Today | With the setting on |
 |---|---|---|
-| `security-keystore.jsp` (identity store contents) | Generate self-signed, import, delete, import a signed-certificate reply, link to the signing-request page; a "no certificate for this domain" message offering generate or import | Notice that the stores are read-only; those actions hidden; the missing-certificate message says the store must be updated outside Openfire. Listing, details and creating a signing request to copy stay |
+| `security-keystore.jsp` (identity store contents) | Generate self-signed, import, delete, import a signed-certificate reply, link to the signing-request page; a "no certificate for this domain" message offering generate or import | Notice that the stores are read-only; those actions hidden; the missing-certificate message (decided by the domain alone) says the store must be updated outside Openfire, and a certificate that covers the domain but not every identity of the server gets a read-only version of the incomplete-certificate message. Listing, details and creating a signing request to copy stay |
 | `security-truststore.jsp` (trust store contents) | Import link, delete per certificate | Notice; import and delete hidden |
 | `import-keystore-certificate.jsp`, `import-truststore-certificate.jsp` | Import form | Notice instead of the form; a POST is refused by the store |
 | `security-keystore-signing-request.jsp` | Issuer details form that re-signs self-signed certificates | Notice instead of the form; a POST is refused by the store |

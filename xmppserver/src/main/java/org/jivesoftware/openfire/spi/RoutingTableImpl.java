@@ -360,9 +360,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     private boolean routeToLocalDomain(JID jid, Packet packet)
     {
         boolean routed = false;
-        // The receiving server and SHOULD remove the <private/> element before delivering to the recipient.
-        final Element packetEl = packet.getElement();
-        packetEl.elements(QName.get("private", Received.NAMESPACE)).forEach(packetEl::remove);
 
         if (jid.getResource() == null) {
             // RFC 6121: 8.5.2. localpart@domainpart (Packet sent to a bare JID of a user)
@@ -384,6 +381,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                         ccMessage(jid, (Message) packet);
                     }
 
+                    // The receiving server SHOULD remove the <private/> element before delivering to the recipient. This is
+                    // done only now, as the carbons eligibility (evaluated above) depends on the presence of that element.
+                    removeCarbonsPrivateElement(packet);
+
                     // This is a route to a local user hosted in this node
                     try {
                         localClientRoutingTable.getRoute(jid).process(packet);
@@ -393,7 +394,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     }
                 }
                 else {
-                    // This is a route to a local user hosted in other node
+                    // This is a route to a local user hosted in other node. The packet is forwarded as-is: that node
+                    // evaluates carbons eligibility and removes the <private/> element before delivering it.
                     if (remotePacketRouter != null) {
                         routed = remotePacketRouter
                                 .routePacket(clientRoute.getNodeID().toByteArray(), jid, packet);
@@ -452,6 +454,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 }
             }
         }
+    }
+
+    /**
+     * Removes the XEP-0280 <private/> element(s) from a packet, as the receiving server SHOULD do before delivering
+     * the packet to the recipient. As the element determines whether the packet is eligible for carbons delivery,
+     * this must not be invoked before that eligibility has been evaluated.
+     *
+     * @param packet the packet to remove the <private/> element from.
+     */
+    private static void removeCarbonsPrivateElement(Packet packet) {
+        final Element packetEl = packet.getElement();
+        packetEl.elements(QName.get("private", Received.NAMESPACE)).forEach(packetEl::remove);
     }
 
     private ClientRoute getClientRouteForLocalUser(JID jid) {
@@ -648,6 +662,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Get the sessions with non-negative priority for message carbons processing.
         List<ClientSession> nonNegativePrioritySessions = getNonNegativeSessions(sessions, 0);
 
+        // Evaluate carbons eligibility before the <private/> element (on which it depends) is removed.
+        final boolean carbonsEligible = Forwarded.isEligibleForCarbonsDelivery(packet);
+        // The receiving server SHOULD remove the <private/> element before delivering to the recipient.
+        removeCarbonsPrivateElement(packet);
+
         if (packet.getType() == Message.Type.error) {
             // Errors should be dropped at this point.
             Log.debug("Error stanza to bare JID discarded: {}", packet.toXML());
@@ -672,7 +691,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 // Headline messages are broadcast.
                 session.process(packet);
             // Deliver to each session, if is message carbons enabled.
-            } else if (shouldCarbonCopyToResource(session, packet)) {
+            } else if (shouldCarbonCopyToResource(session, carbonsEligible)) {
                 session.process(packet);
             // Deliver to each session if property route.really-all-resources is true
             // (in case client does not support carbons)
@@ -694,7 +713,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         if (highestPrioritySessions.size() == 1) {
             // Found only one session so deliver message (if it hasn't already been processed because it has message carbons enabled)
-            if (!shouldCarbonCopyToResource(highestPrioritySessions.get(0), packet)) {
+            if (!shouldCarbonCopyToResource(highestPrioritySessions.get(0), carbonsEligible)) {
                 highestPrioritySessions.get(0).process(packet);
             }
         }
@@ -750,7 +769,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
                 // Make sure, we don't send the packet again, if it has already been sent by message carbons.
                 ClientSession session = targets.get(0);
-                if (!shouldCarbonCopyToResource(session, packet)) {
+                if (!shouldCarbonCopyToResource(session, carbonsEligible)) {
                     // Deliver stanza to session with highest priority, highest show value and most recent activity
                     session.process(packet);
                 }
@@ -758,7 +777,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             else {
                 for (ClientSession session : highestPrioritySessions) {
                     // Make sure, we don't send the packet again, if it has already been sent by message carbons.
-                    if (!shouldCarbonCopyToResource(session, packet)) {
+                    if (!shouldCarbonCopyToResource(session, carbonsEligible)) {
                         session.process(packet);
                     }
                 }
@@ -767,8 +786,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return true;
     }
 
-    private boolean shouldCarbonCopyToResource(ClientSession session, Message message) {
-        return session.isMessageCarbonsEnabled() && Forwarded.isEligibleForCarbonsDelivery(message );
+    private boolean shouldCarbonCopyToResource(ClientSession session, boolean carbonsEligible) {
+        return session.isMessageCarbonsEnabled() && carbonsEligible;
     }
 
     /**

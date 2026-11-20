@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="error.jsp"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreReadOnlyException"%>
 <%@ page import="org.jivesoftware.openfire.keystore.TrustStore"%>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
@@ -65,6 +67,11 @@
 
     pageContext.setAttribute( "connectionType", connectionType );
 
+    // When the certificate stores are read-only, the import form is not offered. A submitted import is still passed to
+    // the store, which refuses it.
+    final boolean readOnly = CertificateStoreManager.isReadOnly();
+    pageContext.setAttribute( "readOnly", readOnly );
+
     if (save && errors.isEmpty())
     {
         final TrustStore trustStoreConfig = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore( connectionType );
@@ -89,8 +96,11 @@
             {
                 // When updating certificates through the admin console, do not immediately restart the website, as that
                 // is very likely to lock out the administrator that is performing the changes.
-                XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin")
-                    .ifPresent(plugin -> ((AdminConsolePlugin) plugin).pauseAutoRestartEnabled(Duration.ofMinutes(5)));
+                // A read-only store refuses the change, so do not pause: that would delay a restart needed for an update made outside Openfire.
+                if (!readOnly) {
+                    XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin")
+                        .ifPresent(plugin -> ((AdminConsolePlugin) plugin).pauseAutoRestartEnabled(Duration.ofMinutes(5)));
+                }
 
                 // Import certificate
                 trustStoreConfig.installCertificate( alias, certificate );
@@ -100,6 +110,10 @@
 
                 response.sendRedirect( "security-truststore.jsp?connectionType=" + storePurposeText + "&importsuccess=true" );
                 return;
+            }
+            catch (CertificateStoreReadOnlyException e)
+            {
+                errors.put("readOnly", e.getMessage());
             }
             catch (Throwable e)
             {
@@ -122,6 +136,10 @@
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
         <c:choose>
+            <c:when test="${err.key eq 'readOnly'}">
+                <fmt:message key="ssl.certificates.read-only.refused"/> <c:out value="${err.value}"/>
+            </c:when>
+
             <c:when test="${err.key eq 'connectionType'}">
                 <fmt:message key="ssl.import.certificate.truststore.error.connection-type"/>
             </c:when>
@@ -155,7 +173,13 @@
     </admin:infobox>
 </c:forEach>
 
-<c:if test="${not empty connectionType}">
+<c:if test="${readOnly}">
+    <admin:infobox type="info">
+        <fmt:message key="ssl.certificates.read-only.notice"/>
+    </admin:infobox>
+</c:if>
+
+<c:if test="${not empty connectionType and not readOnly}">
     <p>
         <fmt:message key="ssl.import.certificate.truststore.intro"/>
     </p>

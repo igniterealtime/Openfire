@@ -143,6 +143,8 @@ public class XMPPServer {
             "adminConsole.port", "adminConsole.securePort", "adminConsole.interface", "network.interface",
             // Misc. settings
             "locale", "fqdn", "setup", ClusterManager.CLUSTER_PROPERTY_NAME, ClusterManager.NODEID_PROPERTY_NAME,
+            // Certificate stores
+            CertificateStoreManager.READ_ONLY_PROPERTY,
             // Database config
             "connectionProvider.className",
             "database.defaultProvider.driver", "database.defaultProvider.serverURL", "database.defaultProvider.username",

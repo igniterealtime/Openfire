@@ -170,7 +170,7 @@ public class AdminConsolePlugin implements Plugin {
     public static final SystemProperty<String> ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_RESPONSEVALUE = SystemProperty.Builder.ofType(String.class)
         .setKey("adminConsole.CSP.responsevalue")
         .setDynamic(true)
-        .setDefaultValue("default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; base-uri 'self'; form-action 'self'; img-src 'self' igniterealtime.org;")
+        .setDefaultValue("default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; base-uri 'self'; form-action 'self'; img-src 'self' igniterealtime.org; frame-ancestors 'self';")
         .build();
 
     /**

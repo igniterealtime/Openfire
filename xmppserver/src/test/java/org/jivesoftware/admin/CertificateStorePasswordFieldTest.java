@@ -77,7 +77,7 @@ public class CertificateStorePasswordFieldTest
     {
         final char[] result = CertificateStorePasswordField.passwordToSave( " spaced ", CURRENT );
 
-        assertArrayEquals( " spaced ".toCharArray(), result, "a submitted password must be saved exactly as typed, as before this change" );
+        assertArrayEquals( " spaced ".toCharArray(), result, "a submitted password must be saved exactly as typed, including leading and trailing spaces" );
     }
 
     @Test

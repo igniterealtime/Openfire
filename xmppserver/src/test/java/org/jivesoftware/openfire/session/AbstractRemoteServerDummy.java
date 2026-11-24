@@ -62,6 +62,8 @@ public class AbstractRemoteServerDummy
     protected boolean refuseSaslExternal;
     protected boolean refuseDialback;
     protected String streamErrorOnAuth;
+    protected boolean closeOnStreamManagementEnable;
+    protected volatile boolean streamManagementEnableReceived;
 
     static {
         // Generating certificates is expensive. For performance, it's best to generate each set once, and then reuse those during the execution of the tests.
@@ -238,6 +240,25 @@ public class AbstractRemoteServerDummy
     public void setStreamErrorOnAuth(String streamErrorOnAuth)
     {
         this.streamErrorOnAuth = streamErrorOnAuth;
+    }
+
+    /**
+     * When set to 'true', this instance offers Stream Management (XEP-0198) in its stream features, and closes the
+     * connection when it is asked to enable Stream Management, so that the negotiation fails.
+     *
+     * @param closeOnStreamManagementEnable 'true' to offer Stream Management and close the connection on enable.
+     */
+    public void setCloseOnStreamManagementEnable(boolean closeOnStreamManagementEnable)
+    {
+        this.closeOnStreamManagementEnable = closeOnStreamManagementEnable;
+    }
+
+    /**
+     * @return whether this instance was asked to enable Stream Management.
+     */
+    public boolean isStreamManagementEnableReceived()
+    {
+        return streamManagementEnableReceived;
     }
 
     /**

@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -697,6 +698,32 @@ public class LocalOutgoingServerSessionTest
 
         // Verify results.
         assertEquals(AttemptMilestones.Authentication.dialbackRefused(), recorder.snapshot().getAuthentication().orElse(null), "a dialback key answered with 'invalid' must be recorded as dialback refused");
+    }
+
+    /**
+     * A connection that closes after authentication, while Stream Management is being negotiated (OF-2425), gives no
+     * session. Authentication is recorded as it happened, and the attempt as failed, so that the S2S connection test
+     * shows authentication passing and no session registered; the reason is in the diagnostic log.
+     */
+    @Test
+    public void testCloseDuringStreamManagementNegotiationIsRecordedAsFailedAfterAuthentication() throws Exception
+    {
+        // Setup test fixture: no TLS, so dialback authenticates, after which the remote closes the connection when it is
+        // asked to enable the Stream Management it offered.
+        remoteReceivingServerDummy.setEncryptionPolicy(Connection.TLSPolicy.disabled);
+        remoteReceivingServerDummy.setCloseOnStreamManagementEnable(true);
+        StreamManager.SERVER_ACTIVE.setValue(true);
+        try {
+            // Execute system under test.
+            final AttemptRecorder recorder = attemptOverOptionalTls(true);
+
+            // Verify results.
+            assertTrue(remoteReceivingServerDummy.isStreamManagementEnableReceived(), "Openfire was expected to ask the remote to enable Stream Management; without that this test proves nothing.");
+            assertEquals(AttemptMilestones.Authentication.dialbackAfterExternalNotOffered(), recorder.snapshot().getAuthentication().orElse(null), "authentication that succeeded before the connection closed must be recorded as it happened");
+            assertEquals(AttemptRecorder.Outcome.FAILED, recorder.getOutcome(), "a connection that closes while Stream Management is negotiated gives no session, so the attempt must be recorded as failed");
+        } finally {
+            StreamManager.SERVER_ACTIVE.setValue(false);
+        }
     }
 
     @Test

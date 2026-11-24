@@ -283,6 +283,14 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                                     case "result":
                                         processDialback(inbound);
                                         break;
+                                    case "enable":
+                                        if (closeOnStreamManagementEnable && "urn:xmpp:sm:3".equals(inbound.getNamespaceURI())) {
+                                            streamManagementEnableReceived = true;
+                                            socket.close();
+                                            return;
+                                        }
+                                        log("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
+                                        break;
                                     default:
                                         log("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
                                 }
@@ -370,6 +378,10 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                 } catch (SSLPeerUnverifiedException e) {
                     log("local certificate is missing/unverified");
                 }
+            }
+
+            if (closeOnStreamManagementEnable) {
+                features.addElement(QName.get("sm", "urn:xmpp:sm:3"));
             }
 
             final String result = stream.asXML(); // String opening and closing element. Opening element needs to be written by parser, to avoid namespace declaration on child element.

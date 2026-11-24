@@ -28,8 +28,10 @@ import java.io.IOException;
  * that the server declares instead of guessing one from the content. Browsers then also refuse to run a script or
  * apply a stylesheet that is not served with a script or stylesheet type.
  *
- * The header is set before the rest of the filter chain runs, so that it is present on every response, including
- * error pages.
+ * The header is set before the rest of the filter chain runs, so that it is present on every response that passes
+ * through the chain, including the error pages of the web application. A response that the servlet container
+ * produces before it reaches the filter chain (for a request to a protected path such as /WEB-INF, or for a malformed
+ * request) does not pass through this filter and does not get the header.
  *
  * @author Matthew Vivian
  */

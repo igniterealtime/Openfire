@@ -582,7 +582,7 @@ public class AdminConsolePlugin implements Plugin {
         // Add CSP headers for all HTTP responses (errors, etc.)
         context.addFilter(AdminContentSecurityPolicyFilter.class, "/*", null);
 
-        // Forbid content type sniffing for all HTTP responses (pages, static files, servlets, errors).
+        // Forbid content type sniffing for all HTTP responses of the web application (pages, static files, servlets, errors).
         context.addFilter(ContentTypeOptionsFilter.class, "/*", null);
 
         // The index.html includes a redirect to the index.jsp and doesn't bypass

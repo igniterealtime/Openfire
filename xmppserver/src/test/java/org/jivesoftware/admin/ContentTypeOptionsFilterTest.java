@@ -33,8 +33,8 @@ import static org.mockito.Mockito.*;
 public class ContentTypeOptionsFilterTest
 {
     /**
-     * Verifies that the header is set before the rest of the chain runs, so that it is present however the response
-     * is produced (including error pages), and that the chain is always invoked.
+     * Verifies that the header is set before the rest of the chain runs, so that it is present however the rest of
+     * the chain produces the response (including an error page), and that the chain is always invoked.
      */
     @Test
     public void testSetsNosniffBeforeInvokingChain() throws Exception

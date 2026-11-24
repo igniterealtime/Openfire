@@ -1,0 +1,33 @@
+/* styles specific to the certificate store management page (security-certificate-store-management.jsp) */
+
+/* The console aligns table labels to text-bottom, which lifts "File password:" above the state beside it, and centres
+   cells, which drops it below the field once the hint adds lines. Align both on the first line. */
+.jive-contentBox table td.store-password-label label {
+    vertical-align: baseline;
+}
+
+.jive-contentBox table td.store-password-label,
+.jive-contentBox table td.store-password {
+    vertical-align: baseline;
+}
+
+/* Keep the label on one line when the open field's hint widens the row. */
+.jive-contentBox table td.store-password-label {
+    white-space: nowrap;
+}
+
+.store-password-state {
+    color: #666;
+}
+
+/* Wrap the hint at about the width of the File box, so that opening the field does not widen the table. */
+.store-password-hint {
+    display: block;
+    max-width: 40em;
+    color: #666;
+}
+
+/* A row whose new password has been typed but not yet saved. */
+.jive-contentBox table tr.store-password-changed td {
+    background-color: #fff8dc;
+}

@@ -25,10 +25,10 @@ import java.util.Objects;
  *
  * The field holds the password Openfire uses to open the store file. Saving it does not re-encrypt the file.
  *
- * The admin console never sends a store's current password to the browser. The form offers an "Update password" link
- * ("Set password" when the store has none), which reveals an empty password field. That field is submitted only once it
- * has been revealed, so a missing or empty field means that the administrator did not change the password, and the
- * store's current password is kept. A non-empty field replaces the current password. An empty field never clears it.
+ * The admin console never sends a store's current password to the browser. The form shows whether the store has a
+ * password and offers a "Change" link ("Set" when the store has none), which reveals an empty password field. That
+ * field is submitted only once it has been revealed, so a missing or empty field means that the administrator did not
+ * change the password, and the store's current password is kept. A non-empty field replaces the current password. An empty field never clears it.
  *
  * @author Matthew Vivian
  */
@@ -40,7 +40,8 @@ public final class CertificateStorePasswordField
 
     /**
      * Indicates whether a certificate store has a password, without revealing anything else about it. The admin
-     * console uses this (through the admin tag library) to choose between "Update password" and "Set password".
+     * console uses this (through the admin tag library) to show "(set)" or "(none)" and to choose
+     * between the "Change" and "Set" links.
      *
      * This is a Java method rather than an EL expression because the 'empty' operator of the EL implementation that
      * Openfire uses (Jasper) treats only arrays of objects as empty when they have no elements, so an empty char array

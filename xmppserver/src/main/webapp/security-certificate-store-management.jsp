@@ -104,7 +104,7 @@
         final String pwdTrustC2S = request.getParameter( "pwd-trust-c2s" );
 
         // The page never sends a store's current password to the browser. A password field is submitted only when the
-        // administrator revealed it with its "Update password" link, so a missing or empty field keeps the current
+        // administrator revealed it with its "Change" or "Set" link, so a missing or empty field keeps the current
         // password of each store (see CertificateStorePasswordField). Only the locations are mandatory.
         if ( locKey == null || locKey.isEmpty() ) {
             errors.put( "locKey", "Identity Store location must be defined." );
@@ -226,13 +226,7 @@
 <head>
     <title><fmt:message key="ssl.certificates.store-management.title"/></title>
     <meta name="pageID" content="security-certificate-store-management"/>
-    <style>
-        /* The console aligns table labels to text-bottom, which lifts "Password:" above the link beside it, and
-           centres cells, which drops it below the field once the hint adds a line. Align both on the first line. */
-        .jive-contentBox table td.store-password-label label { vertical-align: baseline; }
-        .jive-contentBox table td.store-password-label, .jive-contentBox table td.store-password { vertical-align: baseline; }
-        .store-password-hint { display: block; color: #666; }
-    </style>
+    <link rel="stylesheet" type="text/css" href="style/security-certificate-store-management.css">
 </head>
 <body>
 
@@ -390,40 +384,6 @@
     </c:otherwise>
 </c:choose>
 
-<script>
-    // Each store's new-password field starts hidden and disabled, so it is not submitted and the current password is
-    // kept. "Update password" reveals and enables it; "Cancel" clears, disables and hides it again. Each password cell is
-    // handled on its own, finding its elements within the cell, so that every store's links act on that store's field.
-    document.querySelectorAll( 'td.store-password' ).forEach( function ( cell ) {
-        const status = cell.querySelector( '.store-password-status' );
-        const edit = cell.querySelector( '.store-password-edit' );
-        const field = edit.querySelector( 'input[type="password"]' );
-        const change = status.querySelector( '.store-password-change' );
-        const cancel = edit.querySelector( '.store-password-cancel' );
-
-        const show = function ( editing ) {
-            field.value = '';
-            field.disabled = !editing;
-            status.hidden = editing;
-            edit.hidden = !editing;
-            change.setAttribute( 'aria-expanded', editing ? 'true' : 'false' );
-            ( editing ? field : change ).focus();
-        };
-
-        // These links act as buttons: Enter activates a link natively, Space needs handling.
-        [ [ change, true ], [ cancel, false ] ].forEach( function ( pair ) {
-            pair[0].addEventListener( 'click', function ( event ) {
-                event.preventDefault();
-                show( pair[1] );
-            } );
-            pair[0].addEventListener( 'keydown', function ( event ) {
-                if ( event.key === ' ' ) {
-                    event.preventDefault();
-                    show( pair[1] );
-                }
-            } );
-        } );
-    } );
-</script>
+<script src="js/security-certificate-store-management.js"></script>
 </body>
 </html>

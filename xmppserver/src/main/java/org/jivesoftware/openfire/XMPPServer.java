@@ -136,7 +136,8 @@ public class XMPPServer {
 
     private Timer terminatorTimer;
     public static final String EXIT = "exit";
-    private final static Set<String> XML_ONLY_PROPERTIES;
+    // Package-private so that tests can check which properties setup leaves in openfire.xml.
+    final static Set<String> XML_ONLY_PROPERTIES;
     static {
         final List<String> properties = new ArrayList<>(Arrays.asList(
             // Admin console network settings

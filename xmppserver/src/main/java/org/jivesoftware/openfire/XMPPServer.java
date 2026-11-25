@@ -136,13 +136,16 @@ public class XMPPServer {
 
     private Timer terminatorTimer;
     public static final String EXIT = "exit";
-    private final static Set<String> XML_ONLY_PROPERTIES;
+    // Package-private so that tests can check which properties setup leaves in openfire.xml.
+    final static Set<String> XML_ONLY_PROPERTIES;
     static {
         final List<String> properties = new ArrayList<>(Arrays.asList(
             // Admin console network settings
             "adminConsole.port", "adminConsole.securePort", "adminConsole.interface", "network.interface",
             // Misc. settings
             "locale", "fqdn", "setup", ClusterManager.CLUSTER_PROPERTY_NAME, ClusterManager.NODEID_PROPERTY_NAME,
+            // Certificate stores
+            CertificateStoreManager.READ_ONLY_PROPERTY,
             // Database config
             "connectionProvider.className",
             "database.defaultProvider.driver", "database.defaultProvider.serverURL", "database.defaultProvider.username",

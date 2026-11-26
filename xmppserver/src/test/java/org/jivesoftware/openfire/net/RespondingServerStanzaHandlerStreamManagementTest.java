@@ -327,6 +327,33 @@ public class RespondingServerStanzaHandlerStreamManagementTest
     }
 
     /**
+     * Verifies that, with SASL EXTERNAL, Openfire neither asks the remote server to enable Stream Management nor starts
+     * authentication again when the features of the restarted stream arrive after the session was closed. Openfire is
+     * authenticated when the restarted stream header arrives, and the caller may close the session before the
+     * features follow.
+     */
+    @Test
+    public void enableIsNotSentWhenSessionClosedBeforeFeaturesOfRestartedStream() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(features("<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>EXTERNAL</mechanism></mechanisms>"), reader);
+        handler.process("<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>", reader);
+        handler.process(streamHeader("stream-2"), reader);
+        assertTrue(handler.isSessionAuthenticated().isDone(), "Openfire was expected to be authenticated; without that this test proves nothing.");
+        handler.getSession().setStatus(Session.Status.CLOSED); // As the close listener of the connection does.
+        final int deliveredBefore = allDelivered().size();
+
+        // Execute system under test.
+        handler.process(features("<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>EXTERNAL</mechanism></mechanisms>" + SM_FEATURE_V3), reader);
+
+        // Verify result.
+        assertTrue(deliveredEnableElements().isEmpty(), "Stream Management must not be requested on a closed session, but these were delivered: " + allDelivered());
+        assertEquals(deliveredBefore, allDelivered().size(), "Nothing must be sent in answer to the features, so authentication must not start again. Delivered: " + allDelivered());
+    }
+
+    /**
      * Verifies that Stream Management is enabled on the session when the remote server agrees to the request, without
      * resumption, even when the remote server offers it, as resumption on server connections is disabled, for either
      * method of authentication.

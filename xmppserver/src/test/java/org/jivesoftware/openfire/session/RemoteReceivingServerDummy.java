@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,17 +246,50 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                                 final Element inbound = parse(read);
                                 switch (inbound.getName()) {
                                     case "stream":
-                                        sendStreamHeader(inbound);
+                                        switch (streamResponse) {
+                                            case CLOSE -> {
+                                                socket.close();
+                                                return;
+                                            }
+                                            case STAY_SILENT -> {
+                                                continue;
+                                            }
+                                            case ANSWER_WITHOUT_ID -> {
+                                                sendStreamHeader(inbound, false);
+                                                send("<stream:error><undefined-condition xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error></stream:stream>");
+                                                socket.close();
+                                                return;
+                                            }
+                                            case ANSWER -> sendStreamHeader(inbound, true);
+                                        }
+                                        if (streamErrorAfterHeader != null) {
+                                            send("<stream:error><" + streamErrorAfterHeader + " xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error></stream:stream>");
+                                            socket.close();
+                                            return;
+                                        }
                                         sendStreamFeatures();
                                         break;
                                     case "starttls":
                                         sendStartTlsProceed(inbound);
                                         return; // Stop reading from this socket immediately, as it is replaced by a secure socket.
                                     case "auth":
+                                        if (streamErrorOnAuth != null) {
+                                            send("<stream:error><" + streamErrorOnAuth + " xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error></stream:stream>");
+                                            socket.close();
+                                            return;
+                                        }
                                         sendAuthResponse(inbound);
                                         break;
                                     case "result":
                                         processDialback(inbound);
+                                        break;
+                                    case "enable":
+                                        if (closeOnStreamManagementEnable && "urn:xmpp:sm:3".equals(inbound.getNamespaceURI())) {
+                                            streamManagementEnableReceived = true;
+                                            socket.close();
+                                            return;
+                                        }
+                                        log("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
                                         break;
                                     default:
                                         log("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
@@ -281,7 +314,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
             }
         }
 
-        private synchronized void sendStreamHeader(Element inbound) throws IOException
+        private synchronized void sendStreamHeader(Element inbound, boolean includeId) throws IOException
         {
             final Document outbound = DocumentHelper.createDocument();
             final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
@@ -294,7 +327,9 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
             root.addAttribute("from", XMPP_DOMAIN);
             root.addAttribute("to", inbound.attributeValue("from", null));
             root.addAttribute("version", "1.0");
-            root.addAttribute("id", StringUtils.randomString(5));
+            if (includeId) {
+                root.addAttribute("id", StringUtils.randomString(5));
+            }
 
             send(root.asXML().substring(0, root.asXML().indexOf("</stream:stream>")));
         }
@@ -345,6 +380,10 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                 }
             }
 
+            if (closeOnStreamManagementEnable) {
+                features.addElement(QName.get("sm", "urn:xmpp:sm:3"));
+            }
+
             final String result = stream.asXML(); // String opening and closing element. Opening element needs to be written by parser, to avoid namespace declaration on child element.
             final String streamStripped = result.substring(result.indexOf('>')+1, result.lastIndexOf("</stream:stream>")).trim();
             send(streamStripped);
@@ -352,7 +391,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
         private synchronized void sendStartTlsProceed(Element inbound) throws Exception
         {
-            if (encryptionPolicy == Connection.TLSPolicy.disabled) {
+            if (encryptionPolicy == Connection.TLSPolicy.disabled || refuseStartTls) {
                 final Document outbound = DocumentHelper.createDocument();
                 final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
                 final Element root = outbound.addElement(QName.get("stream", namespace));
@@ -397,6 +436,14 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
          */
         private synchronized void sendAuthResponse(Element inbound) throws IOException
         {
+            if (refuseSaslExternal) {
+                final Document outbound = DocumentHelper.createDocument();
+                final Element failure = outbound.addElement(QName.get("failure", "urn:ietf:params:xml:ns:xmpp-sasl"));
+                failure.addElement(QName.get("not-authorized"));
+                send(failure.asXML());
+                return;
+            }
+
             if (encryptionPolicy == Connection.TLSPolicy.disabled) {
                 isAuthenticated = false;
 
@@ -478,7 +525,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
             final Element result = outbound.addElement(QName.get("result", "db", "jabber:server:dialback"));
             result.addAttribute("from", XMPP_DOMAIN);
             result.addAttribute("to", inbound.attributeValue("from", null));
-            result.addAttribute("type", "valid");
+            result.addAttribute("type", refuseDialback ? "invalid" : "valid");
 
             send(outbound.getRootElement().asXML());
         }

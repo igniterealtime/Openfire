@@ -80,6 +80,8 @@ public class NettyOutboundConnectionHandlerTlsFailureTest
         doReturn(stanzaHandler).when(handlerAttribute).get();
         channel = mock(Channel.class);
         doReturn(handlerAttribute).when(channel).attr(NettyConnectionHandler.HANDLER);
+        // A Netty channel always has the attribute; this connection has no attempt recorder in it.
+        doReturn(mock(Attribute.class)).when(channel).attr(NettyConnection.ATTEMPT_RECORDER);
         ctx = mock(ChannelHandlerContext.class);
         doReturn(channel).when(ctx).channel();
     }

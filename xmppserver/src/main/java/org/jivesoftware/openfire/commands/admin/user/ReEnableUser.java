@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.commands.admin.user;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UserLoginLimitManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -36,7 +37,9 @@ import java.util.*;
 /**
  * Re-Enables a user.
  *
- * The implementation uses Openfire's LockOutManager to apply the configuration state.
+ * The implementation uses Openfire's LockOutManager to apply the configuration state. Each account is unlocked
+ * through {@link UserLoginLimitManager#unlockAccount(String)}: a lock that the login limits set is lifted with the
+ * rest of the user's login limits, as the admin console's Unlock account lifts it, and any other lock is lifted alone.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#reenable-user">XEP-0133 Service Administration: Re-Enable User</a>
@@ -123,9 +126,20 @@ public class ReEnableUser extends AdHocCommand
             return;
         }
 
-        // No errors. Re-Enable all users.
+        // No errors. Re-Enable all users, through the login limits so that a lock they set is lifted with the rest of
+        // the user's login limits.
+        boolean lockLiftFailed = false;
         for (final User user : users) {
-            LockOutManager.getInstance().enableAccount(user.getUsername());
+            final Optional<UserLoginLimitManager.ClearedBlocks> cleared = UserLoginLimitManager.getInstance().unlockAccount(user.getUsername());
+            if (cleared.isPresent() && cleared.get().lockLiftFailed()) {
+                lockLiftFailed = true;
+            }
+        }
+
+        if (lockLiftFailed) {
+            note.addAttribute("type", "error");
+            note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.with-errors", preferredLocale));
+            return;
         }
 
         // Answer that the operation was successful

@@ -317,6 +317,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      */
     @Override
     public Iterator<Element> getIdentities() {
+        // Do nothing if server is not enabled
+        if (!ENABLED.getValue()) {
+            return Collections.emptyIterator();
+        }
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "pubsub");
         identity.addAttribute("type", "pep");
@@ -598,6 +602,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     public Iterator<Element> getUserItems(String name, JID senderJID) {
         ArrayList<Element> items = new ArrayList<>();
 
+        // Do nothing if server is not enabled
+        if (!ENABLED.getValue()) {
+            return items.iterator();
+        }
+
         JID recipientJID = XMPPServer.getInstance().createJID(name, null, true).asBareJID();
         PEPService pepService = pepServiceManager.getPEPService(recipientJID, false);
 
@@ -802,6 +811,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     public boolean hasInfo(String name, String node, JID senderJID) throws UnauthorizedException
     {
         if (node == null) return true;
+        // Check if the service is disabled. Info is not available when disabled.
+        if (!ENABLED.getValue()) {
+            return false;
+        }
         JID recipientJID = XMPPServer.getInstance().createJID(name, null, true).asBareJID();
         PEPService pepService = pepServiceManager.getPEPService(recipientJID);
 

@@ -220,6 +220,15 @@ public class AdHocCommandManager {
                 return reply;
             }
 
+            // Check that the session is being continued by the entity (full JID) that started it, and
+            // that the requester still has enough permission to execute the command, as the permission
+            // might have been revoked after the session was started. Answer forbidden error otherwise
+            if (command == null || !session.getOwner().equals(packet.getFrom()) || !command.hasPermission(packet.getFrom())) {
+                reply.setChildElement(iqCommand.createCopy());
+                reply.setError(PacketError.Condition.forbidden);
+                return reply;
+            }
+
             // Check if the Session data has expired
             if (Duration.between(session.getCreationInstant(), Instant.now()).compareTo(COMMAND_TIMEOUT.getValue()) > 0) {
                 // TODO Check all sessions that might have timed out (use another thread?)

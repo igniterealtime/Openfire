@@ -560,12 +560,21 @@ public class HttpSession extends LocalClientSession {
         synchronized (router) {
             HttpBindManager.getInstance().getSessionManager().execute(this, () -> {
                 Log.trace("Stream {}: sending {} packet(s)", streamID, packetsToSend.size());
+                // The amount and size of the packets is controlled by the (possibly unauthenticated) client. To prevent it
+                // from also controlling the amount of data that is logged, only the first unknown packet of a request is
+                // logged, in a limited amount of detail (and without a stack trace, which is always the same).
+                int unknownPackets = 0;
                 for (Element packet : packetsToSend) {
                     try {
                         router.route(packet);
                     } catch (UnknownStanzaException e) {
-                        Log.error("On session {} client provided unknown packet type: {}", getStreamID(), packet.asXML(), e);
+                        if (unknownPackets++ == 0) {
+                            Log.warn("On session {} client provided unknown packet type: {}", getStreamID(), StringUtils.abbreviate(packet.asXML(), 256));
+                        }
                     }
+                }
+                if (unknownPackets > 1) {
+                    Log.warn("On session {} client provided {} more unknown packet(s) in the same request.", getStreamID(), unknownPackets - 1);
                 }
             });
         }

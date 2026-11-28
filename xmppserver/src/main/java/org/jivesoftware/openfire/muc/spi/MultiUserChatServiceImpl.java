@@ -2437,10 +2437,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void removeSysadmin(final JID userJID) {
+    public synchronized void removeSysadmin(final JID userJID) {
         final JID bareJID = userJID.asBareJID();
 
-        sysadmins.remove(bareJID);
+        sysadmins.removeIf(bareJID::equals);
 
         // Update the config.
         final String[] jids = new String[sysadmins.size()];
